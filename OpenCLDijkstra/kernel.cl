@@ -5,6 +5,8 @@ __kernel void square(
                      __global int *maskArray,
                      __global float *costArray,
                      __global float *updatingCostArray,
+                     const int vertexCount,
+                     const int edgeCount,
                      __global float* input,
                      __global float* output,
                      const unsigned int count)

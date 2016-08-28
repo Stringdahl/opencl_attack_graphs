@@ -129,7 +129,7 @@ cl_program loadAndBuildProgram( cl_context gpuContext, const char *fileName )
     
     cl_int errNum;
     cl_program program;
-
+    
     // Load the OpenCL source code from the .cl file
     std::ifstream kernelFile(fileName, std::ios::in);
     if (!kernelFile.is_open())
@@ -236,12 +236,15 @@ int main(int argc, char** argv)
     cl_mem input;                       // device memory used for the input array
     cl_mem output;                      // device memory used for the output array
     
+    int vertexCount = 999;
+    int edgeCount = 998;
+    
     // Fill our data set with random float values
     //
     int i = 0;
     unsigned int count = DATA_SIZE;
     for(i = 0; i < count; i++)
-        data[i] = rand() / (float)RAND_MAX;
+    data[i] = rand() / (float)RAND_MAX;
     
     // Connect to a compute device
     //
@@ -330,15 +333,17 @@ int main(int argc, char** argv)
     // Set the arguments to our compute kernel
     //
     err = 0;
-    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &vertexArray);
-    err  = clSetKernelArg(kernel, 1, sizeof(cl_mem), &edgeArray);
-    err  = clSetKernelArg(kernel, 2, sizeof(cl_mem), &weightArray);
-    err  = clSetKernelArg(kernel, 3, sizeof(cl_mem), &maskArray);
-    err  = clSetKernelArg(kernel, 4, sizeof(cl_mem), &costArray);
-    err  = clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArray);
-    err  = clSetKernelArg(kernel, 6, sizeof(cl_mem), &input);
-    err |= clSetKernelArg(kernel, 7, sizeof(cl_mem), &output);
-    err |= clSetKernelArg(kernel, 8, sizeof(unsigned int), &count);
+    err |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &vertexArray);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &edgeArray);
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &weightArray);
+    err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &maskArray);
+    err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &costArray);
+    err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArray);
+    err |= clSetKernelArg(kernel, 6, sizeof(int), &vertexCount);
+    err |= clSetKernelArg(kernel, 7, sizeof(int), &edgeCount);
+    err |= clSetKernelArg(kernel, 8, sizeof(cl_mem), &input);
+    err |= clSetKernelArg(kernel, 9, sizeof(cl_mem), &output);
+    err |= clSetKernelArg(kernel, 10, sizeof(unsigned int), &count);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", err);
@@ -384,7 +389,7 @@ int main(int argc, char** argv)
     for(i = 0; i < count; i++)
     {
         if(results[i] == data[i] * data[i])
-            correct++;
+        correct++;
     }
     
     // Print a brief summary detailing the results
