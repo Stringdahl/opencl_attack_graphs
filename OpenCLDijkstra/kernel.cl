@@ -1,10 +1,15 @@
 __kernel void square(
-   __global int *vertexArray,
-   __global float* input,
-   __global float* output,
-   const unsigned int count)
+                     __global int *vertexArray,
+                     __global int *edgeArray,
+                     __global float *weightArray,
+                     __global int *maskArray,
+                     __global float *costArray,
+                     __global float *updatingCostArray,
+                     __global float* input,
+                     __global float* output,
+                     const unsigned int count)
 {
-   int i = get_global_id(0);
-   if(i < count)
-       output[i] = input[i] * input[i];
+    int i = get_global_id(0);
+    if(i < count)
+        output[i] = input[i] * input[i];
 }

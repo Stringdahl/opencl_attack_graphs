@@ -228,6 +228,11 @@ int main(int argc, char** argv)
     cl_kernel kernel;                   // compute kernel
     
     cl_mem vertexArray;                       // device memory used for the input array
+    cl_mem edgeArray;                       // device memory used for the input array
+    cl_mem weightArray;                       // device memory used for the input array
+    cl_mem maskArray;                       // device memory used for the input array
+    cl_mem costArray;                       // device memory used for the input array
+    cl_mem updatingCostArray;                       // device memory used for the input array
     cl_mem input;                       // device memory used for the input array
     cl_mem output;                      // device memory used for the output array
     
@@ -295,12 +300,16 @@ int main(int argc, char** argv)
         printf("Error: Failed to create compute kernel!\n");
         exit(1);
     }
-
     
     
     // Create the input and output arrays in device memory for our calculation
     //
     vertexArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    edgeArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    weightArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    maskArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    costArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    updatingCostArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
     input = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, NULL);
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
     if (!input || !output)
@@ -322,9 +331,14 @@ int main(int argc, char** argv)
     //
     err = 0;
     err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &vertexArray);
-    err  = clSetKernelArg(kernel, 1, sizeof(cl_mem), &input);
-    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &output);
-    err |= clSetKernelArg(kernel, 3, sizeof(unsigned int), &count);
+    err  = clSetKernelArg(kernel, 1, sizeof(cl_mem), &edgeArray);
+    err  = clSetKernelArg(kernel, 2, sizeof(cl_mem), &weightArray);
+    err  = clSetKernelArg(kernel, 3, sizeof(cl_mem), &maskArray);
+    err  = clSetKernelArg(kernel, 4, sizeof(cl_mem), &costArray);
+    err  = clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArray);
+    err  = clSetKernelArg(kernel, 6, sizeof(cl_mem), &input);
+    err |= clSetKernelArg(kernel, 7, sizeof(cl_mem), &output);
+    err |= clSetKernelArg(kernel, 8, sizeof(unsigned int), &count);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", err);
