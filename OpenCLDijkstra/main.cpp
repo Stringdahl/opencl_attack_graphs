@@ -115,6 +115,29 @@ typedef struct
 } GraphData;
 
 
+///
+//  Generate a random graph
+//
+void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex)
+{
+    graph->vertexCount = numVertices;
+    graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->edgeCount = numVertices * neighborsPerVertex;
+    graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    graph->weightArray = (float*)malloc(graph->edgeCount * sizeof(float));
+    
+    for(int i = 0; i < graph->vertexCount; i++)
+    {
+        graph->vertexArray[i] = i * neighborsPerVertex;
+    }
+    
+    for(int i = 0; i < graph->edgeCount; i++)
+    {
+        graph->edgeArray[i] = (rand() % graph->vertexCount);
+        graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
+    }
+}
+
 
 
 ///
@@ -238,6 +261,14 @@ int main(int argc, char** argv)
     
     int vertexCount = 999;
     int edgeCount = 998;
+    
+    // Allocate memory for arrays
+    GraphData graph;
+    generateRandomGraph(&graph, 100, 5);
+    
+    printf("Vertex Count: %d\n", graph.vertexCount);
+    printf("Edge Count: %d\n", graph.edgeCount);
+
     
     // Fill our data set with random float values
     //
