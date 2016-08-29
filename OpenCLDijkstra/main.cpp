@@ -225,7 +225,47 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
     }
 }
 
+int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_command_queue *commands, cl_program *program) {
+    // Connect to a compute device
+    //
+    int gpu = 1;
+    int err = clGetDeviceIDs(NULL, gpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 1, device_id, NULL);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to create a device group!\n");
+        return EXIT_FAILURE;
+    }
+    
+    // Create a compute context
+    //
+    *context = clCreateContext(0, 1, device_id, NULL, NULL, &err);
+    if (!context)
+    {
+        printf("Error: Failed to create a compute context!\n");
+        return EXIT_FAILURE;
+    }
+    
+    // Create a command commands
+    //
+    *commands = clCreateCommandQueue(*context, *device_id, 0, &err);
+    if (!commands)
+    {
+        printf("Error: Failed to create a command commands!\n");
+        return EXIT_FAILURE;
+    }
+    
+    // Create the compute program from the source file
+    *program = loadAndBuildProgram(*context, "/Users/pontus/Dropbox/Pontus/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
+    if (!program)
+    {
+        printf("Error: Failed to create compute program!\n");
+        return EXIT_FAILURE;
+    }
 
+
+
+    return err;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -264,44 +304,10 @@ int main(int argc, char** argv)
     generateRandomGraph(&graph, 100, 5);
     
     
-    // Connect to a compute device
-    //
-    int gpu = 1;
-    err = clGetDeviceIDs(NULL, gpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 1, &device_id, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to create a device group!\n");
-        return EXIT_FAILURE;
-    }
-    
-    // Create a compute context
-    //
-    context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-    if (!context)
-    {
-        printf("Error: Failed to create a compute context!\n");
-        return EXIT_FAILURE;
-    }
-    
-    // Create a command commands
-    //
-    commands = clCreateCommandQueue(context, device_id, 0, &err);
-    if (!commands)
-    {
-        printf("Error: Failed to create a command commands!\n");
-        return EXIT_FAILURE;
-    }
+    initializeComputing(&device_id, &context, &commands, &program);
     
     
-    
-    // Create the compute program from the source file
-    program = loadAndBuildProgram(context, "/Users/pontus/Dropbox/Pontus/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
-    if (!program)
-    {
-        printf("Error: Failed to create compute program!\n");
-        return EXIT_FAILURE;
-    }
-    
+     
     // Build the program executable
     //
     err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
@@ -315,6 +321,8 @@ int main(int argc, char** argv)
         printf("%s\n", buffer);
         exit(1);
     }
+    
+    
     
     // Create the compute kernel in the program we wish to run
     initializeKernel = clCreateKernel(program, "initializeBuffers", &err);
