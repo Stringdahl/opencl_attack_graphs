@@ -291,7 +291,7 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
 
 int main(int argc, char** argv)
 {
-    int err;                            // error code returned from api calls
+    int errNum;                            // error code returned from api calls
     
     unsigned int correct;               // number of correct results returned
     
@@ -303,6 +303,7 @@ int main(int argc, char** argv)
     cl_command_queue commands;          // compute command queue
     cl_program program;                 // compute program
     cl_kernel initializeKernel;                   // compute kernel
+    cl_kernel ssspKernel1;
     
     cl_mem vertexArrayDevice;                       // device memory used for the input array
     cl_mem edgeArrayDevice;                       // device memory used for the input array
@@ -320,13 +321,21 @@ int main(int argc, char** argv)
     
     
     // Create the compute kernel in the program we wish to run
-    initializeKernel = clCreateKernel(program, "initializeBuffers", &err);
-    if (!initializeKernel || err != CL_SUCCESS)
+    initializeKernel = clCreateKernel(program, "initializeBuffers", &errNum);
+    if (!initializeKernel || errNum != CL_SUCCESS)
     {
         printf("Error: Failed to create compute kernel initializeBuffers!\n");
         exit(1);
     }
     
+    // Kernel 1
+    ssspKernel1 = clCreateKernel(program, "OCL_SSSP_KERNEL1", &errNum);
+    if (!initializeKernel || errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to create compute kernel initializeBuffers!\n");
+        exit(1);
+    }
+
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
@@ -334,41 +343,41 @@ int main(int argc, char** argv)
     
     
     
-    // Set the arguments to our compute kernel
+    // Set the arguments to initializeKernel
     //
     int sourceVertex = 0;
-    err = 0;
+    errNum = 0;
    // err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &vertexArrayDevice);
    // err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &edgeArrayDevice);
    // err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &weightArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 3, sizeof(int), &sourceVertex);
-    err |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.vertexCount);
-    if (err != CL_SUCCESS)
+    errNum |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
+    errNum |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
+    errNum |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
+    errNum |= clSetKernelArg(initializeKernel, 3, sizeof(int), &sourceVertex);
+    errNum |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.vertexCount);
+    if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to set kernel arguments! %d\n", err);
+        printf("Error: Failed to set kernel arguments! %d\n", errNum);
         exit(1);
     }
     
     // Get the maximum work group size for executing the kernel on the device
     //
-    err = clGetKernelWorkGroupInfo(initializeKernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
-    if (err != CL_SUCCESS)
+    errNum = clGetKernelWorkGroupInfo(initializeKernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
+    if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
+        printf("Error: Failed to retrieve kernel work group info! %d\n", errNum);
         exit(1);
     }
     
-    printf("local = %zuz\n",local);
+    printf("local = %zu\n",local);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
     global = DATA_SIZE;
-    err = clEnqueueNDRangeKernel(commands, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
-    if (err)
+    errNum = clEnqueueNDRangeKernel(commands, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
+    if (errNum)
     {
         printf("Error: Failed to execute kernel!\n");
         return EXIT_FAILURE;
@@ -381,10 +390,10 @@ int main(int argc, char** argv)
     // Read back the results from the device to verify the output
     //
     float results[DATA_SIZE];           // results returned from device
-    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
-    if (err != CL_SUCCESS)
+    errNum = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
+    if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to read output array! %d\n", err);
+        printf("Error: Failed to read output array! %d\n", errNum);
         exit(1);
     }
     
