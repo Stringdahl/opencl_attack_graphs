@@ -1,56 +1,6 @@
 
 
-//
-// File:       hello.cpp
-//
-// Abstract:   A simple "Hello World" compute example showing basic usage of OpenCL which
-//             calculates the mathematical square (X[i] = pow(X[i],2)) for a buffer of
-//             floating point values.
-//
-//
-// Version:    <1.0>
-//
-// Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc. ("Apple")
-//             in consideration of your agreement to the following terms, and your use,
-//             installation, modification or redistribution of this Apple software
-//             constitutes acceptance of these terms.  If you do not agree with these
-//             terms, please do not use, install, modify or redistribute this Apple
-//             software.
-//
-//             In consideration of your agreement to abide by the following terms, and
-//             subject to these terms, Apple grants you a personal, non - exclusive
-//             license, under Apple's copyrights in this original Apple software ( the
-//             "Apple Software" ), to use, reproduce, modify and redistribute the Apple
-//             Software, with or without modifications, in source and / or binary forms;
-//             provided that if you redistribute the Apple Software in its entirety and
-//             without modifications, you must retain this notice and the following text
-//             and disclaimers in all such redistributions of the Apple Software. Neither
-//             the name, trademarks, service marks or logos of Apple Inc. may be used to
-//             endorse or promote products derived from the Apple Software without specific
-//             prior written permission from Apple.  Except as expressly stated in this
-//             notice, no other rights or licenses, express or implied, are granted by
-//             Apple herein, including but not limited to any patent rights that may be
-//             infringed by your derivative works or by other works in which the Apple
-//             Software may be incorporated.
-//
-//             The Apple Software is provided by Apple on an "AS IS" basis.  APPLE MAKES NO
-//             WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED
-//             WARRANTIES OF NON - INFRINGEMENT, MERCHANTABILITY AND FITNESS FOR A
-//             PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND OPERATION
-//             ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
-//
-//             IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL OR
-//             CONSEQUENTIAL DAMAGES ( INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-//             SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-//             INTERRUPTION ) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, MODIFICATION
-//             AND / OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER
-//             UNDER THEORY OF CONTRACT, TORT ( INCLUDING NEGLIGENCE ), STRICT LIABILITY OR
-//             OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Copyright ( C ) 2008 Apple Inc. All Rights Reserved.
-//
 
-////////////////////////////////////////////////////////////////////////////////
 
 #include <fcntl.h>
 #include <iostream>
@@ -138,6 +88,66 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     }
 }
 
+
+///
+///  Allocate memory for input CUDA buffers and copy the data into device memory
+///
+void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph,
+                        cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice,
+                        cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice,
+                        size_t globalWorkSize)
+{
+    cl_int errNum;
+    cl_mem hostVertexArrayBuffer;
+    cl_mem hostEdgeArrayBuffer;
+    cl_mem hostWeightArrayBuffer;
+    
+    // First, need to create OpenCL Host buffers that can be copied to device buffers
+    hostVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                           sizeof(int) * graph->vertexCount, graph->vertexArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    hostEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                         sizeof(int) * graph->edgeCount, graph->edgeArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                           sizeof(float) * graph->edgeCount, graph->weightArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    printf("%lu, %zu\n", sizeof(int), globalWorkSize);
+    
+    // Now create all of the GPU buffers
+    *vertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * globalWorkSize, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *edgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * graph->edgeCount, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *maskArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * globalWorkSize, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *costArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * globalWorkSize, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *updatingCostArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * globalWorkSize, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    // Now queue up the data to be copied to the device
+    errNum = clEnqueueCopyBuffer(commandQueue, hostVertexArrayBuffer, *vertexArrayDevice, 0, 0,
+                                 sizeof(int) * graph->vertexCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
+    errNum = clEnqueueCopyBuffer(commandQueue, hostEdgeArrayBuffer, *edgeArrayDevice, 0, 0,
+                                 sizeof(int) * graph->edgeCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
+    errNum = clEnqueueCopyBuffer(commandQueue, hostWeightArrayBuffer, *weightArrayDevice, 0, 0,
+                                 sizeof(float) * graph->edgeCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
+    clReleaseMemObject(hostVertexArrayBuffer);
+    clReleaseMemObject(hostEdgeArrayBuffer);
+    clReleaseMemObject(hostWeightArrayBuffer);
+}
 
 
 ///
@@ -250,17 +260,14 @@ int main(int argc, char** argv)
     cl_program program;                 // compute program
     cl_kernel kernel;                   // compute kernel
     
-    cl_mem vertexArray;                       // device memory used for the input array
-    cl_mem edgeArray;                       // device memory used for the input array
-    cl_mem weightArray;                       // device memory used for the input array
-    cl_mem maskArray;                       // device memory used for the input array
-    cl_mem costArray;                       // device memory used for the input array
-    cl_mem updatingCostArray;                       // device memory used for the input array
+    cl_mem vertexArrayDevice;                       // device memory used for the input array
+    cl_mem edgeArrayDevice;                       // device memory used for the input array
+    cl_mem weightArrayDevice;                       // device memory used for the input array
+    cl_mem maskArrayDevice;                       // device memory used for the input array
+    cl_mem costArrayDevice;                       // device memory used for the input array
+    cl_mem updatingCostArrayDevice;                       // device memory used for the input array
     cl_mem input;                       // device memory used for the input array
     cl_mem output;                      // device memory used for the output array
-    
-    int vertexCount = 999;
-    int edgeCount = 998;
     
     // Allocate memory for arrays
     GraphData graph;
@@ -268,7 +275,7 @@ int main(int argc, char** argv)
     
     printf("Vertex Count: %d\n", graph.vertexCount);
     printf("Edge Count: %d\n", graph.edgeCount);
-
+    
     
     // Fill our data set with random float values
     //
@@ -336,14 +343,15 @@ int main(int argc, char** argv)
     }
     
     
+    
     // Create the input and output arrays in device memory for our calculation
     //
-    vertexArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    edgeArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    weightArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    maskArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    costArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    updatingCostArray = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    vertexArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    edgeArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    weightArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    maskArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    costArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    updatingCostArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
     input = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, NULL);
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
     if (!input || !output)
@@ -361,17 +369,23 @@ int main(int argc, char** argv)
         exit(1);
     }
     
+    // Allocate buffers in Device memory
+    allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
+                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, 1000);
+    
+    
+    
     // Set the arguments to our compute kernel
     //
     err = 0;
-    err |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &vertexArray);
-    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &edgeArray);
-    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &weightArray);
-    err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &maskArray);
-    err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &costArray);
-    err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArray);
-    err |= clSetKernelArg(kernel, 6, sizeof(int), &vertexCount);
-    err |= clSetKernelArg(kernel, 7, sizeof(int), &edgeCount);
+    err |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &vertexArrayDevice);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &edgeArrayDevice);
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &weightArrayDevice);
+    err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &maskArrayDevice);
+    err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &costArrayDevice);
+    err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArrayDevice);
+    err |= clSetKernelArg(kernel, 6, sizeof(int), &graph.vertexCount);
+    err |= clSetKernelArg(kernel, 7, sizeof(int), &graph.edgeCount);
     err |= clSetKernelArg(kernel, 8, sizeof(cl_mem), &input);
     err |= clSetKernelArg(kernel, 9, sizeof(cl_mem), &output);
     err |= clSetKernelArg(kernel, 10, sizeof(unsigned int), &count);
@@ -417,10 +431,14 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(i = 0; i < count; i++)
+    for(i = 0; i < graph.edgeCount; i++)
     {
-        if(results[i] == data[i] * data[i])
-        correct++;
+        if(results[i] == graph.weightArray[i] * graph.weightArray[i]) {
+            correct++;
+        }
+        else {
+        printf("%f squared is erroneously calculated to %f\n", graph.weightArray[i], results[i]);
+        }
     }
     
     // Print a brief summary detailing the results

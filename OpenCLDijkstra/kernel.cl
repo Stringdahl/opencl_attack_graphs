@@ -12,6 +12,6 @@ __kernel void square(
                      const unsigned int count)
 {
     int i = get_global_id(0);
-    if(i < count)
-        output[i] = input[i] * input[i];
+    if(i < edgeCount)
+        output[i] = weightArray[i] * weightArray[i];
 }
