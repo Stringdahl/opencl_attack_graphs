@@ -261,8 +261,20 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
         printf("Error: Failed to create compute program!\n");
         return EXIT_FAILURE;
     }
-
-
+    
+    // Build the program executable
+    //
+    err = clBuildProgram(*program, 0, NULL, NULL, NULL, NULL);
+    if (err != CL_SUCCESS)
+    {
+        size_t len;
+        char buffer[2048];
+        
+        printf("Error: Failed to build program executable!\n");
+        clGetProgramBuildInfo(*program, *device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+        printf("%s\n", buffer);
+        exit(1);
+    }
 
     return err;
 }
@@ -305,23 +317,6 @@ int main(int argc, char** argv)
     
     
     initializeComputing(&device_id, &context, &commands, &program);
-    
-    
-     
-    // Build the program executable
-    //
-    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        size_t len;
-        char buffer[2048];
-        
-        printf("Error: Failed to build program executable!\n");
-        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
-        printf("%s\n", buffer);
-        exit(1);
-    }
-    
     
     
     // Create the compute kernel in the program we wish to run
