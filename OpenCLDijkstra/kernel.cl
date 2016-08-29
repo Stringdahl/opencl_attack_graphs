@@ -12,3 +12,4 @@ __kernel void initializeBuffers(
     if(i < edgeCount)
         costArray[i] = weightArray[i] * weightArray[i];
 }
+
