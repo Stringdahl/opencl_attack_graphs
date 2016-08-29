@@ -304,6 +304,7 @@ int main(int argc, char** argv)
     cl_program program;                 // compute program
     cl_kernel initializeKernel;                   // compute kernel
     cl_kernel ssspKernel1;
+    cl_kernel ssspKernel2;
     
     cl_mem vertexArrayDevice;                       // device memory used for the input array
     cl_mem edgeArrayDevice;                       // device memory used for the input array
@@ -324,18 +325,26 @@ int main(int argc, char** argv)
     initializeKernel = clCreateKernel(program, "initializeBuffers", &errNum);
     if (!initializeKernel || errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to create compute kernel initializeBuffers!\n");
+        printf("Error: Failed to create initializeKernel initializeBuffers!\n");
         exit(1);
     }
     
     // Kernel 1
     ssspKernel1 = clCreateKernel(program, "OCL_SSSP_KERNEL1", &errNum);
-    if (!initializeKernel || errNum != CL_SUCCESS)
+    if (!ssspKernel1 || errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to create compute kernel initializeBuffers!\n");
+        printf("Error: Failed to create ssspKernel1 initializeBuffers!\n");
         exit(1);
     }
-
+    
+    // Kernel 1
+    ssspKernel2 = clCreateKernel(program, "OCL_SSSP_KERNEL2", &errNum);
+    if (!ssspKernel2 || errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to create ssspKernel2 initializeBuffers!\n");
+        exit(1);
+    }
+    
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
@@ -347,9 +356,6 @@ int main(int argc, char** argv)
     //
     int sourceVertex = 0;
     errNum = 0;
-   // err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &vertexArrayDevice);
-   // err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &edgeArrayDevice);
-   // err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &weightArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
@@ -357,31 +363,69 @@ int main(int argc, char** argv)
     errNum |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.vertexCount);
     if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to set kernel arguments! %d\n", errNum);
+        printf("Error: Failed to set initializeKernel arguments! %d\n", errNum);
         exit(1);
     }
     
-    // Get the maximum work group size for executing the kernel on the device
-    //
-    errNum = clGetKernelWorkGroupInfo(initializeKernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
+    errNum = 0;
+    errNum |= clSetKernelArg(ssspKernel1, 0, sizeof(cl_mem), &vertexArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 1, sizeof(cl_mem), &edgeArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 2, sizeof(cl_mem), &weightArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 3, sizeof(cl_mem), &maskArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 4, sizeof(cl_mem), &costArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 5, sizeof(cl_mem), &updatingCostArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel1, 6, sizeof(int), &graph.vertexCount);
+    errNum |= clSetKernelArg(ssspKernel1, 7, sizeof(int), &graph.edgeCount);
     if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to retrieve kernel work group info! %d\n", errNum);
+        printf("Error: Failed to set ssspKernel1 arguments! %d\n", errNum);
         exit(1);
     }
     
-    printf("local = %zu\n",local);
+    // Kernel 2
+    errNum = 0;
+    errNum |= clSetKernelArg(ssspKernel2, 0, sizeof(cl_mem), &vertexArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 1, sizeof(cl_mem), &edgeArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 2, sizeof(cl_mem), &weightArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 3, sizeof(cl_mem), &maskArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 4, sizeof(cl_mem), &costArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 5, sizeof(cl_mem), &updatingCostArrayDevice);
+    errNum |= clSetKernelArg(ssspKernel2, 6, sizeof(int), &graph.vertexCount);
+    if (errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to set ssspKernel2 arguments! %d\n", errNum);
+        exit(1);
+    }
+
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
     global = DATA_SIZE;
+    local = 256;
     errNum = clEnqueueNDRangeKernel(commands, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
     if (errNum)
     {
         printf("Error: Failed to execute kernel!\n");
         return EXIT_FAILURE;
     }
+    
+    int *maskArrayHost = (int*) malloc(sizeof(int) * graph.vertexCount);
+
+    cl_event readDone;
+    errNum = clEnqueueReadBuffer( commands, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
+                                 maskArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+
+    errNum = clEnqueueNDRangeKernel(commands, ssspKernel1, 1, 0, &global, &local,
+                                    0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
+    errNum = clEnqueueNDRangeKernel(commands, ssspKernel2, 1, 0, &global, &local,
+                                    0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
     
     // Wait for the command commands to get serviced before reading back results
     //
