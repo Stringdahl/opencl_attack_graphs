@@ -1,7 +1,3 @@
-
-
-
-
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
@@ -114,8 +110,6 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * graph->edgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
-    
-    printf("%lu, %zu\n", sizeof(int), globalWorkSize);
     
     // Now create all of the GPU buffers
     *vertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * globalWorkSize, NULL, &errNum);
@@ -266,8 +260,6 @@ int main(int argc, char** argv)
     cl_mem maskArrayDevice;                       // device memory used for the input array
     cl_mem costArrayDevice;                       // device memory used for the input array
     cl_mem updatingCostArrayDevice;                       // device memory used for the input array
-    cl_mem input;                       // device memory used for the input array
-    cl_mem output;                      // device memory used for the output array
     
     // Allocate memory for arrays
     GraphData graph;
@@ -352,22 +344,7 @@ int main(int argc, char** argv)
     maskArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
     costArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
     updatingCostArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
-    input = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, NULL);
-    output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
-    if (!input || !output)
-    {
-        printf("Error: Failed to allocate device memory!\n");
-        exit(1);
-    }
     
-    // Write our data set into the input array in device memory
-    //
-    err = clEnqueueWriteBuffer(commands, input, CL_TRUE, 0, sizeof(float) * count, data, 0, NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to write to source array!\n");
-        exit(1);
-    }
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
@@ -444,8 +421,6 @@ int main(int argc, char** argv)
     
     // Shutdown and cleanup
     //
-    clReleaseMemObject(input);
-    clReleaseMemObject(output);
     clReleaseProgram(program);
     clReleaseKernel(kernel);
     clReleaseCommandQueue(commands);
