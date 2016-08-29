@@ -1,4 +1,4 @@
-__kernel void square(
+__kernel void initializeBuffers(
                      __global int *vertexArray,
                      __global int *edgeArray,
                      __global float *weightArray,

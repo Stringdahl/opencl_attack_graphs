@@ -269,13 +269,6 @@ int main(int argc, char** argv)
     printf("Edge Count: %d\n", graph.edgeCount);
     
     
-    // Fill our data set with random float values
-    //
-    int i = 0;
-    unsigned int count = DATA_SIZE;
-    for(i = 0; i < count; i++)
-    data[i] = rand() / (float)RAND_MAX;
-    
     // Connect to a compute device
     //
     int gpu = 1;
@@ -327,7 +320,7 @@ int main(int argc, char** argv)
     }
     
     // Create the compute kernel in the program we wish to run
-    kernel = clCreateKernel(program, "square", &err);
+    kernel = clCreateKernel(program, "initializeBuffers", &err);
     if (!kernel || err != CL_SUCCESS)
     {
         printf("Error: Failed to create compute kernel!\n");
@@ -335,20 +328,9 @@ int main(int argc, char** argv)
     }
     
     
-    
-    // Create the input and output arrays in device memory for our calculation
-    //
-    vertexArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
-    edgeArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.edgeCount, NULL, NULL);
-    weightArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.edgeCount, NULL, NULL);
-    maskArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
-    costArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
-    updatingCostArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
-    
-    
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
-                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, count);
+                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, 1024);
     
     
     
@@ -381,7 +363,7 @@ int main(int argc, char** argv)
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
-    global = count;
+    global = 1024;
     err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
     if (err)
     {
@@ -395,7 +377,7 @@ int main(int argc, char** argv)
     
     // Read back the results from the device to verify the output
     //
-    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * count, results, 0, NULL, NULL );
+    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * 1024, results, 0, NULL, NULL );
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to read output array! %d\n", err);
@@ -405,7 +387,7 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(i = 0; i < graph.edgeCount; i++)
+    for(int i = 0; i < graph.edgeCount; i++)
     {
         if(results[i] == graph.weightArray[i] * graph.weightArray[i]) {
             correct++;
