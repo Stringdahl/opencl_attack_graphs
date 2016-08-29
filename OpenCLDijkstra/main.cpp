@@ -333,15 +333,16 @@ int main(int argc, char** argv)
     
     // Set the arguments to our compute kernel
     //
+    int sourceVertex = 0;
     err = 0;
-    err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &vertexArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &edgeArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &weightArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 3, sizeof(cl_mem), &maskArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 4, sizeof(cl_mem), &costArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 5, sizeof(cl_mem), &updatingCostArrayDevice);
-    err |= clSetKernelArg(initializeKernel, 6, sizeof(int), &graph.vertexCount);
-    err |= clSetKernelArg(initializeKernel, 7, sizeof(int), &graph.edgeCount);
+   // err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &vertexArrayDevice);
+   // err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &edgeArrayDevice);
+   // err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &weightArrayDevice);
+    err |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
+    err |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
+    err |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
+    err |= clSetKernelArg(initializeKernel, 3, sizeof(int), &sourceVertex);
+    err |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.vertexCount);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", err);
@@ -389,17 +390,9 @@ int main(int argc, char** argv)
     correct = 0;
     for(int i = 0; i < graph.edgeCount; i++)
     {
-        if(results[i] == graph.weightArray[i] * graph.weightArray[i]) {
-            correct++;
-        }
-        else {
-        printf("%f squared is erroneously calculated to %f\n", graph.weightArray[i], results[i]);
-        }
+        printf("Cost of node %i is %f\n", i, results[i]);
+        
     }
-    
-    // Print a brief summary detailing the results
-    //
-    printf("Computed '%d/%d' correct values!\n", correct, graph.edgeCount);
     
     // Shutdown and cleanup
     //
