@@ -241,8 +241,6 @@ int main(int argc, char** argv)
 {
     int err;                            // error code returned from api calls
     
-    float data[DATA_SIZE];              // original data set given to device
-    float results[DATA_SIZE];           // results returned from device
     unsigned int correct;               // number of correct results returned
     
     size_t global;                      // global domain size for our calculation
@@ -264,9 +262,6 @@ int main(int argc, char** argv)
     // Allocate memory for arrays
     GraphData graph;
     generateRandomGraph(&graph, 100, 5);
-    
-    printf("Vertex Count: %d\n", graph.vertexCount);
-    printf("Edge Count: %d\n", graph.edgeCount);
     
     
     // Connect to a compute device
@@ -297,6 +292,8 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     
+    
+    
     // Create the compute program from the source file
     program = loadAndBuildProgram(context, "/Users/pontus/Dropbox/Pontus/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
     if (!program)
@@ -323,14 +320,14 @@ int main(int argc, char** argv)
     kernel = clCreateKernel(program, "initializeBuffers", &err);
     if (!kernel || err != CL_SUCCESS)
     {
-        printf("Error: Failed to create compute kernel!\n");
+        printf("Error: Failed to create compute kernel initializeBuffers!\n");
         exit(1);
     }
     
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
-                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, 1024);
+                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, DATA_SIZE);
     
     
     
@@ -360,10 +357,12 @@ int main(int argc, char** argv)
         exit(1);
     }
     
+    printf("local = %zuz\n",local);
+    
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
-    global = 1024;
+    global = DATA_SIZE;
     err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
     if (err)
     {
@@ -377,7 +376,8 @@ int main(int argc, char** argv)
     
     // Read back the results from the device to verify the output
     //
-    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * 1024, results, 0, NULL, NULL );
+    float results[DATA_SIZE];           // results returned from device
+    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to read output array! %d\n", err);
