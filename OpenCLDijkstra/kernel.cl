@@ -7,11 +7,11 @@ __kernel void square(
                      __global float *updatingCostArray,
                      const int vertexCount,
                      const int edgeCount,
-                     __global float* input,
-                     __global float* output,
-                     const unsigned int count)
+                     __global float *input,
+                     __global float *output,
+                     const int count)
 {
     int i = get_global_id(0);
     if(i < edgeCount)
-        output[i] = weightArray[i] * weightArray[i];
+        costArray[i] = weightArray[i] * weightArray[i];
 }

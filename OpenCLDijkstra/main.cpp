@@ -346,12 +346,12 @@ int main(int argc, char** argv)
     
     // Create the input and output arrays in device memory for our calculation
     //
-    vertexArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    edgeArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    weightArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    maskArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    costArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
-    updatingCostArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+    vertexArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
+    edgeArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.edgeCount, NULL, NULL);
+    weightArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.edgeCount, NULL, NULL);
+    maskArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
+    costArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
+    updatingCostArrayDevice = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * graph.vertexCount, NULL, NULL);
     input = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(float) * count, NULL, NULL);
     output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
     if (!input || !output)
@@ -371,7 +371,7 @@ int main(int argc, char** argv)
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
-                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, 1000);
+                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, count);
     
     
     
@@ -421,7 +421,7 @@ int main(int argc, char** argv)
     
     // Read back the results from the device to verify the output
     //
-    err = clEnqueueReadBuffer( commands, output, CL_TRUE, 0, sizeof(float) * count, results, 0, NULL, NULL );
+    err = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * count, results, 0, NULL, NULL );
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to read output array! %d\n", err);
@@ -443,7 +443,7 @@ int main(int argc, char** argv)
     
     // Print a brief summary detailing the results
     //
-    printf("Computed '%d/%d' correct values!\n", correct, count);
+    printf("Computed '%d/%d' correct values!\n", correct, graph.edgeCount);
     
     // Shutdown and cleanup
     //
