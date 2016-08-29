@@ -6,10 +6,7 @@ __kernel void square(
                      __global float *costArray,
                      __global float *updatingCostArray,
                      const int vertexCount,
-                     const int edgeCount,
-                     __global float *input,
-                     __global float *output,
-                     const int count)
+                     const int edgeCount)
 {
     int i = get_global_id(0);
     if(i < edgeCount)

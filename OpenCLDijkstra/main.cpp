@@ -386,9 +386,6 @@ int main(int argc, char** argv)
     err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &updatingCostArrayDevice);
     err |= clSetKernelArg(kernel, 6, sizeof(int), &graph.vertexCount);
     err |= clSetKernelArg(kernel, 7, sizeof(int), &graph.edgeCount);
-    err |= clSetKernelArg(kernel, 8, sizeof(cl_mem), &input);
-    err |= clSetKernelArg(kernel, 9, sizeof(cl_mem), &output);
-    err |= clSetKernelArg(kernel, 10, sizeof(unsigned int), &count);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", err);
