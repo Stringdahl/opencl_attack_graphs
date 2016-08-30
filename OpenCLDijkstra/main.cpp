@@ -350,7 +350,7 @@ int main(int argc, char** argv)
     
     // Allocate memory for arrays
     GraphData graph;
-    generateRandomGraph(&graph, 10, 3);
+    generateRandomGraph(&graph, 6, 2);
     printGraph(graph);
     
     initializeComputing(&device_id, &context, &commandQueue, &program);
@@ -401,7 +401,8 @@ int main(int argc, char** argv)
         printf("Error: Failed to set initializeKernel arguments! %d\n", errNum);
         exit(1);
     }
-    
+
+    // Set the arguments to ssspKernel1
     errNum = 0;
     errNum |= clSetKernelArg(ssspKernel1, 0, sizeof(cl_mem), &vertexArrayDevice);
     errNum |= clSetKernelArg(ssspKernel1, 1, sizeof(cl_mem), &edgeArrayDevice);
@@ -417,7 +418,7 @@ int main(int argc, char** argv)
         exit(1);
     }
     
-    // Kernel 2
+    // Set the arguments to ssspKernel2
     errNum = 0;
     errNum |= clSetKernelArg(ssspKernel2, 0, sizeof(cl_mem), &vertexArrayDevice);
     errNum |= clSetKernelArg(ssspKernel2, 1, sizeof(cl_mem), &edgeArrayDevice);
