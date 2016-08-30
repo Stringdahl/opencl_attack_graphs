@@ -92,13 +92,21 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
 void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph,
                         cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice,
                         cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice,
-                        size_t globalWorkSize)
+                         cl_mem *traversedEdgeArrayDevice, size_t globalWorkSize)
 {
     cl_int errNum;
     cl_mem hostVertexArrayBuffer;
     cl_mem hostEdgeArrayBuffer;
     cl_mem hostWeightArrayBuffer;
+    cl_mem hostTraversedEdgeArrayBuffer;
     
+    // Initially, no edges have been travelled
+    int *traversedEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    for (int iEdge=0; iEdge<graph->edgeCount; iEdge++) {
+        traversedEdgeArray[iEdge]=0;
+    }
+    
+
     // First, need to create OpenCL Host buffers that can be copied to device buffers
     hostVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(int) * graph->vertexCount, graph->vertexArray, &errNum);
@@ -110,6 +118,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * graph->edgeCount, graph->weightArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    hostTraversedEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                           sizeof(int) * graph->edgeCount, traversedEdgeArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -125,6 +137,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *updatingCostArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * globalWorkSize, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
+    *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+
+    //
     
     // Now queue up the data to be copied to the device
     errNum = clEnqueueCopyBuffer(commandQueue, hostVertexArrayBuffer, *vertexArrayDevice, 0, 0,
@@ -137,6 +153,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostWeightArrayBuffer, *weightArrayDevice, 0, 0,
                                  sizeof(float) * graph->edgeCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
+    errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
+                                 sizeof(int) * graph->edgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     clReleaseMemObject(hostVertexArrayBuffer);
@@ -347,6 +367,7 @@ int main(int argc, char** argv)
     cl_mem maskArrayDevice;                       // device memory used for the input array
     cl_mem costArrayDevice;                       // device memory used for the input array
     cl_mem updatingCostArrayDevice;                       // device memory used for the input array
+    cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     
     // Allocate memory for arrays
     GraphData graph;
@@ -383,7 +404,7 @@ int main(int argc, char** argv)
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
-                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, DATA_SIZE);
+                       &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, DATA_SIZE);
     
     
     

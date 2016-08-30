@@ -11,6 +11,26 @@ __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArr
     if ( maskArray[tid] != 0 )
     {
         maskArray[tid] = 0;
+
+        //  New arguments: boolean maxNode, __global int *parents
+        //
+        //  boolean finished = true;
+        //  if (maxNode) {
+        //  if (tid + 1 < (vertexCount))
+        //  {
+        //      parentEnd = parentEdges[tid + 1];
+        //  }
+        //  else
+        //  {
+        //      parentEnd = edgeCount;
+        //  }
+        //      for (int iParentEdge = 0; parentEdge < parentEnd; parentEdge++) {
+        //          if (traversedEdge[parentEdges[parentEdge]] == 0) {
+        //              finished = false;
+        //          }
+        //      }
+        //      if (finished) {
+        //
         
         int edgeStart = vertexArray[tid];
         int edgeEnd;
@@ -25,6 +45,8 @@ __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArr
         
         for(int edge = edgeStart; edge < edgeEnd; edge++)
         {
+            // traversedEdge[edge] = 1;
+            
             int nid = edgeArray[edge];
             
             // One note here: whereas the paper specified weightArray[nid], I
