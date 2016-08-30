@@ -318,6 +318,39 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
     return err;
 }
 
+int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, cl_program *program) {
+    
+    int errNum;
+    
+    // Create the compute kernel in the program we wish to run
+    *initializeKernel = clCreateKernel(*program, "initializeBuffers", &errNum);
+    if (!initializeKernel || errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to create initializeKernel initializeBuffers!\n");
+        exit(1);
+    }
+    
+    // Kernel 1
+    *ssspKernel1 = clCreateKernel(*program, "OCL_SSSP_KERNEL1", &errNum);
+    if (!ssspKernel1 || errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to create ssspKernel1 initializeBuffers!\n");
+        exit(1);
+    }
+    
+    // Kernel 2
+    *ssspKernel2 = clCreateKernel(*program, "OCL_SSSP_KERNEL2", &errNum);
+    if (!ssspKernel2 || errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to create ssspKernel2 initializeBuffers!\n");
+        exit(1);
+    }
+    
+    
+    return errNum;
+}
+
+
 void printGraph(GraphData graph) {
     int nChildren;
     for (int iNode=0; iNode<graph.vertexCount; iNode++) {
@@ -381,36 +414,14 @@ int main(int argc, char** argv)
     GraphData *graphs = (GraphData*) malloc(nGraphs * sizeof(GraphData));
     for (int iGraph=0; iGraph<nGraphs; iGraph++) {
         generateRandomGraph(&graphs[iGraph], 6, 2);
-        printGraph(graphs[iGraph]);
+//        printGraph(graphs[iGraph]);
     }
 
     
     initializeComputing(&device_id, &context, &commandQueue, &program);
     
     
-    // Create the compute kernel in the program we wish to run
-    initializeKernel = clCreateKernel(program, "initializeBuffers", &errNum);
-    if (!initializeKernel || errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to create initializeKernel initializeBuffers!\n");
-        exit(1);
-    }
-    
-    // Kernel 1
-    ssspKernel1 = clCreateKernel(program, "OCL_SSSP_KERNEL1", &errNum);
-    if (!ssspKernel1 || errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to create ssspKernel1 initializeBuffers!\n");
-        exit(1);
-    }
-    
-    // Kernel 1
-    ssspKernel2 = clCreateKernel(program, "OCL_SSSP_KERNEL2", &errNum);
-    if (!ssspKernel2 || errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to create ssspKernel2 initializeBuffers!\n");
-        exit(1);
-    }
+    createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     
     // Allocate buffers in Device memory
