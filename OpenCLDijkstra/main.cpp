@@ -348,6 +348,8 @@ int main(int argc, char** argv)
 {
     int errNum;                            // error code returned from api calls
     
+    int nGraphs = 3;
+    
     unsigned int correct;               // number of correct results returned
     
     size_t global;                      // global domain size for our calculation
@@ -370,9 +372,18 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     
     // Allocate memory for arrays
+    
+    
     GraphData graph;
     generateRandomGraph(&graph, 6, 2);
     printGraph(graph);
+
+    GraphData *graphs = (GraphData*) malloc(nGraphs * sizeof(GraphData));
+    for (int iGraph=0; iGraph<nGraphs; iGraph++) {
+        generateRandomGraph(&graphs[iGraph], 6, 2);
+        printGraph(graphs[iGraph]);
+    }
+
     
     initializeComputing(&device_id, &context, &commandQueue, &program);
     
