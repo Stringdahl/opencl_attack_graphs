@@ -16,6 +16,7 @@
 //  Macros
 //
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
+#define NUM_ASYNCHRONOUS_ITERATIONS 10  // Number of async loop iterations before attempting to read results back
 
 ///
 //  Utility functions adapted from NVIDIA GPU Computing SDK
@@ -225,6 +226,24 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
     }
 }
 
+///
+/// Check whether the mask array is empty.  This tells the algorithm whether
+/// it needs to continue running or not.
+///
+bool maskArrayEmpty(int *maskArray, int count)
+{
+    for(int i = 0; i < count; i++ )
+    {
+        if (maskArray[i] == 1)
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
 int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_command_queue *commands, cl_program *program) {
     // Connect to a compute device
     //
@@ -275,8 +294,24 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
         printf("%s\n", buffer);
         exit(1);
     }
-
+    
     return err;
+}
+
+void printGraph(GraphData graph) {
+    int nChildren;
+    for (int iNode=0; iNode<graph.vertexCount; iNode++) {
+        if (iNode<graph.vertexCount-1) {
+            nChildren = graph.vertexArray[iNode+1]-graph.vertexArray[iNode];
+        }
+        else {
+            nChildren = graph.edgeCount-graph.vertexArray[iNode];
+        }
+        printf("Vertex %i has %i children\n", iNode, nChildren);
+        for (int iChild=0; iChild<nChildren; iChild++) {
+            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph.edgeArray[graph.vertexArray[iNode]+iChild], graph.weightArray[graph.vertexArray[iNode]+iChild]);
+        }
+    }
 }
 
 
@@ -300,7 +335,7 @@ int main(int argc, char** argv)
     
     cl_device_id device_id;             // compute device id
     cl_context context;                 // compute context
-    cl_command_queue commands;          // compute command queue
+    cl_command_queue commandQueue;          // compute command queue
     cl_program program;                 // compute program
     cl_kernel initializeKernel;                   // compute kernel
     cl_kernel ssspKernel1;
@@ -315,10 +350,10 @@ int main(int argc, char** argv)
     
     // Allocate memory for arrays
     GraphData graph;
-    generateRandomGraph(&graph, 100, 5);
+    generateRandomGraph(&graph, 10, 3);
+    printGraph(graph);
     
-    
-    initializeComputing(&device_id, &context, &commands, &program);
+    initializeComputing(&device_id, &context, &commandQueue, &program);
     
     
     // Create the compute kernel in the program we wish to run
@@ -347,7 +382,7 @@ int main(int argc, char** argv)
     
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commands, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
+    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
                        &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, DATA_SIZE);
     
     
@@ -396,14 +431,14 @@ int main(int argc, char** argv)
         printf("Error: Failed to set ssspKernel2 arguments! %d\n", errNum);
         exit(1);
     }
-
+    
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
     global = DATA_SIZE;
     local = 256;
-    errNum = clEnqueueNDRangeKernel(commands, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
+    errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
     if (errNum)
     {
         printf("Error: Failed to execute kernel!\n");
@@ -411,30 +446,44 @@ int main(int argc, char** argv)
     }
     
     int *maskArrayHost = (int*) malloc(sizeof(int) * graph.vertexCount);
-
+    
     cl_event readDone;
-    errNum = clEnqueueReadBuffer( commands, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
+    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
                                  maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
-
-    errNum = clEnqueueNDRangeKernel(commands, ssspKernel1, 1, 0, &global, &local,
-                                    0, NULL, NULL);
-    checkError(errNum, CL_SUCCESS);
     
-    errNum = clEnqueueNDRangeKernel(commands, ssspKernel2, 1, 0, &global, &local,
-                                    0, NULL, NULL);
-    checkError(errNum, CL_SUCCESS);
-    
-    
+    while(!maskArrayEmpty(maskArrayHost, graph.vertexCount))
+    {
+        
+        // In order to improve performance, we run some number of iterations
+        // without reading the results.  This might result in running more iterations
+        // than necessary at times, but it will in most cases be faster because
+        // we are doing less stalling of the GPU waiting for results.
+        for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
+        {
+            
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local,
+                                            0, NULL, NULL);
+            checkError(errNum, CL_SUCCESS);
+            
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, &local,
+                                            0, NULL, NULL);
+            checkError(errNum, CL_SUCCESS);
+        }
+        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
+                                     maskArrayHost, 0, NULL, &readDone);
+        checkError(errNum, CL_SUCCESS);
+        clWaitForEvents(1, &readDone);
+    }
     // Wait for the command commands to get serviced before reading back results
     //
-    clFinish(commands);
+    clFinish(commandQueue);
     
     // Read back the results from the device to verify the output
     //
     float results[DATA_SIZE];           // results returned from device
-    errNum = clEnqueueReadBuffer( commands, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
     if (errNum != CL_SUCCESS)
     {
         printf("Error: Failed to read output array! %d\n", errNum);
@@ -444,7 +493,7 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(int i = 0; i < graph.edgeCount; i++)
+    for(int i = 0; i < graph.vertexCount; i++)
     {
         printf("Cost of node %i is %f\n", i, results[i]);
         
@@ -454,7 +503,7 @@ int main(int argc, char** argv)
     //
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
-    clReleaseCommandQueue(commands);
+    clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
     
     return 0;
