@@ -417,12 +417,11 @@ int main(int argc, char** argv)
 //        printGraph(graphs[iGraph]);
     }
 
-    
+    // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
     initializeComputing(&device_id, &context, &commandQueue, &program);
     
-    
+    // Create kernels from the program (kernel.cl)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
-    
     
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
