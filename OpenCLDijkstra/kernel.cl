@@ -3,34 +3,18 @@
 ///
 __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
                                 __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
-                                int vertexCount, int edgeCount )
+                                int vertexCount, int edgeCount)
 {
     // access thread id
     int tid = get_global_id(0);
+    
+    int iGraph = tid / edgeCount;
+    int localTid = tid & edgeCount;
     
     if ( maskArray[tid] != 0 )
     {
         maskArray[tid] = 0;
 
-        //  New arguments: boolean maxNode, __global int *parents
-        //
-        //  boolean finished = true;
-        //  if (maxNode) {
-        //  if (tid + 1 < (vertexCount))
-        //  {
-        //      parentEnd = parentEdges[tid + 1];
-        //  }
-        //  else
-        //  {
-        //      parentEnd = edgeCount;
-        //  }
-        //      for (int iParentEdge = 0; parentEdge < parentEnd; parentEdge++) {
-        //          if (traversedEdge[parentEdges[parentEdge]] == 0) {
-        //              finished = false;
-        //          }
-        //      }
-        //      if (finished) {
-        //
         
         int edgeStart = vertexArray[tid];
         int edgeEnd;

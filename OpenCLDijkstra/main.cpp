@@ -139,7 +139,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     *edgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * graph->edgeCount, NULL, &errNum);
+    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * nGraphs* graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *maskArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * globalWorkSize, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -162,7 +162,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostWeightArrayBuffer, *weightArrayDevice, 0, 0,
-                                 sizeof(float) * graph->edgeCount, 0, NULL, NULL);
+                                 sizeof(float) * nGraphs* graph->edgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
@@ -492,6 +492,7 @@ int main(int argc, char** argv)
     //
     global = DATA_SIZE;
     local = 256;
+    printf("\nglobal = %zu, local = %zu\n", global, local);
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
     if (errNum)
     {
