@@ -85,18 +85,20 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     }
 }
 
-void generateWeightArray(int edgeCount, float weightArray[]) {
+float* generateWeightArray(int edgeCount) {
+    float* weightArray = (float*) malloc(edgeCount * sizeof(float));
     for(int i = 0; i < edgeCount; i++)
     {
         weightArray[i] = (float)(rand() % 1000) / 1000.0f;
     }
+    return weightArray;
 }
 
 
 ///
 ///  Allocate memory for input CUDA buffers and copy the data into device memory
 ///
-void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph, float** weightArrays,
+void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, int nGraphs, GraphData *graph, float* weightArrays,
                         cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice,
                         cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice,
                          cl_mem *traversedEdgeArrayDevice, size_t globalWorkSize)
@@ -107,10 +109,6 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     cl_mem hostWeightArrayBuffer;
     cl_mem hostTraversedEdgeArrayBuffer;
     
-    
-    for (int i =0; i<graph->edgeCount; i++) {
-        printf("%f ", weightArrays[0][i]);
-    }
     
     // Initially, no edges have been travelled
     int *traversedEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
@@ -129,7 +127,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(float) * graph->edgeCount, graph->weightArray, &errNum);
+                                           sizeof(float) * nGraphs* graph->edgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     hostTraversedEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -424,12 +422,10 @@ int main(int argc, char** argv)
     
 //    printGraph(graph);
 
-    float **weightArrays;
-    weightArrays = (float**) malloc(nGraphs * sizeof(float*));
-
-    for (int iGraph=0; iGraph<nGraphs; iGraph++) {
-        weightArrays[iGraph] = (float*) malloc(graph.edgeCount * sizeof(float));
-        generateWeightArray(graph.edgeCount, weightArrays[iGraph]);
+    float *weightArray = generateWeightArray(nGraphs * graph.edgeCount);
+    
+    for (int i = 1; i < nGraphs * graph.edgeCount; i++) {
+        printf("%f ", weightArray[i]);
     }
 
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
@@ -439,7 +435,7 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, &graph, weightArrays, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
+    allocateOCLBuffers(context, commandQueue, nGraphs, &graph, weightArray, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice,
                        &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, DATA_SIZE);
     
     
