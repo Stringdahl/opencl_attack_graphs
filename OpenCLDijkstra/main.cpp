@@ -548,7 +548,7 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(int i = 0; i < graph.vertexCount; i++)
+    for(int i = 0; i < nGraphs*graph.vertexCount; i++)
     {
         printf("Cost of node %i is %f\n", i, results[i]);
         

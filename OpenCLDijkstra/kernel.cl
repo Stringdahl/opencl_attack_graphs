@@ -1,7 +1,7 @@
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
                                 __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
                                 int vertexCount, int edgeCount)
 {
@@ -9,18 +9,18 @@ __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArr
     int tid = get_global_id(0);
     
     int iGraph = tid / edgeCount;
-    int localTid = tid & edgeCount;
+    int localTid = tid % edgeCount;
     
-    if ( maskArray[tid] != 0 )
+    if ( maskArray[localTid] != 0 )
     {
-        maskArray[tid] = 0;
+        maskArray[localTid] = 0;
 
         
-        int edgeStart = vertexArray[tid];
+        int edgeStart = vertexArray[localTid];
         int edgeEnd;
-        if (tid + 1 < (vertexCount))
+        if (localTid + 1 < (vertexCount))
         {
-            edgeEnd = vertexArray[tid + 1];
+            edgeEnd = vertexArray[localTid + 1];
         }
         else
         {
@@ -37,9 +37,9 @@ __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArr
             //  found that the correct thing to do was weightArray[edge].  I think
             //  this was a typo in the paper.  Either that, or I misunderstood
             //  the data structure.
-            if (updatingCostArray[nid] > (costArray[tid] + weightArray[edge]))
+            if (updatingCostArray[iGraph*vertexCount + nid] > (costArray[iGraph*vertexCount + tid] + weightArray[iGraph*edgeCount + edge]))
             {
-                updatingCostArray[nid] = (costArray[tid] + weightArray[edge]);
+                updatingCostArray[iGraph*vertexCount + nid] = (costArray[iGraph*vertexCount + tid] + weightArray[iGraph*edgeCount + edge]);
             }
         }
     }
@@ -48,7 +48,7 @@ __kernel  void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArr
 ///
 /// This is part 2 of the Kernel from Algorithm 5 in the paper.
 ///
-__kernel  void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
+__kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
                                 __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
                                 int vertexCount)
 {
