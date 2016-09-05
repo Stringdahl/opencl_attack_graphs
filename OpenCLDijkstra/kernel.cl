@@ -74,14 +74,20 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
 __kernel void initializeBuffers( __global int *maskArray,
                                 __global float *costArray,
                                 __global float *updatingCostArray,
-                                int sourceVertex,
-                                int vertexCount )
+                                int vertexCount,
+                                int nSourceVertices,
+                                __global int *sourceArray)
 {
     // access thread id
     int tid = get_global_id(0);
+    bool isSource = false;
     
-    
-    if (sourceVertex == tid)
+    for (int i = 0; i < nSourceVertices; i++) {
+        if (sourceArray[i] == tid) {
+            isSource = true;
+        }
+    }
+    if (isSource)
     {
         maskArray[tid] = 1;
         costArray[tid] = 0.0;
