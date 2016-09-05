@@ -56,6 +56,20 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
     int tid = get_global_id(0);
     
     
+    
+   // uppdatera till localTid
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     if (costArray[tid] > updatingCostArray[tid])
     {
         costArray[tid] = updatingCostArray[tid];
