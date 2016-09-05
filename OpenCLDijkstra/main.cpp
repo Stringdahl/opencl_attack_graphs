@@ -539,13 +539,17 @@ int main(int argc, char** argv)
     printf("Initiating loop.\n");
     while(!maskArrayEmpty(maskArrayHost, nGraphs* graph.vertexCount))
     {
+        for (int i = 0; i < nGraphs * graph.vertexCount; i++) {
+            printf("%i", maskArrayHost[i]);
+        }
+        printf("\n");
         
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
         // than necessary at times, but it will in most cases be faster because
         // we are doing less stalling of the GPU waiting for results.
-        for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
-        {
+        //for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
+        //{
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local,
                                             0, NULL, NULL);
             checkError(errNum, CL_SUCCESS);
@@ -553,7 +557,7 @@ int main(int argc, char** argv)
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, &local,
                                             0, NULL, NULL);
             checkError(errNum, CL_SUCCESS);
-        }
+        //}
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * nGraphs * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
