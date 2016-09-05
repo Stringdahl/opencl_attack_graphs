@@ -266,6 +266,7 @@ bool maskArrayEmpty(int *maskArray, int count)
     {
         if (maskArray[i] == 1)
         {
+            printf("Vertex %i is still masked\n", i);
             return false;
         }
     }
@@ -442,7 +443,7 @@ int main(int argc, char** argv)
     
     // Set the arguments to initializeKernel
     //
-    int sourceVertex = 0;
+    int sourceVertex = 12;
     errNum = 0;
     errNum |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
@@ -500,15 +501,15 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     
-    int *maskArrayHost = (int*) malloc(sizeof(int) * graph.vertexCount);
+    int *maskArrayHost = (int*) malloc(sizeof(int) * nGraphs * graph.vertexCount);
     
     cl_event readDone;
-    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
-                                 maskArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * nGraphs * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
-    
-    while(!maskArrayEmpty(maskArrayHost, graph.vertexCount))
+  
+    printf("Initiating loop.\n");
+    while(!maskArrayEmpty(maskArrayHost, nGraphs* graph.vertexCount))
     {
         
         // In order to improve performance, we run some number of iterations
@@ -517,7 +518,6 @@ int main(int argc, char** argv)
         // we are doing less stalling of the GPU waiting for results.
         for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
         {
-            
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local,
                                             0, NULL, NULL);
             checkError(errNum, CL_SUCCESS);
@@ -526,8 +526,7 @@ int main(int argc, char** argv)
                                             0, NULL, NULL);
             checkError(errNum, CL_SUCCESS);
         }
-        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.vertexCount,
-                                     maskArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * nGraphs * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
     }
