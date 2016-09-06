@@ -50,6 +50,9 @@ typedef struct
     // Vertex count
     int vertexCount;
     
+    // (V) This contains a pointer to the source array
+    int *sourceArray;
+    
     // Graph count
     int graphCount;
     
@@ -73,9 +76,10 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     graph->vertexCount = numVertices;
     graph->graphCount = numGraphs;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = numVertices * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->weightArray = (float*)malloc(graph->edgeCount * sizeof(float));
+    graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
@@ -85,8 +89,16 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     for(int i = 0; i < graph->edgeCount; i++)
     {
         graph->edgeArray[i] = (rand() % graph->vertexCount);
+    }
+    for(int i = 0; i < numGraphs * graph->edgeCount; i++)
+    {
         graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
     }
+    for(int i = 0; i < numGraphs; i++)
+    {
+        graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
+    }
+    
 }
 
 float* generateWeightArray(int edgeCount) {
@@ -102,7 +114,7 @@ float* generateWeightArray(int edgeCount) {
 ///
 ///  Allocate memory for input CUDA buffers and copy the data into device memory
 ///
-void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, int nGraphs, GraphData *graph, float* weightArray, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, size_t globalWorkSize)
+void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, int nGraphs, GraphData *graph, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, size_t globalWorkSize)
 {
     cl_int errNum;
     cl_mem hostVertexArrayBuffer;
@@ -118,10 +130,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
         traversedEdgeArray[iEdge]=0;
     }
     
-    int sourceArray[] = {2, 8, 14};
-    
     printf("graph->vertexArray[1]=%i\n", graph->vertexArray[1]);
-    printf("sourceArray[1]=%i\n", sourceArray[1]);
     printf("nGraphs=%i\n", nGraphs);
     
     
@@ -135,7 +144,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(float) * nGraphs* graph->edgeCount, weightArray, &errNum);
+                                           sizeof(float) * nGraphs* graph->edgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     hostTraversedEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -143,7 +152,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(int) * nGraphs, sourceArray, &errNum);
+                                           sizeof(int) * nGraphs, graph->sourceArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -452,11 +461,17 @@ int main(int argc, char** argv)
     
     
     GraphData graph;
-    generateRandomGraph(&graph, 6, 2, 3);
+    generateRandomGraph(&graph, 6, 2, 5);
+    
+    printf("Nodes ");
+    for (int i = 0; i < graph.graphCount; i++) {
+        printf("%i, ", graph.sourceArray[i]);
+    }
+    printf("are sources.\n");
     
     //    printGraph(graph);
     
-    float *weightArray = generateWeightArray(nGraphs * graph.edgeCount);
+    //float *weightArray = generateWeightArray(nGraphs * graph.edgeCount);
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
     initializeComputing(&device_id, &context, &commandQueue, &program);
@@ -465,7 +480,7 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, nGraphs, &graph, weightArray, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
+    allocateOCLBuffers(context, commandQueue, nGraphs, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
     
     
     
@@ -546,7 +561,7 @@ int main(int argc, char** argv)
     clWaitForEvents(1, &readDone);
     
     for (int i = 0; i < nGraphs*graph.edgeCount; i++) {
-        printf("weightArray[%i] = %f\n", i, weightArray[i]);
+        printf("weightArray[%i] = %f\n", i, graph.weightArray[i]);
     }
     
     printf("Initiating loop.\n");
@@ -581,7 +596,7 @@ int main(int argc, char** argv)
                 {
                     int nid = iGraph*graph.vertexCount + graph.edgeArray[edge];
                     int eid = iGraph*graph.edgeCount + edge;
-                    printf("Node %i (of cost %f) updated node %i (of cost %f) by edge %i with weight %f\n", i, costArrayHost[i], nid, costArrayHost[nid], edge, weightArray[eid]);
+                    printf("Node %i (of cost %f) updated node %i (of cost %f) by edge %i with weight %f\n", i, costArrayHost[i], nid, costArrayHost[nid], edge, graph.weightArray[eid]);
                 }
             }
         }
