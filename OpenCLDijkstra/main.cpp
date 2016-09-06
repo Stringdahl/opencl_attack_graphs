@@ -114,7 +114,7 @@ float* generateWeightArray(int edgeCount) {
 ///
 ///  Allocate memory for input CUDA buffers and copy the data into device memory
 ///
-void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, int nGraphs, GraphData *graph, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, size_t globalWorkSize)
+void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, size_t globalWorkSize)
 {
     cl_int errNum;
     cl_mem hostVertexArrayBuffer;
@@ -131,7 +131,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     }
     
     printf("graph->vertexArray[1]=%i\n", graph->vertexArray[1]);
-    printf("nGraphs=%i\n", nGraphs);
+    printf("nGraphs=%i\n", graph->graphCount);
     
     
     // First, need to create OpenCL Host buffers that can be copied to device buffers
@@ -144,7 +144,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(float) * nGraphs* graph->edgeCount, graph->weightArray, &errNum);
+                                           sizeof(float) * graph->graphCount * graph->edgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     hostTraversedEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -152,7 +152,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(int) * nGraphs, graph->sourceArray, &errNum);
+                                           sizeof(int) * graph->graphCount, graph->sourceArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -160,7 +160,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     *edgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * nGraphs* graph->edgeCount, NULL, &errNum);
+    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * graph->graphCount* graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *maskArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * globalWorkSize, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -170,7 +170,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * nGraphs, NULL, &errNum);
+    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->graphCount, NULL, &errNum);
     if (errNum != CL_SUCCESS)
     {
         printf("Error: Failed to create source array buffer!\n");
@@ -190,7 +190,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostWeightArrayBuffer, *weightArrayDevice, 0, 0,
-                                 sizeof(float) * nGraphs* graph->edgeCount, 0, NULL, NULL);
+                                 sizeof(float) * graph->graphCount* graph->edgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
@@ -198,7 +198,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, in
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostSourceArrayBuffer, *sourceArrayDevice, 0, 0,
-                                 sizeof(int) * nGraphs, 0, NULL, NULL);
+                                 sizeof(int) * graph->graphCount, 0, NULL, NULL);
     if (errNum != CL_SUCCESS)
     {
         printf("Error: Failed to enqueue source array buffer!\n");
@@ -431,9 +431,6 @@ int main(int argc, char** argv)
 {
     int errNum;                            // error code returned from api calls
     
-    int nGraphs = 3;
-    int nSources = 3;
-    
     
     unsigned int correct;               // number of correct results returned
     
@@ -480,7 +477,7 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, nGraphs, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
+    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
     
     
     
@@ -491,7 +488,7 @@ int main(int argc, char** argv)
     errNum |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
     errNum |= clSetKernelArg(initializeKernel, 3, sizeof(int), &graph.vertexCount);
-    errNum |= clSetKernelArg(initializeKernel, 4, sizeof(int), &nSources);
+    errNum |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.graphCount);
     errNum |= clSetKernelArg(initializeKernel, 5, sizeof(cl_mem), &sourceArrayDevice);
     if (errNum != CL_SUCCESS)
     {
@@ -544,34 +541,34 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     
-    int *maskArrayHost = (int*) malloc(sizeof(int) * nGraphs * graph.vertexCount);
-    float *costArrayHost = (float*) malloc(sizeof(float) * nGraphs * graph.vertexCount);
-    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * nGraphs * graph.vertexCount);
-    float *weightArrayHost = (float*) malloc(sizeof(float) * nGraphs * graph.edgeCount);
+    int *maskArrayHost = (int*) malloc(sizeof(int) * graph.graphCount * graph.vertexCount);
+    float *costArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.vertexCount);
+    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.vertexCount);
+    float *weightArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.edgeCount);
     
     cl_event readDone;
-    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * nGraphs * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.graphCount * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
-    for (int i = 0; i < nGraphs*graph.edgeCount; i++) {
+    for (int i = 0; i < graph.graphCount*graph.edgeCount; i++) {
         printf("weightArray[%i] = %f\n", i, graph.weightArray[i]);
     }
     
     printf("Initiating loop.\n");
-    while(!maskArrayEmpty(maskArrayHost, nGraphs* graph.vertexCount))
+    while(!maskArrayEmpty(maskArrayHost, graph.graphCount* graph.vertexCount))
     {
-        for (int i = 0; i < nGraphs * graph.vertexCount; i++) {
+        for (int i = 0; i < graph.graphCount * graph.vertexCount; i++) {
             printf("%i", maskArrayHost[i]);
         }
         printf("\n");
-        for (int i = 0; i < nGraphs * graph.vertexCount; i++) {
+        for (int i = 0; i < graph.graphCount * graph.vertexCount; i++) {
             if ( maskArrayHost[i] != 0 )
             {
                // printf("The cost of vertex %i is %f\n", i, costArrayHost[i]);
@@ -616,13 +613,13 @@ int main(int argc, char** argv)
                                         0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         //}
-        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * nGraphs * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.graphCount * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * nGraphs * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
     }
@@ -643,7 +640,7 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(int i = 0; i < nGraphs*graph.vertexCount; i++)
+    for(int i = 0; i < graph.graphCount*graph.vertexCount; i++)
     {
         printf("Cost of node %i is %f\n", i, results[i]);
     }
