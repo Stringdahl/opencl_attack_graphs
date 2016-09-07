@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 #include <OpenCL/opencl.h>
 #include <pthread.h>
+#include "graph.hpp"
+#include "utility.hpp"
+
 
 ///
 //  Macros
@@ -34,72 +37,10 @@ using namespace std;
 //
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
-///
-//  Types
-//
-//
-//  This data structure and algorithm implementation is based on
-//  Accelerating large graph algorithms on the GPU using CUDA by
-//  Parwan Harish and P.J. Narayanan
-//
-typedef struct
-{
-    // (V) This contains a pointer to the edge list for each vertex
-    int *vertexArray;
-    
-    // Vertex count
-    int vertexCount;
-    
-    // (V) This contains a pointer to the source array
-    int *sourceArray;
-    
-    // Graph count
-    int graphCount;
-    
-    // (E) This contains pointers to the vertices that each edge is attached to
-    int *edgeArray;
-    
-    // Edge count
-    int edgeCount;
-    
-    // (W) Weight array
-    float *weightArray;
-    
-} GraphData;
 
 
-///
-//  Generate a random graph
-//
-void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs)
-{
-    graph->vertexCount = numVertices;
-    graph->graphCount = numGraphs;
-    graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
-    graph->edgeCount = numVertices * neighborsPerVertex;
-    graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
-    
-    for(int i = 0; i < graph->vertexCount; i++)
-    {
-        graph->vertexArray[i] = i * neighborsPerVertex;
-    }
-    
-    for(int i = 0; i < graph->edgeCount; i++)
-    {
-        graph->edgeArray[i] = (rand() % graph->vertexCount);
-    }
-    for(int i = 0; i < numGraphs * graph->edgeCount; i++)
-    {
-        graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
-    }
-    for(int i = 0; i < numGraphs; i++)
-    {
-        graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
-    }
-    
-}
+
+
 
 float* generateWeightArray(int edgeCount) {
     float* weightArray = (float*) malloc(edgeCount * sizeof(float));
@@ -395,27 +336,9 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
         printf("Error: Failed to create ssspKernel2 initializeBuffers!\n");
         exit(1);
     }
-    
-    
     return errNum;
 }
 
-
-void printGraph(GraphData graph) {
-    int nChildren;
-    for (int iNode=0; iNode<graph.vertexCount; iNode++) {
-        if (iNode<graph.vertexCount-1) {
-            nChildren = graph.vertexArray[iNode+1]-graph.vertexArray[iNode];
-        }
-        else {
-            nChildren = graph.edgeCount-graph.vertexArray[iNode];
-        }
-        printf("Vertex %i has %i children\n", iNode, nChildren);
-        for (int iChild=0; iChild<nChildren; iChild++) {
-            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph.edgeArray[graph.vertexArray[iNode]+iChild], graph.weightArray[graph.vertexArray[iNode]+iChild]);
-        }
-    }
-}
 
 int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice) {
     
@@ -453,6 +376,22 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
         printf("Error: Failed to set kernel arguments! %d\n", errNum);
     }
     return errNum;
+}
+
+void printGraph(GraphData graph) {
+    int nChildren;
+    for (int iNode=0; iNode<graph.vertexCount; iNode++) {
+        if (iNode<graph.vertexCount-1) {
+            nChildren = graph.vertexArray[iNode+1]-graph.vertexArray[iNode];
+        }
+        else {
+            nChildren = graph.edgeCount-graph.vertexArray[iNode];
+        }
+        printf("Vertex %i has %i children\n", iNode, nChildren);
+        for (int iChild=0; iChild<nChildren; iChild++) {
+            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph.edgeArray[graph.vertexArray[iNode]+iChild], graph.weightArray[graph.vertexArray[iNode]+iChild]);
+        }
+    }
 }
 
 void printWeights(GraphData *graph) {

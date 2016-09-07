@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		166C35ED1D805E8D002AAAFC /* utility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 166C35EB1D805E8D002AAAFC /* utility.cpp */; };
+		166C35F01D805EF6002AAAFC /* graph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 166C35EE1D805EF6002AAAFC /* graph.cpp */; };
 		16ACE9951D729A1D00D2EA65 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 16ACE9941D729A1D00D2EA65 /* main.cpp */; };
 		16ACE99C1D729A6F00D2EA65 /* kernel.cl in Sources */ = {isa = PBXBuildFile; fileRef = 16ACE99B1D729A6F00D2EA65 /* kernel.cl */; };
 /* End PBXBuildFile section */
@@ -24,6 +26,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		166C35EB1D805E8D002AAAFC /* utility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utility.cpp; sourceTree = "<group>"; };
+		166C35EC1D805E8D002AAAFC /* utility.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utility.hpp; sourceTree = "<group>"; };
+		166C35EE1D805EF6002AAAFC /* graph.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = graph.cpp; sourceTree = "<group>"; };
+		166C35EF1D805EF6002AAAFC /* graph.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = graph.hpp; sourceTree = "<group>"; };
 		16ACE9911D729A1D00D2EA65 /* OpenCLDijkstra */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OpenCLDijkstra; sourceTree = BUILT_PRODUCTS_DIR; };
 		16ACE9941D729A1D00D2EA65 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		16ACE99B1D729A6F00D2EA65 /* kernel.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = kernel.cl; sourceTree = "<group>"; };
@@ -61,6 +67,10 @@
 			children = (
 				16ACE9941D729A1D00D2EA65 /* main.cpp */,
 				16ACE99B1D729A6F00D2EA65 /* kernel.cl */,
+				166C35EB1D805E8D002AAAFC /* utility.cpp */,
+				166C35EC1D805E8D002AAAFC /* utility.hpp */,
+				166C35EE1D805EF6002AAAFC /* graph.cpp */,
+				166C35EF1D805EF6002AAAFC /* graph.hpp */,
 			);
 			path = OpenCLDijkstra;
 			sourceTree = "<group>";
@@ -121,6 +131,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				166C35F01D805EF6002AAAFC /* graph.cpp in Sources */,
+				166C35ED1D805E8D002AAAFC /* utility.cpp in Sources */,
 				16ACE9951D729A1D00D2EA65 /* main.cpp in Sources */,
 				16ACE99C1D729A6F00D2EA65 /* kernel.cl in Sources */,
 			);
@@ -243,6 +255,7 @@
 				16ACE99A1D729A1D00D2EA65 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
