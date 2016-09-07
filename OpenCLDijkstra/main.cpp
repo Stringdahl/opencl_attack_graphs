@@ -477,19 +477,27 @@ void printMaskArray(int *maskArrayHost, int totalVertexCount) {
     printf("\n");
 }
 
+void printCost(float *costArrayHost, int totalVertexCount) {
+    for(int i = 0; i < totalVertexCount; i++)
+    {
+        printf("Cost of node %i is %f\n", i, costArrayHost[i]);
+    }
+}
+
+
 void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice) {
     
     int errNum = 0;
     cl_event readDone;
-
+    
     int totalVertexCount = graph->graphCount * graph->vertexCount;
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
-
+    
     float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-
+    
     errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     
@@ -544,9 +552,6 @@ int main(int argc, char** argv)
     int errNum;                            // error code returned from api calls
     GraphData graph;
     
-    
-    unsigned int correct;               // number of correct results returned
-    
     size_t global;                      // global domain size for our calculation
     size_t local;                       // local domain size for our calculation
     
@@ -557,6 +562,7 @@ int main(int argc, char** argv)
     cl_kernel initializeKernel;                   // compute kernel
     cl_kernel ssspKernel1;
     cl_kernel ssspKernel2;
+    cl_event readDone;
     
     cl_mem vertexArrayDevice;                       // device memory used for the input array
     cl_mem edgeArrayDevice;                       // device memory used for the input array
@@ -567,12 +573,11 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    // Allocate memory for arrays
-    
-    
     generateRandomGraph(&graph, 6, 2, 5);
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
+    int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     
     // printSources(&graph);
     // printGraph(graph);
@@ -601,18 +606,16 @@ int main(int argc, char** argv)
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
-    int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-    cl_event readDone;
     errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
+    
     clWaitForEvents(1, &readDone);
     
     printf("Initiating loop.\n");
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
-
-        printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice);
+        // printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice);
         
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
@@ -621,39 +624,26 @@ int main(int argc, char** argv)
         
         //for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
         //{
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local,
-                                        0, NULL, NULL);
+        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
-        
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, &local,
-                                        0, NULL, NULL);
+        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, &local, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         //}
+        
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
     }
     // Wait for the command commands to get serviced before reading back results
-    //
+    
     clFinish(commandQueue);
     
     // Read back the results from the device to verify the output
-    //
-    float results[DATA_SIZE];           // results returned from device
-    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, results, 0, NULL, NULL );
-    if (errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to read output array! %d\n", errNum);
-        exit(1);
-    }
     
-    // Validate our results
-    //
-    correct = 0;
-    for(int i = 0; i < totalVertexCount; i++)
-    {
-        printf("Cost of node %i is %f\n", i, results[i]);
-    }
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, costArrayHost, 0, NULL, NULL );
+    checkError(errNum, CL_SUCCESS);
+    
+    printCost(costArrayHost, totalVertexCount);
     
     // Shutdown and cleanup
     //
