@@ -21,10 +21,11 @@
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 
 
-void printCost(float *costArrayHost, int totalVertexCount) {
-    for(int i = 0; i < totalVertexCount; i++)
+void printCostOfRandomVertices(float *costArrayHost, int verticesToPrint, int totalVerticeCount) {
+    for(int i = 0; i < verticesToPrint; i++)
     {
-        printf("Cost of node %i is %f\n", i, costArrayHost[i]);
+        int iVertice = rand() % totalVerticeCount;
+        printf("Cost of node %i is %f\n", iVertice, costArrayHost[iVertice]);
     }
 }
 

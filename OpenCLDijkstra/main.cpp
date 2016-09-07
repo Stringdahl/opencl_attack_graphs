@@ -378,7 +378,11 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    generateRandomGraph(&graph, 250000, 2, 250);
+    int nVertices = 25000;
+    int nEdgePerVertice = 2;
+    int nGraphs = 250;
+    
+    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs);
 
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
@@ -448,7 +452,7 @@ int main(int argc, char** argv)
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     
-    printCost(costArrayHost, 3);
+    printCostOfRandomVertices(costArrayHost, 30, totalVertexCount);
     
     // Shutdown and cleanup
     //
