@@ -10,6 +10,8 @@
 #define graph_hpp
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 
 ///
 //  Types

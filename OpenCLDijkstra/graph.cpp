@@ -7,7 +7,27 @@
 //
 
 #include "graph.hpp"
-#include <stdlib.h>
+
+///
+//  Namespaces
+//
+using namespace std;
+
+
+
+///
+/// Check for error condition and exit if found.  Print file and line number
+/// of error. (from NVIDIA SDK)
+///
+void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber)
+{
+    if (errNum != expected)
+    {
+        cerr << "Line " << lineNumber << " in File " << file << endl;
+        exit(1);
+    }
+}
+
 
 ///
 //  Generate a random graph

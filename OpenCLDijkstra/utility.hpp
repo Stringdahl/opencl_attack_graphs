@@ -8,7 +8,18 @@
 
 #ifndef utility_hpp
 #define utility_hpp
+#include <OpenCL/opencl.h>
 
 #include <stdio.h>
+#include "graph.hpp"
+
+void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
+
+void printCost(float *costArrayHost, int totalVertexCount);
+void printWeights(GraphData *graph);
+void printGraph(GraphData graph);
+void printSources(GraphData *graph);
+void printMaskArray(int *maskArrayHost, int totalVertexCount);
+void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice);
 
 #endif /* utility_hpp */
