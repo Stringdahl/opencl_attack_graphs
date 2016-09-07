@@ -60,9 +60,6 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
         traversedEdgeArray[iEdge]=0;
     }
     
-    printf("graph->vertexArray[1]=%i\n", graph->vertexArray[1]);
-    printf("nGraphs=%i\n", graph->graphCount);
-    
     
     // First, need to create OpenCL Host buffers that can be copied to device buffers
     hostVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -223,7 +220,6 @@ bool maskArrayEmpty(int *maskArray, int count)
     {
         if (maskArray[i] == 1)
         {
-            printf("Vertex %i is still masked\n", i);
             return false;
         }
     }
@@ -391,7 +387,7 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    generateRandomGraph(&graph, 6, 2, 5);
+    generateRandomGraph(&graph, 200, 2, 5);
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
@@ -461,7 +457,7 @@ int main(int argc, char** argv)
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, costArrayHost, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     
-    printCost(costArrayHost, totalVertexCount);
+    printCost(costArrayHost, 3);
     
     // Shutdown and cleanup
     //
