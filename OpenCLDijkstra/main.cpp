@@ -11,8 +11,10 @@
 #include <sys/stat.h>
 #include <OpenCL/opencl.h>
 #include <pthread.h>
+#include<time.h>
 #include "graph.hpp"
 #include "utility.hpp"
+
 
 
 ///
@@ -411,8 +413,6 @@ int main(int argc, char** argv)
     // Setting the kernel arguments
     errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice);
     
-    
-    
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
@@ -427,7 +427,8 @@ int main(int argc, char** argv)
     
     clWaitForEvents(1, &readDone);
     
-    printf("Initiating loop.\n");
+    clock_t startTime = clock();
+
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
@@ -451,9 +452,10 @@ int main(int argc, char** argv)
         clWaitForEvents(1, &readDone);
     }
     // Wait for the command commands to get serviced before reading back results
-    
     clFinish(commandQueue);
-    
+    float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
+    printf("Completed calculations in %f milliseconds.\n", diff);
+
     // Read back the results from the device to verify the output
     
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, costArrayHost, 0, NULL, NULL );
