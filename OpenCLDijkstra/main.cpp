@@ -417,6 +417,44 @@ void printGraph(GraphData graph) {
     }
 }
 
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice) {
+    
+    
+    // Set the arguments to initializeKernel
+    //
+    int errNum = 0;
+    errNum |= clSetKernelArg(*initializeKernel, 0, sizeof(cl_mem), maskArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 1, sizeof(cl_mem), costArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 2, sizeof(cl_mem), updatingCostArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 3, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(int), &graphCount);
+    errNum |= clSetKernelArg(*initializeKernel, 5, sizeof(cl_mem), sourceArrayDevice);
+    
+    // Set the arguments to ssspKernel1
+    errNum |= clSetKernelArg(*ssspKernel1, 0, sizeof(cl_mem), vertexArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 1, sizeof(cl_mem), edgeArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 2, sizeof(cl_mem), weightArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 3, sizeof(cl_mem), maskArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 4, sizeof(cl_mem), costArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 5, sizeof(cl_mem), updatingCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(int), &edgeCount);
+    
+    // Set the arguments to ssspKernel2
+    errNum |= clSetKernelArg(*ssspKernel2, 0, sizeof(cl_mem), vertexArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 1, sizeof(cl_mem), edgeArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 2, sizeof(cl_mem), weightArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 3, sizeof(cl_mem), maskArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 4, sizeof(cl_mem), costArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 5, sizeof(cl_mem), updatingCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 6, sizeof(int), &vertexCount);
+    if (errNum != CL_SUCCESS)
+    {
+        printf("Error: Failed to set kernel arguments! %d\n", errNum);
+    }
+    return errNum;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -479,53 +517,8 @@ int main(int argc, char** argv)
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
     
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice);
     
-    
-    // Set the arguments to initializeKernel
-    //
-    errNum = 0;
-    errNum |= clSetKernelArg(initializeKernel, 0, sizeof(cl_mem), &maskArrayDevice);
-    errNum |= clSetKernelArg(initializeKernel, 1, sizeof(cl_mem), &costArrayDevice);
-    errNum |= clSetKernelArg(initializeKernel, 2, sizeof(cl_mem), &updatingCostArrayDevice);
-    errNum |= clSetKernelArg(initializeKernel, 3, sizeof(int), &graph.vertexCount);
-    errNum |= clSetKernelArg(initializeKernel, 4, sizeof(int), &graph.graphCount);
-    errNum |= clSetKernelArg(initializeKernel, 5, sizeof(cl_mem), &sourceArrayDevice);
-    if (errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to set initializeKernel arguments! %d\n", errNum);
-        exit(1);
-    }
-    
-    // Set the arguments to ssspKernel1
-    errNum = 0;
-    errNum |= clSetKernelArg(ssspKernel1, 0, sizeof(cl_mem), &vertexArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 1, sizeof(cl_mem), &edgeArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 2, sizeof(cl_mem), &weightArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 3, sizeof(cl_mem), &maskArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 4, sizeof(cl_mem), &costArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 5, sizeof(cl_mem), &updatingCostArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel1, 6, sizeof(int), &graph.vertexCount);
-    errNum |= clSetKernelArg(ssspKernel1, 7, sizeof(int), &graph.edgeCount);
-    if (errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to set ssspKernel1 arguments! %d\n", errNum);
-        exit(1);
-    }
-    
-    // Set the arguments to ssspKernel2
-    errNum = 0;
-    errNum |= clSetKernelArg(ssspKernel2, 0, sizeof(cl_mem), &vertexArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 1, sizeof(cl_mem), &edgeArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 2, sizeof(cl_mem), &weightArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 3, sizeof(cl_mem), &maskArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 4, sizeof(cl_mem), &costArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 5, sizeof(cl_mem), &updatingCostArrayDevice);
-    errNum |= clSetKernelArg(ssspKernel2, 6, sizeof(int), &graph.vertexCount);
-    if (errNum != CL_SUCCESS)
-    {
-        printf("Error: Failed to set ssspKernel2 arguments! %d\n", errNum);
-        exit(1);
-    }
     
     
     // Execute the kernel over the entire range of our 1d input data set
