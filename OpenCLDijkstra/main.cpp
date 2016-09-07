@@ -352,14 +352,6 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-
-// Use a static data size for simplicity
-//
-#define DATA_SIZE (1024)
-
-////////////////////////////////////////////////////////////////////////////////
-
 
 int main(int argc, char** argv)
 {
@@ -367,7 +359,6 @@ int main(int argc, char** argv)
     GraphData graph;
     
     size_t global;                      // global domain size for our calculation
-    size_t local;                       // local domain size for our calculation
     
     cl_device_id device_id;             // compute device id
     cl_context context;                 // compute context
@@ -387,11 +378,12 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    generateRandomGraph(&graph, 200, 2, 5);
+    generateRandomGraph(&graph, 250000, 2, 250);
+
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-    float *costArrayHost = (float*) malloc(sizeof(float) * DATA_SIZE);
+    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     
     // printSources(&graph);
     // printGraph(graph);
@@ -404,7 +396,7 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
+    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, totalVertexCount);
     
     // Setting the kernel arguments
     errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice);
@@ -412,10 +404,9 @@ int main(int argc, char** argv)
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
-    global = DATA_SIZE;
-    local = 256;
+    global = totalVertexCount;
     
-    errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
+    errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
@@ -437,9 +428,9 @@ int main(int argc, char** argv)
         
         //for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
         //{
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, &local, 0, NULL, NULL);
+        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, &local, 0, NULL, NULL);
+        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         //}
         
@@ -454,7 +445,7 @@ int main(int argc, char** argv)
 
     // Read back the results from the device to verify the output
     
-    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * DATA_SIZE, costArrayHost, 0, NULL, NULL );
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     
     printCost(costArrayHost, 3);
