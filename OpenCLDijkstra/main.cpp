@@ -467,8 +467,16 @@ void printSources(GraphData *graph) {
         printf("%i, ", graph->sourceArray[i]);
     }
     printf("are sources.\n");
-
+    
 }
+
+void printMaskArray(int *maskArrayHost, int totalVertexCount) {
+    for (int i = 0; i < totalVertexCount; i++) {
+        printf("%i", maskArrayHost[i]);
+    }
+    printf("\n");
+}
+
 
 
 
@@ -484,6 +492,7 @@ void printSources(GraphData *graph) {
 int main(int argc, char** argv)
 {
     int errNum;                            // error code returned from api calls
+    GraphData graph;
     
     
     unsigned int correct;               // number of correct results returned
@@ -511,17 +520,14 @@ int main(int argc, char** argv)
     // Allocate memory for arrays
     
     
-    GraphData graph;
     generateRandomGraph(&graph, 6, 2, 5);
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
     int totalEdgeCount = graph.graphCount * graph.edgeCount;
     
-    printSources(&graph);
-    
-    //    printGraph(graph);
-    
-    //float *weightArray = generateWeightArray(nGraphs * graph.edgeCount);
+    // printSources(&graph);
+    // printGraph(graph);
+    // printWeights(&graph);
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
     initializeComputing(&device_id, &context, &commandQueue, &program);
@@ -542,22 +548,20 @@ int main(int argc, char** argv)
     //
     global = DATA_SIZE;
     local = 256;
-    printf("\nglobal = %zu, local = %zu\n", global, local);
+    
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, &local, 0, NULL, NULL);
-    if (errNum)
-    {
-        printf("Error: Failed to execute kernel!\n");
-        return EXIT_FAILURE;
-    }
+    checkError(errNum, CL_SUCCESS);
     
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    cl_event readDone;
+    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    
+    
     float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
     
-    cl_event readDone;
-    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
-    checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
@@ -566,17 +570,10 @@ int main(int argc, char** argv)
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
-    printWeights(&graph);
-    
     printf("Initiating loop.\n");
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
-        // printMaskArray(&maskArrayHost, totalVertexCount)
-        for (int i = 0; i < totalVertexCount; i++) {
-            printf("%i", maskArrayHost[i]);
-        }
-        printf("\n");
-        
+        // printMaskArray(maskArrayHost, totalVertexCount);
         
         for (int i = 0; i < totalVertexCount; i++) {
             if ( maskArrayHost[i] != 0 )
