@@ -393,7 +393,7 @@ int main(int argc, char** argv)
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *costArrayHost = (float*) malloc(sizeof(float) * DATA_SIZE);
     
     // printSources(&graph);
     // printGraph(graph);
