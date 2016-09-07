@@ -455,6 +455,13 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     return errNum;
 }
 
+void printWeights(GraphData *graph) {
+    for (int i = 0; i < graph->graphCount*graph->edgeCount; i++) {
+        printf("weightArray[%i] = %f\n", i, graph->weightArray[i]);
+    }
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -498,6 +505,9 @@ int main(int argc, char** argv)
     GraphData graph;
     generateRandomGraph(&graph, 6, 2, 5);
     
+    int totalVertexCount = graph.graphCount * graph.vertexCount;
+    int totalEdgeCount = graph.graphCount * graph.edgeCount;
+    
     printf("Nodes ");
     for (int i = 0; i < graph.graphCount; i++) {
         printf("%i, ", graph.sourceArray[i]);
@@ -517,6 +527,7 @@ int main(int argc, char** argv)
     // Allocate buffers in Device memory
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, DATA_SIZE);
     
+    // Setting the kernel arguments
     errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice);
     
     
@@ -534,43 +545,44 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     
-    int *maskArrayHost = (int*) malloc(sizeof(int) * graph.graphCount * graph.vertexCount);
-    float *costArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.vertexCount);
-    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.vertexCount);
-    float *weightArrayHost = (float*) malloc(sizeof(float) * graph.graphCount * graph.edgeCount);
+    int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
     
     cl_event readDone;
-    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.graphCount * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
-    for (int i = 0; i < graph.graphCount*graph.edgeCount; i++) {
-        printf("weightArray[%i] = %f\n", i, graph.weightArray[i]);
-    }
+    printWeights(&graph);
     
     printf("Initiating loop.\n");
-    while(!maskArrayEmpty(maskArrayHost, graph.graphCount* graph.vertexCount))
+    while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
-        for (int i = 0; i < graph.graphCount * graph.vertexCount; i++) {
+        // printMaskArray(&maskArrayHost, totalVertexCount)
+        for (int i = 0; i < totalVertexCount; i++) {
             printf("%i", maskArrayHost[i]);
         }
         printf("\n");
-        for (int i = 0; i < graph.graphCount * graph.vertexCount; i++) {
+        
+        
+        for (int i = 0; i < totalVertexCount; i++) {
             if ( maskArrayHost[i] != 0 )
             {
-               // printf("The cost of vertex %i is %f\n", i, costArrayHost[i]);
-               // printf("The updating cost of vertex %i is %f \n", i, updatingCostArrayHost[i]);
+                // printf("The cost of vertex %i is %f\n", i, costArrayHost[i]);
+                // printf("The updating cost of vertex %i is %f \n", i, updatingCostArrayHost[i]);
                 
                 
                 int iGraph = i / graph.vertexCount;
                 int localTid = i % graph.vertexCount;
-                                
+                
                 int edgeStart = graph.vertexArray[localTid];
                 int edgeEnd;
                 if (localTid + 1 < (graph.vertexCount))
@@ -606,13 +618,13 @@ int main(int argc, char** argv)
                                         0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         //}
-        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph.graphCount * graph.vertexCount, maskArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, costArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.vertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
-        errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * graph.graphCount * graph.edgeCount, weightArrayHost, 0, NULL, &readDone);
+        errNum = clEnqueueReadBuffer(commandQueue, weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
     }
@@ -633,7 +645,7 @@ int main(int argc, char** argv)
     // Validate our results
     //
     correct = 0;
-    for(int i = 0; i < graph.graphCount*graph.vertexCount; i++)
+    for(int i = 0; i < totalVertexCount; i++)
     {
         printf("Cost of node %i is %f\n", i, results[i]);
     }
