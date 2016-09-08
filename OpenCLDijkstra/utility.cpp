@@ -178,3 +178,20 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     sprintf(str + strlen(str) - 2, "}, VertexSize -> Large, EdgeShapeFunction -> GraphElementData[{\"CarvedArrow\", \"ArrowSize\" -> .02}]]\n");
     printf("%s", str);
 }
+
+void printTraversedEdges(cl_command_queue *commandQueue, GraphData *graph, cl_mem *traversedEdgeCountArrayDevice) {
+    int *traversedEdgeCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->edgeCount);
+    cl_event readDone;
+    
+    int errNum = clEnqueueReadBuffer(*commandQueue, *traversedEdgeCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->edgeCount, traversedEdgeCountArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+    
+    for (int iGraph=0; iGraph < graph->graphCount; iGraph++) {
+        for (int iEdge=0; iEdge<graph->edgeCount; iEdge++) {
+            printf("%i",traversedEdgeCountArrayHost[iGraph * graph->edgeCount + iEdge]);
+        }
+        printf("\n");
+    }
+}
+

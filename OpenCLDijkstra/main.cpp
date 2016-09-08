@@ -75,7 +75,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     hostTraversedEdgeCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                  sizeof(int) * graph->graphCount * graph->edgeCount, traversedEdgeCountArray, &errNum);
+                                                       sizeof(int) * graph->graphCount * graph->edgeCount, traversedEdgeCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -335,6 +335,7 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel1, 5, sizeof(cl_mem), updatingCostArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(int), &vertexCount);
     errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(int), &edgeCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(cl_mem), traversedEdgeCountArrayDevice);
     
     // Set the arguments to ssspKernel2
     errNum |= clSetKernelArg(*ssspKernel2, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -383,10 +384,12 @@ int main(int argc, char** argv)
     int nGraphs = 25;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs);
-
+    
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
+    int totalEdgeCount = graph.graphCount * graph.edgeCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *traversedEdgeCountArrayHost = (int*) malloc(sizeof(int) * totalEdgeCount);
     
     // printSources(&graph);
     // printWeights(&graph);
@@ -417,7 +420,7 @@ int main(int argc, char** argv)
     clWaitForEvents(1, &readDone);
     
     clock_t startTime = clock();
-
+    
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
@@ -443,11 +446,13 @@ int main(int argc, char** argv)
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
     float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
-
+    
     // Read back the results from the device to verify the output
     
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph.costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
+    
+    //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     
     printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
     
@@ -456,8 +461,8 @@ int main(int argc, char** argv)
     printMathematicaString(&graph, 1);
     
     // printGraph(graph);
-
-     // Shutdown and cleanup
+    
+    // Shutdown and cleanup
     //
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
