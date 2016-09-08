@@ -420,7 +420,7 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =10;
+    int nVertices =5;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     
@@ -458,16 +458,13 @@ int main(int argc, char** argv)
     
     clWaitForEvents(1, &readDone);
     
-    printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
+    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
 
-    
     clock_t startTime = clock();
     
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
-
-        //printBeforeUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
 
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
@@ -483,6 +480,8 @@ int main(int argc, char** argv)
         //}
         
         printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+
+        printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
 
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
@@ -503,8 +502,8 @@ int main(int argc, char** argv)
     printMathematicaString(&graph, 1);
     //printGraph(&graph);
     //printParents(&graph);
-    //printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
-    printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
+    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
+    //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
 
