@@ -132,7 +132,7 @@ const char* costToString(float cost) {
 }
 
 void printMathematicaString(GraphData *graph, int iGraph) {
-    char str[80000];
+    char str[64*graph->edgeCount];
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {

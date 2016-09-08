@@ -378,7 +378,7 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    int nVertices = 25;
+    int nVertices = 2500;
     int nEdgePerVertice = 2;
     int nGraphs = 25;
     
