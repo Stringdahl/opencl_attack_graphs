@@ -90,7 +90,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostMaxVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                sizeof(int) * totalVertexCount, maxVertexArrayDevice, &errNum);
+                                                sizeof(int) * totalVertexCount, graph->maxVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -408,7 +408,7 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices = 9;
+    int nVertices =21;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     
