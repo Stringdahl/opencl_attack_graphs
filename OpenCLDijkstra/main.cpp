@@ -420,11 +420,12 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =5;
+    int nVertices =35;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
+    float probOfMax = 0.1;
     
-    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs);
+    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
     
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
@@ -458,8 +459,6 @@ int main(int argc, char** argv)
     
     clWaitForEvents(1, &readDone);
     
-    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
-
     clock_t startTime = clock();
     
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
@@ -481,7 +480,6 @@ int main(int argc, char** argv)
         
         printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
 
-        printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
 
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
@@ -502,7 +500,6 @@ int main(int argc, char** argv)
     printMathematicaString(&graph, 1);
     //printGraph(&graph);
     //printParents(&graph);
-    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
     //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);

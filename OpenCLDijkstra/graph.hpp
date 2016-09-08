@@ -56,6 +56,6 @@ typedef struct
 } GraphData;
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
-void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs);
+void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax);
 
 #endif /* graph_hpp */

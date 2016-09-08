@@ -32,7 +32,7 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
 ///
 //  Generate a random graph
 //
-void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs)
+void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax)
 {
     graph->vertexCount = numVertices;
     graph->graphCount = numGraphs;
@@ -48,7 +48,7 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     for(int i = 0; i < graph->vertexCount; i++)
     {
         graph->vertexArray[i] = i * neighborsPerVertex;
-        if (rand() % 100 < 34) {
+        if ((rand() % 100) < 100*probOfMax) {
             graph->maxVertexArray[i]=0;
         }
         else {
