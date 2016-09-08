@@ -48,6 +48,9 @@ typedef struct
     // Cost array
     float *costArray;
     
+    // Number of parents to each vertex
+    int *parentCountArray;
+    
     // Weight array
     float *weightArray;
     

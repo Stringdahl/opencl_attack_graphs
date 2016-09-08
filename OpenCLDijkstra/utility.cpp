@@ -29,19 +29,25 @@ void printCostOfRandomVertices(float *costArrayHost, int verticesToPrint, int to
     }
 }
 
-void printGraph(GraphData graph) {
+void printGraph(GraphData *graph) {
     int nChildren;
-    for (int iNode=0; iNode<graph.vertexCount; iNode++) {
-        if (iNode<graph.vertexCount-1) {
-            nChildren = graph.vertexArray[iNode+1]-graph.vertexArray[iNode];
+    for (int iNode=0; iNode<graph->vertexCount; iNode++) {
+        if (iNode<graph->vertexCount-1) {
+            nChildren = graph->vertexArray[iNode+1]-graph->vertexArray[iNode];
         }
         else {
-            nChildren = graph.edgeCount-graph.vertexArray[iNode];
+            nChildren = graph->edgeCount-graph->vertexArray[iNode];
         }
         printf("Vertex %i has %i children\n", iNode, nChildren);
         for (int iChild=0; iChild<nChildren; iChild++) {
-            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph.edgeArray[graph.vertexArray[iNode]+iChild], graph.weightArray[graph.vertexArray[iNode]+iChild]);
+            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph->edgeArray[graph->vertexArray[iNode]+iChild], graph->weightArray[graph->vertexArray[iNode]+iChild]);
         }
+    }
+}
+
+void printParents(GraphData *graph) {
+    for (int i = 0; i < graph->vertexCount; i++) {
+        printf("Vertex %i has %i parents.\n", i, graph->parentCountArray[i]);
     }
 }
 

@@ -451,14 +451,13 @@ int main(int argc, char** argv)
     checkError(errNum, CL_SUCCESS);
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
-    
-    printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
+    //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
+    //printMathematicaString(&graph, 1);
+    //printGraph(&graph);
+    //printParents(&graph);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
-    
-    printMathematicaString(&graph, 1);
-    
-    // printGraph(graph);
+
     
     // Shutdown and cleanup
     //

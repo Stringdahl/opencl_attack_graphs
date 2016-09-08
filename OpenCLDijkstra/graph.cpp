@@ -42,6 +42,7 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = numVertices * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
     
     for(int i = 0; i < graph->vertexCount; i++)
@@ -53,11 +54,15 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
         else {
             graph->maxVertexArray[i]=0;
         }
+        graph->parentCountArray[i] = 0;
     }
     
     for(int i = 0; i < graph->edgeCount; i++)
     {
-        graph->edgeArray[i] = (rand() % graph->vertexCount);
+        int targetVertex = (rand() % graph->vertexCount);
+        graph->edgeArray[i] = targetVertex;
+        graph->parentCountArray[targetVertex]++;
+        
     }
     for(int i = 0; i < numGraphs * graph->edgeCount; i++)
     {
@@ -67,5 +72,7 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     {
         graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
     }
+    
+    
     
 }
