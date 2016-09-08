@@ -27,6 +27,7 @@ typedef struct
     int *vertexArray;
     
     // maxVerticeArray[i] is 1 if vertex i is max, and 0 if min.
+    // It is int rather than bool because some GPUs don't accept bool, I read somewhere.
     int *maxVertexArray;
     
     // Vertex count

@@ -50,14 +50,14 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     cl_mem hostVertexArrayBuffer;
     cl_mem hostEdgeArrayBuffer;
     cl_mem hostWeightArrayBuffer;
-    cl_mem hostTraversedEdgeArrayBuffer;
+    cl_mem hostTraversedEdgeCountArrayBuffer;
     cl_mem hostSourceArrayBuffer;
     
     
     // Initially, no edges have been travelled
-    int *traversedEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    for (int iEdge=0; iEdge<graph->edgeCount; iEdge++) {
-        traversedEdgeArray[iEdge]=0;
+    int *traversedEdgeCountArray = (int*)malloc(graph->graphCount * graph->edgeCount * sizeof(int));
+    for (int iEdge=0; iEdge<graph->graphCount * graph->edgeCount; iEdge++) {
+        traversedEdgeCountArray[iEdge]=0;
     }
     
     
@@ -74,8 +74,8 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                            sizeof(float) * graph->graphCount * graph->edgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
-    hostTraversedEdgeArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                  sizeof(int) * graph->edgeCount, traversedEdgeArray, &errNum);
+    hostTraversedEdgeCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                                  sizeof(int) * graph->graphCount * graph->edgeCount, traversedEdgeCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -95,7 +95,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *updatingCostArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * globalWorkSize, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
+    *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->graphCount * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->graphCount, NULL, &errNum);
     if (errNum != CL_SUCCESS)
@@ -120,7 +120,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                  sizeof(float) * graph->graphCount* graph->edgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
-    errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
+    errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeCountArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
                                  sizeof(int) * graph->edgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
@@ -136,7 +136,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     clReleaseMemObject(hostVertexArrayBuffer);
     clReleaseMemObject(hostEdgeArrayBuffer);
     clReleaseMemObject(hostWeightArrayBuffer);
-    clReleaseMemObject(hostTraversedEdgeArrayBuffer);
+    clReleaseMemObject(hostTraversedEdgeCountArrayBuffer);
     clReleaseMemObject(hostSourceArrayBuffer);
 }
 
@@ -313,7 +313,7 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 }
 
 
-int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice) {
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *traversedEdgeCountArrayDevice) {
     
     
     // Set the arguments to initializeKernel
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
     cl_mem maskArrayDevice;                       // device memory used for the input array
     cl_mem costArrayDevice;                       // device memory used for the input array
     cl_mem updatingCostArrayDevice;                       // device memory used for the input array
-    cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
+    cl_mem traversedEdgeCountArrayDevice;            // How many times was this edge traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
     int nVertices = 25;
@@ -398,10 +398,10 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeArrayDevice, &sourceArrayDevice, totalVertexCount);
+    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, totalVertexCount);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &traversedEdgeCountArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
