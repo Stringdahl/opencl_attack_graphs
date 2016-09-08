@@ -420,7 +420,7 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =5;
+    int nVertices =10;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     

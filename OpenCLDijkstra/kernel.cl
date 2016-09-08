@@ -48,6 +48,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
                         }
                         if (parentCountArray[nid]==0) {
                             updatingCostArray[nid] = maxVertexArray[nid];
+                            costArray[nid] = maxVertexArray[nid];
                         }
                     }
                 }

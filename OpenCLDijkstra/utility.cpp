@@ -174,6 +174,7 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
     
     for (int tid = 0; tid < totalVertexCount; tid++) {
         if ( maskArrayHost[tid] != 0 ) {
+            printf("Vertex %i, (max: %.2f, %i remaining parents) is considered for updating.\n", tid, maxVertexArrayHost[tid], parentCountArrayHost[tid]);
             if (maxVertexArrayHost[tid]<0 || parentCountArrayHost[tid]==0) {
                 
                 int iGraph = tid / graph->vertexCount;
