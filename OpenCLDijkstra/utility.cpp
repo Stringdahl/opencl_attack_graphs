@@ -119,3 +119,26 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
         }
     }
 }
+
+void printMathematicaString(GraphData *graph, int iGraph) {
+    char str[80000];
+    
+    sprintf(str, "Graph[{");
+    for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        int edgeStart = graph->vertexArray[localSource];
+        int edgeEnd;
+        if (localSource + 1 < (graph->vertexCount)) {
+            edgeEnd = graph->vertexArray[localSource + 1];
+        }
+        else {
+            edgeEnd = graph->edgeCount;
+        }
+        
+        for(int edge = edgeStart; edge < edgeEnd; edge++) {
+            int localTarget = graph->edgeArray[edge];
+            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i, ", localSource, localTarget);
+        }
+    }
+    sprintf(str + strlen(str) - 2, "}]\n");
+    printf("%s", str);
+}

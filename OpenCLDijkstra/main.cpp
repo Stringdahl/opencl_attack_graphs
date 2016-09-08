@@ -378,16 +378,15 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    int nVertices = 25000;
+    int nVertices = 25;
     int nEdgePerVertice = 2;
-    int nGraphs = 250;
+    int nGraphs = 25;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs);
 
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     
     // printSources(&graph);
     // printGraph(graph);
@@ -445,14 +444,28 @@ int main(int argc, char** argv)
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
     float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
-    printf("Completed calculations in %f milliseconds.\n", diff);
 
     // Read back the results from the device to verify the output
     
-    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, NULL );
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph.costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     
-    printCostOfRandomVertices(costArrayHost, 30, totalVertexCount);
+    printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
+    
+    printf("Completed calculations in %f milliseconds.\n", diff);
+    
+    
+    printMathematicaString(&graph, 1);
+    
+    
+    // Produce graph string for Mathematica.
+    
+    
+    
+    
+    
+    
+    
     
     // Shutdown and cleanup
     //

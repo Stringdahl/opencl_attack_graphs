@@ -29,19 +29,22 @@ typedef struct
     // Vertex count
     int vertexCount;
     
-    // (V) This contains a pointer to the source array
+    // This contains a pointer to the source array
     int *sourceArray;
     
     // Graph count
     int graphCount;
     
-    // (E) This contains pointers to the vertices that each edge is attached to
+    // This contains pointers to the vertices that each edge is attached to
     int *edgeArray;
     
     // Edge count
     int edgeCount;
     
-    // (W) Weight array
+    // Cost array
+    float *costArray;
+    
+    // Weight array
     float *weightArray;
     
 } GraphData;
