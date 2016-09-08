@@ -10,50 +10,49 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
     int localTid = tid % vertexCount;
     
     if ( maskArray[tid] != 0 )
-    {
-        maskArray[tid] = 0;
-        
-        
-        int edgeStart = vertexArray[localTid];
-        int edgeEnd;
-        if (localTid + 1 < (vertexCount))
-        {
-            edgeEnd = vertexArray[localTid + 1];
-        }
-        else
-        {
-            edgeEnd = edgeCount;
-        }
-        
-        for(int edge = edgeStart; edge < edgeEnd; edge++)
-        {
-            
-            int nid = iGraph*vertexCount + edgeArray[edge];
-            int eid = iGraph*edgeCount + edge;
-            
-            if (traversedEdgeCountArray[eid] == 0) {
-                parentCountArray[nid]--;
-            }
-            traversedEdgeCountArray[eid] ++;
-            
-            
-            if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]) && maxVertexArray[tid]<0)
+        if (maxVertexArray[tid]<0 || parentCountArray[tid]==0) {
+            maskArray[tid] = 0;
             {
-                updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
-            }
-            
-            if (maxVertexArray[nid]>=0)
-            {
-                if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
-                    maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                int edgeStart = vertexArray[localTid];
+                int edgeEnd;
+                if (localTid + 1 < (vertexCount))
+                {
+                    edgeEnd = vertexArray[localTid + 1];
                 }
-                if (parentCountArray[nid]==0) {
-                    updatingCostArray[nid] = maxVertexArray[nid];
+                else
+                {
+                    edgeEnd = edgeCount;
+                }
+                
+                for(int edge = edgeStart; edge < edgeEnd; edge++)
+                {
+                    
+                    int nid = iGraph*vertexCount + edgeArray[edge];
+                    int eid = iGraph*edgeCount + edge;
+                    
+                    if (traversedEdgeCountArray[eid] == 0) {
+                        parentCountArray[nid]--;
+                    }
+                    traversedEdgeCountArray[eid] ++;
+                    
+                    
+                    if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]) && maxVertexArray[tid]<0)
+                    {
+                        updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
+                    }
+                    
+                    if (maxVertexArray[nid]>=0)
+                    {
+                        if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
+                            maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                        }
+                        if (parentCountArray[nid]==0) {
+                            updatingCostArray[nid] = maxVertexArray[nid];
+                        }
+                    }
                 }
             }
         }
-        
-    }
 }
 
 ///

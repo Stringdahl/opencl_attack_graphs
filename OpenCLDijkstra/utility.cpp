@@ -85,10 +85,10 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
-    float *maxVerticeArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *parentCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
-
+    
     
     errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -97,7 +97,7 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVerticeArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -106,28 +106,29 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     clWaitForEvents(1, &readDone);
     
     for (int i = 0; i < totalVertexCount; i++) {
-        if ( maskArrayHost[i] != 0 )
-        {
-            
-            int iGraph = i / graph->vertexCount;
-            int localTid = i % graph->vertexCount;
-            
-            int edgeStart = graph->vertexArray[localTid];
-            int edgeEnd;
-            if (localTid + 1 < (graph->vertexCount))
-            {
-                edgeEnd = graph->vertexArray[localTid + 1];
-            }
-            else
-            {
-                edgeEnd = graph->edgeCount;
-            }
-            
-            for(int edge = edgeStart; edge < edgeEnd; edge++)
-            {
-                int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
-                int eid = iGraph*graph->edgeCount + edge;
-                printf("Node %i (of cost %.2f) updated node %i (of cost %.2f, of max %.2f with %i remaining parents) by edge %i with weight %.2f\n", i, costArrayHost[i], nid, costArrayHost[nid], maxVerticeArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
+        if ( maskArrayHost[i] != 0 ) {
+            if (maxVertexArrayHost[i]<0 || parentCountArrayHost[i]==0) {
+                
+                int iGraph = i / graph->vertexCount;
+                int localTid = i % graph->vertexCount;
+                
+                int edgeStart = graph->vertexArray[localTid];
+                int edgeEnd;
+                if (localTid + 1 < (graph->vertexCount))
+                {
+                    edgeEnd = graph->vertexArray[localTid + 1];
+                }
+                else
+                {
+                    edgeEnd = graph->edgeCount;
+                }
+                
+                for(int edge = edgeStart; edge < edgeEnd; edge++)
+                {
+                    int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
+                    int eid = iGraph*graph->edgeCount + edge;
+                    printf("Node %i (of cost %.2f) updated node %i (of cost %.2f, of max %.2f with %i remaining parents) by edge %i with weight %.2f\n", i, costArrayHost[i], nid, costArrayHost[nid], maxVertexArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
+                }
             }
         }
     }
