@@ -120,6 +120,17 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     }
 }
 
+const char* costToString(float cost) {
+    static char str[8];
+    if (cost > 99999) {
+        sprintf(str, "inf");
+    }
+    else {
+        sprintf(str, "%.2f", cost);
+    }
+    return str;
+}
+
 void printMathematicaString(GraphData *graph, int iGraph) {
     char str[80000];
     
@@ -138,6 +149,11 @@ void printMathematicaString(GraphData *graph, int iGraph) {
             int localTarget = graph->edgeArray[edge];
             sprintf(str + strlen(str), "%i \\[DirectedEdge] %i, ", localSource, localTarget);
         }
+    }
+    sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
+    for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        const char* sourceString = costToString(graph->costArray[localSource]);
+        sprintf(str + strlen(str), "%i -> %s, ", localSource, sourceString);
     }
     sprintf(str + strlen(str) - 2, "}]\n");
     printf("%s", str);
