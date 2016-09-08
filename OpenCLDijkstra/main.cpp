@@ -387,9 +387,7 @@ int main(int argc, char** argv)
     
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
-    int totalEdgeCount = graph.graphCount * graph.edgeCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
-    int *traversedEdgeCountArrayHost = (int*) malloc(sizeof(int) * totalEdgeCount);
     
     // printSources(&graph);
     // printWeights(&graph);
