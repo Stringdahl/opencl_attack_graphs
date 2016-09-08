@@ -201,3 +201,21 @@ void printTraversedEdges(cl_command_queue *commandQueue, GraphData *graph, cl_me
     }
 }
 
+void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_mem *parentCountArrayDevice) {
+    int *parentCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
+    cl_event readDone;
+    
+    int errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, parentCountArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+    
+    for (int iGraph=0; iGraph < graph->graphCount; iGraph++) {
+        for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+            printf("%i",parentCountArrayHost[iGraph * graph->vertexCount + iVertex]);
+        }
+        printf("\n");
+    }
+
+}
+
+

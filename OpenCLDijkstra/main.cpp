@@ -327,7 +327,7 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 }
 
 
-int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *traversedEdgeCountArrayDevice) {
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice) {
     
     
     // Set the arguments to initializeKernel
@@ -350,6 +350,7 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(int), &vertexCount);
     errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(int), &edgeCount);
     errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(cl_mem), traversedEdgeCountArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(cl_mem), parentCountArrayDevice);
     
     // Set the arguments to ssspKernel2
     errNum |= clSetKernelArg(*ssspKernel2, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -417,7 +418,7 @@ int main(int argc, char** argv)
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &traversedEdgeCountArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
@@ -470,6 +471,7 @@ int main(int argc, char** argv)
     //printMathematicaString(&graph, 1);
     //printGraph(&graph);
     //printParents(&graph);
+    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
 

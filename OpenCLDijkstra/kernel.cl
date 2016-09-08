@@ -1,7 +1,7 @@
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArray, __global float *weightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArray, __global float *weightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -31,6 +31,9 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
             int nid = iGraph*vertexCount + edgeArray[edge];
             int eid = iGraph*edgeCount + edge;
             
+            if (traversedEdgeCountArray == 0) {
+                parentCountArray[nid]--;
+            }
             traversedEdgeCountArray[eid] ++;
 
             if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]))
