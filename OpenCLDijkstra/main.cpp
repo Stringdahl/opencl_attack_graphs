@@ -464,7 +464,7 @@ int main(int argc, char** argv)
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
 
-        printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        //printBeforeUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
 
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
@@ -479,6 +479,7 @@ int main(int argc, char** argv)
         checkError(errNum, CL_SUCCESS);
         //}
         
+        printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
 
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
@@ -487,8 +488,6 @@ int main(int argc, char** argv)
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
     
-    printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
-
     float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
     
     // Read back the results from the device to verify the output
