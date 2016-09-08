@@ -69,14 +69,16 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
         parentCountArray[iVertex]=graph->parentCountArray[iVertex % graph->vertexCount];
     }
     
-    float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
+    float *maxVertexArray = (float*)malloc(totalVertexCount * sizeof(float));
+    for (int iGraph=0; iGraph<graph->graphCount; iGraph++) {
     for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
         if (graph->maxVertexArray[iVertex]==-1) {
-        maxVertexArray[iVertex]=-1;
+        maxVertexArray[iGraph*graph->vertexCount + iVertex]=-1;
         }
         else {
-            maxVertexArray[iVertex]=0;
+            maxVertexArray[iGraph*graph->vertexCount + iVertex]=0;
         }
+    }
     }
     
     
@@ -100,7 +102,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostMaxVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                sizeof(float) * graph->vertexCount, maxVertexArray, &errNum);
+                                                sizeof(float) * totalVertexCount, maxVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -118,7 +120,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *parentCountArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * graph->vertexCount, NULL, &errNum);
+    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -150,7 +152,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostMaxVertexArrayBuffer, *maxVertexArrayDevice, 0, 0,
-                                 sizeof(float) * graph->vertexCount, 0, NULL, NULL);
+                                 sizeof(float) * totalVertexCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeCountArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
@@ -418,7 +420,7 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =21;
+    int nVertices =5;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     
@@ -461,8 +463,9 @@ int main(int argc, char** argv)
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
-        // printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice);
-        
+
+        printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
         // than necessary at times, but it will in most cases be faster because
@@ -476,12 +479,16 @@ int main(int argc, char** argv)
         checkError(errNum, CL_SUCCESS);
         //}
         
+
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
     }
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
+    
+    printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+
     float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
     
     // Read back the results from the device to verify the output
@@ -495,6 +502,7 @@ int main(int argc, char** argv)
     //printGraph(&graph);
     //printParents(&graph);
     //printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
+    printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
 

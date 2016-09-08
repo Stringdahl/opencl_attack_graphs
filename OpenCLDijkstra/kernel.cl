@@ -12,7 +12,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
     if ( maskArray[tid] != 0 )
     {
         maskArray[tid] = 0;
-
+        
         
         int edgeStart = vertexArray[localTid];
         int edgeEnd;
@@ -35,16 +35,18 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
                 parentCountArray[nid]--;
             }
             traversedEdgeCountArray[eid] ++;
-
+            
             
             if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]) && maxVertexArray[tid]<0)
             {
                 updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
             }
-
+            
             if (maxVertexArray[nid]>=0)
             {
-                maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
+                    maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                }
                 if (parentCountArray[nid]==0) {
                     updatingCostArray[nid] = maxVertexArray[nid];
                 }
@@ -58,8 +60,8 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
 /// This is part 2 of the Kernel from Algorithm 5 in the paper.
 ///
 __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
-                                __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
-                                int vertexCount)
+                               __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
+                               int vertexCount)
 {
     // access thread id
     int tid = get_global_id(0);

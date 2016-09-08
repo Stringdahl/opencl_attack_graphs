@@ -74,7 +74,7 @@ void printMaskArray(int *maskArrayHost, int totalVertexCount) {
 }
 
 
-void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice) {
+void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
     
     int errNum = 0;
     cl_event readDone;
@@ -85,6 +85,7 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
+    float *maxVerticeArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *parentCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
 
@@ -95,6 +96,8 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVerticeArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -124,7 +127,7 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
             {
                 int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
                 int eid = iGraph*graph->edgeCount + edge;
-                printf("Node %i (of cost %f) updated node %i (of cost %f, with %i remaining parents) by edge %i with weight %f\n", i, costArrayHost[i], nid, costArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
+                printf("Node %i (of cost %.2f) updated node %i (of cost %.2f, of max %.2f with %i remaining parents) by edge %i with weight %.2f\n", i, costArrayHost[i], nid, costArrayHost[nid], maxVerticeArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
             }
         }
     }
@@ -218,7 +221,22 @@ void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_me
             printf("Vertex %i has %i remaining parents\n",iGraph * graph->vertexCount + iVertex, parentCountArrayHost[iGraph * graph->vertexCount + iVertex]);
         }
     }
+}
 
+void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *maxVertexArrayDevice) {
+    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * graph->graphCount*graph->vertexCount);
+    cl_event readDone;
+    
+    int errNum = clEnqueueReadBuffer(*commandQueue, *maxVertexArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, maxVertexArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+    
+    for (int iGraph=0; iGraph < graph->graphCount; iGraph++) {
+        for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+            int iGlobalVertex =iGraph * graph->vertexCount + iVertex;
+            printf("Max of vertex %i is %.2f.\n",iGlobalVertex, maxVertexArrayHost[iGlobalVertex]);
+        }
+    }
 }
 
 
