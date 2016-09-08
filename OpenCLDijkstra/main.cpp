@@ -458,6 +458,9 @@ int main(int argc, char** argv)
     
     clWaitForEvents(1, &readDone);
     
+    printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
+
+    
     clock_t startTime = clock();
     
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))

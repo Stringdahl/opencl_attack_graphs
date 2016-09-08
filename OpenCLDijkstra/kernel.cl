@@ -10,8 +10,8 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
     int localTid = tid % vertexCount;
     
     if ( maskArray[tid] != 0 )
+        maskArray[tid] = 0;
         if (maxVertexArray[tid]<0 || parentCountArray[tid]==0) {
-            maskArray[tid] = 0;
             {
                 int edgeStart = vertexArray[localTid];
                 int edgeEnd;
@@ -36,7 +36,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
                     traversedEdgeCountArray[eid] ++;
                     
                     
-                    if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]) && maxVertexArray[tid]<0)
+                    if (updatingCostArray[nid] > (costArray[tid] + weightArray[eid]) && maxVertexArray[nid]<0)
                     {
                         updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
                     }
