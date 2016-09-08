@@ -23,8 +23,11 @@
 //
 typedef struct
 {
-    // (V) This contains a pointer to the edge list for each vertex
+    // This contains a pointer to the edge list for each vertex
     int *vertexArray;
+    
+    // maxVerticeArray[i] is 1 if vertex i is max, and 0 if min.
+    int *maxVertexArray;
     
     // Vertex count
     int vertexCount;

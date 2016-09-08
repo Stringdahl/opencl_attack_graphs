@@ -37,16 +37,22 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     graph->vertexCount = numVertices;
     graph->graphCount = numGraphs;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->costArray = (float*) malloc(numGraphs * graph->vertexCount * sizeof(float));
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = numVertices * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
     
-    
     for(int i = 0; i < graph->vertexCount; i++)
     {
         graph->vertexArray[i] = i * neighborsPerVertex;
+        if (rand() % 100 < 34) {
+            graph->maxVertexArray[i]=1;
+        }
+        else {
+            graph->maxVertexArray[i]=0;
+        }
     }
     
     for(int i = 0; i < graph->edgeCount; i++)

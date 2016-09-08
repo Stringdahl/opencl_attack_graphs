@@ -378,7 +378,7 @@ int main(int argc, char** argv)
     cl_mem traversedEdgeArrayDevice;            // was this edge already traversed?
     cl_mem sourceArrayDevice;            // which are teh sources?
     
-    int nVertices = 2500;
+    int nVertices = 25;
     int nEdgePerVertice = 2;
     int nGraphs = 25;
     
@@ -389,7 +389,6 @@ int main(int argc, char** argv)
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
     // printSources(&graph);
-    // printGraph(graph);
     // printWeights(&graph);
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
@@ -454,20 +453,11 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %f milliseconds.\n", diff);
     
-    
     printMathematicaString(&graph, 1);
     
-    
-    // Produce graph string for Mathematica.
-    
-    
-    
-    
-    
-    
-    
-    
-    // Shutdown and cleanup
+    // printGraph(graph);
+
+     // Shutdown and cleanup
     //
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);

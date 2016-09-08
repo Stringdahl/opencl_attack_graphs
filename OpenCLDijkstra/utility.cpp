@@ -131,6 +131,15 @@ const char* costToString(float cost) {
     return str;
 }
 
+bool contains(int *array, int arrayLength, int value) {
+    for (int i = 0; i < arrayLength; i++) {
+        if (array[i]==value) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void printMathematicaString(GraphData *graph, int iGraph) {
     char str[64*graph->edgeCount];
     
@@ -151,10 +160,21 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         }
     }
     sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
-    for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
-        const char* sourceString = costToString(graph->costArray[localSource]);
-        sprintf(str + strlen(str), "%i -> %s, ", localSource, sourceString);
+    for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
+        const char* sourceString = costToString(graph->costArray[vertex]);
+        sprintf(str + strlen(str), "%i -> %s, ", vertex, sourceString);
     }
-    sprintf(str + strlen(str) - 2, "}]\n");
+    sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
+    for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
+        if (contains(graph->sourceArray, graph->graphCount, vertex)) {
+            sprintf(str + strlen(str), "%i -> \"Star\", ", vertex);
+        }
+        else {
+            if (graph->maxVertexArray[vertex]==1) {
+                sprintf(str + strlen(str), "%i -> \"Square\", ", vertex);
+            }
+        }
+    }
+    sprintf(str + strlen(str) - 2, "}, VertexSize -> Large, EdgeShapeFunction -> GraphElementData[{\"CarvedArrow\", \"ArrowSize\" -> .02}]]\n");
     printf("%s", str);
 }
