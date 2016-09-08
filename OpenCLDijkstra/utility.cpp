@@ -74,7 +74,7 @@ void printMaskArray(int *maskArrayHost, int totalVertexCount) {
 }
 
 
-void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice) {
+void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice) {
     
     int errNum = 0;
     cl_event readDone;
@@ -86,6 +86,8 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
     float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *parentCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
+
     
     errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -95,6 +97,8 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
     errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, parentCountArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
@@ -120,7 +124,7 @@ void printCostUpdating(GraphData *graph, cl_command_queue *commandQueue, cl_mem 
             {
                 int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
                 int eid = iGraph*graph->edgeCount + edge;
-                printf("Node %i (of cost %f) updated node %i (of cost %f) by edge %i with weight %f\n", i, costArrayHost[i], nid, costArrayHost[nid], edge, graph->weightArray[eid]);
+                printf("Node %i (of cost %f) updated node %i (of cost %f, with %i remaining parents) by edge %i with weight %f\n", i, costArrayHost[i], nid, costArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
             }
         }
     }
@@ -168,7 +172,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
         const char* sourceString = costToString(graph->costArray[vertex]);
-        sprintf(str + strlen(str), "%i -> %s, ", vertex, sourceString);
+        sprintf(str + strlen(str), "%i -> %i [%s], ", vertex, vertex, sourceString);
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
@@ -211,9 +215,8 @@ void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_me
     
     for (int iGraph=0; iGraph < graph->graphCount; iGraph++) {
         for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
-            printf("%i",parentCountArrayHost[iGraph * graph->vertexCount + iVertex]);
+            printf("Vertex %i has %i remaining parents\n",iGraph * graph->vertexCount + iVertex, parentCountArrayHost[iGraph * graph->vertexCount + iVertex]);
         }
-        printf("\n");
     }
 
 }

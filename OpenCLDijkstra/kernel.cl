@@ -31,7 +31,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
             int nid = iGraph*vertexCount + edgeArray[edge];
             int eid = iGraph*edgeCount + edge;
             
-            if (traversedEdgeCountArray == 0) {
+            if (traversedEdgeCountArray[eid] == 0) {
                 parentCountArray[nid]--;
             }
             traversedEdgeCountArray[eid] ++;

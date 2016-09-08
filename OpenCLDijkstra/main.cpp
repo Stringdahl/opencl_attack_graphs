@@ -395,9 +395,9 @@ int main(int argc, char** argv)
     cl_mem sourceArrayDevice;
     cl_mem parentCountArrayDevice;
     
-    int nVertices = 25;
+    int nVertices = 9;
     int nEdgePerVertice = 2;
-    int nGraphs = 25;
+    int nGraphs = 1;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs);
     
@@ -438,7 +438,7 @@ int main(int argc, char** argv)
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
-        // printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice);
+        // printCostUpdating(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice);
         
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
@@ -468,9 +468,9 @@ int main(int argc, char** argv)
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
-    //printMathematicaString(&graph, 1);
+    printMathematicaString(&graph, 1);
     //printGraph(&graph);
-    //printParents(&graph);
+    printParents(&graph);
     printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
