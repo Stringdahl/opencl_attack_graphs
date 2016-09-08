@@ -69,6 +69,16 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
         parentCountArray[iVertex]=graph->parentCountArray[iVertex % graph->vertexCount];
     }
     
+    float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
+    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+        if (graph->maxVertexArray[iVertex]==0) {
+        maxVertexArray[iVertex]=-1;
+        }
+        else {
+            maxVertexArray[iVertex]=0;
+        }
+    }
+    
     
     // First, need to create OpenCL Host buffers that can be copied to device buffers
     hostVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
@@ -90,7 +100,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostMaxVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                sizeof(int) * totalVertexCount, graph->maxVertexArray, &errNum);
+                                                sizeof(float) * graph->vertexCount, maxVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -108,7 +118,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *parentCountArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * graph->vertexCount, NULL, &errNum);
+    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * graph->vertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -140,7 +150,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostMaxVertexArrayBuffer, *maxVertexArrayDevice, 0, 0,
-                                 sizeof(int) * graph->vertexCount, 0, NULL, NULL);
+                                 sizeof(float) * graph->vertexCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeCountArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
@@ -483,8 +493,8 @@ int main(int argc, char** argv)
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
     printMathematicaString(&graph, 1);
     //printGraph(&graph);
-    printParents(&graph);
-    printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
+    //printParents(&graph);
+    //printVisitedParents(&commandQueue, &graph, &parentCountArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
 
