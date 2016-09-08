@@ -49,10 +49,10 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     {
         graph->vertexArray[i] = i * neighborsPerVertex;
         if (rand() % 100 < 34) {
-            graph->maxVertexArray[i]=1;
+            graph->maxVertexArray[i]=0;
         }
         else {
-            graph->maxVertexArray[i]=0;
+            graph->maxVertexArray[i]=-1;
         }
         graph->parentCountArray[i] = 0;
     }

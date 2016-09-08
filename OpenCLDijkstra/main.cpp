@@ -71,7 +71,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     
     float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
     for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
-        if (graph->maxVertexArray[iVertex]==0) {
+        if (graph->maxVertexArray[iVertex]==-1) {
         maxVertexArray[iVertex]=-1;
         }
         else {

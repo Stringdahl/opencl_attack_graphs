@@ -26,8 +26,7 @@ typedef struct
     // This contains a pointer to the edge list for each vertex
     int *vertexArray;
     
-    // maxVerticeArray[i] is 1 if vertex i is max, and 0 if min.
-    // It is int rather than bool because some GPUs don't accept bool, I read somewhere.
+    // maxVerticeArray[i] is greater than 0 if vertex i is max, and -1 if min. It contains the highest value so far.
     int *maxVertexArray;
     
     // Vertex count

@@ -180,7 +180,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
             sprintf(str + strlen(str), "%i -> \"Star\", ", vertex);
         }
         else {
-            if (graph->maxVertexArray[vertex]==1) {
+            if (graph->maxVertexArray[vertex]>=0) {
                 sprintf(str + strlen(str), "%i -> \"Square\", ", vertex);
             }
         }
