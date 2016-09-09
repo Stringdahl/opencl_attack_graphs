@@ -28,7 +28,9 @@ typedef struct
 {
     // This contains a pointer to the edge list for each vertex
     int *vertexArray;
-    
+
+    int *inverseVertexArray;
+
     // maxVerticeArray[i] is greater than 0 if vertex i is max, and -1 if min. It contains the highest value so far.
     int *maxVertexArray;
     
@@ -43,7 +45,9 @@ typedef struct
     
     // This contains pointers to the vertices that each edge is attached to
     int *edgeArray;
-    
+
+    int *inverseEdgeArray;
+
     // Edge count
     int edgeCount;
     

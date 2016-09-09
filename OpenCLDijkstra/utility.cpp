@@ -45,6 +45,22 @@ void printGraph(GraphData *graph) {
     }
 }
 
+void printInverseGraph(GraphData *graph) {
+    int nParents;
+    for (int iNode=0; iNode<graph->vertexCount; iNode++) {
+        if (iNode<graph->vertexCount-1) {
+            nParents = graph->inverseVertexArray[iNode+1]-graph->inverseVertexArray[iNode];
+        }
+        else {
+            nParents = graph->edgeCount-graph->inverseVertexArray[iNode];
+        }
+        printf("Vertex %i has %i parents\n", iNode, nParents);
+        for (int iParent=0; iParent<nParents; iParent++) {
+            printf("Vertex %i is child to vertex %i\n", iNode, graph->inverseEdgeArray[graph->inverseVertexArray[iNode]+iParent]);
+        }
+    }
+}
+
 void printParents(GraphData *graph) {
     for (int i = 0; i < graph->vertexCount; i++) {
         printf("Vertex %i has %i parents.\n", i, graph->parentCountArray[i]);

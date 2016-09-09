@@ -428,7 +428,9 @@ int main(int argc, char** argv)
     cl_event readDone;
     
     cl_mem vertexArrayDevice;                       // device memory used for the input array
+    cl_mem invertedVertexArrayDevice;                       // device memory used for the input array
     cl_mem edgeArrayDevice;                       // device memory used for the input array
+    cl_mem invertedEdgeArrayDevice;                       // device memory used for the input array
     cl_mem weightArrayDevice;                       // device memory used for the input array
     cl_mem aggregatedWeightArrayDevice;                       // device memory used for the input array
     cl_mem maskArrayDevice;                       // device memory used for the input array
@@ -439,12 +441,13 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =20;
+    int nVertices =5;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     float probOfMax = 0.1;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
+    
     
     
     int totalVertexCount = graph.graphCount * graph.vertexCount;
@@ -518,6 +521,7 @@ int main(int argc, char** argv)
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
     printMathematicaString(&graph, 0);
     //printGraph(&graph);
+    //printInverseGraph(&graph);
     //printParents(&graph);
     //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     

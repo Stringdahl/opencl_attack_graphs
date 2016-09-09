@@ -37,11 +37,13 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     graph->vertexCount = numVertices;
     graph->graphCount = numGraphs;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->costArray = (float*) malloc(numGraphs * graph->vertexCount * sizeof(float));
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = numVertices * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
     
@@ -71,6 +73,30 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     for(int i = 0; i < numGraphs; i++)
     {
         graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
+    }
+    
+    int iEdge = 0;
+    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
+        graph->inverseVertexArray[iChild] = iEdge;
+        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
+            // Get the edges
+            int edgeStart = graph->vertexArray[iParent];
+            int edgeEnd;
+            if (iParent + 1 < (graph->vertexCount))
+            {
+                edgeEnd = graph->vertexArray[iParent + 1];
+            }
+            else
+            {
+                edgeEnd = graph->edgeCount;
+            }
+            for(int edge = edgeStart; edge < edgeEnd; edge++){
+                if (graph->edgeArray[edge]==iChild) {
+                    graph->inverseEdgeArray[iEdge]=iParent;
+                    iEdge ++;
+                }
+            }
+        }
     }
 }
 
