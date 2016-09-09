@@ -56,7 +56,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     cl_mem hostMaxVertexArrayBuffer;
     int totalVertexCount = graph->graphCount * graph->vertexCount;
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
-
+    
     
     // Initially, no edges have been travelled
     int *traversedEdgeCountArray = (int*)malloc(totalEdgeCount * sizeof(int));
@@ -71,14 +71,14 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     
     float *maxVertexArray = (float*)malloc(totalVertexCount * sizeof(float));
     for (int iGraph=0; iGraph<graph->graphCount; iGraph++) {
-    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
-        if (graph->maxVertexArray[iVertex]==-1) {
-        maxVertexArray[iGraph*graph->vertexCount + iVertex]=-1;
+        for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+            if (graph->maxVertexArray[iVertex]==-1) {
+                maxVertexArray[iGraph*graph->vertexCount + iVertex]=-1;
+            }
+            else {
+                maxVertexArray[iGraph*graph->vertexCount + iVertex]=0;
+            }
         }
-        else {
-            maxVertexArray[iGraph*graph->vertexCount + iVertex]=0;
-        }
-    }
     }
     
     
@@ -102,7 +102,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostMaxVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                sizeof(float) * totalVertexCount, maxVertexArray, &errNum);
+                                              sizeof(float) * totalVertexCount, maxVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -420,9 +420,9 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =35;
+    int nVertices =25;
     int nEdgePerVertice = 2;
-    int nGraphs = 1;
+    int nGraphs = 100;
     float probOfMax = 0.1;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
@@ -464,7 +464,7 @@ int main(int argc, char** argv)
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         // printMaskArray(maskArrayHost, totalVertexCount);
-
+        
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
         // than necessary at times, but it will in most cases be faster because
@@ -478,9 +478,9 @@ int main(int argc, char** argv)
         checkError(errNum, CL_SUCCESS);
         //}
         
-        printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
-
-
+        //printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        
+        
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
@@ -497,13 +497,14 @@ int main(int argc, char** argv)
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
-    printMathematicaString(&graph, 1);
+    printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printParents(&graph);
     //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     
     printf("Completed calculations in %f milliseconds.\n", diff);
-
+    
+    dijkstra(&graph);
     
     // Shutdown and cleanup
     //

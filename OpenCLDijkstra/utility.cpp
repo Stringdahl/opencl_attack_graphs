@@ -167,6 +167,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        int globalSource = iGraph*graph->vertexCount + localSource;
         int edgeStart = graph->vertexArray[localSource];
         int edgeEnd;
         if (localSource + 1 < (graph->vertexCount)) {
@@ -178,22 +179,25 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         
         for(int edge = edgeStart; edge < edgeEnd; edge++) {
             int localTarget = graph->edgeArray[edge];
-            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i, ", localSource, localTarget);
+            int globalTarget = iGraph*graph->vertexCount + localTarget;
+            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i, ", globalSource, globalTarget);
         }
     }
     sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
-        const char* sourceString = costToString(graph->costArray[vertex]);
-        sprintf(str + strlen(str), "%i -> %i [%s], ", vertex, vertex, sourceString);
+        int globalVertex = iGraph*graph->vertexCount + vertex;
+        const char* sourceString = costToString(graph->costArray[globalVertex]);
+        sprintf(str + strlen(str), "%i -> %i [%s], ", globalVertex, globalVertex, sourceString);
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
-        if (contains(graph->sourceArray, graph->graphCount, vertex)) {
-            sprintf(str + strlen(str), "%i -> \"Star\", ", vertex);
+        int globalVertex = iGraph*graph->vertexCount + vertex;
+        if (contains(graph->sourceArray, graph->graphCount, globalVertex)) {
+            sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
         }
         else {
-            if (graph->maxVertexArray[vertex]>=0) {
-                sprintf(str + strlen(str), "%i -> \"Square\", ", vertex);
+            if (graph->maxVertexArray[globalVertex]>=0) {
+                sprintf(str + strlen(str), "%i -> \"Square\", ", globalVertex);
             }
         }
     }

@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <limits.h>
+#include <float.h>
+
 
 ///
 //  Types
@@ -57,5 +60,6 @@ typedef struct
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax);
+void dijkstra(GraphData *graph);
 
 #endif /* graph_hpp */

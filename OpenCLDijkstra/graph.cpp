@@ -72,7 +72,122 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     {
         graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
     }
+}
+
+// A utility function to find the vertex with minimum distance value, from
+// the set of vertices not yet included in shortest path tree
+int minDistance(float *dist, bool *sptSet, int vertexCount)
+{
+    // Initialize min value
+    int min = INT_MAX, min_index = 0;
+    
+    for (int v = 0; v < vertexCount; v++)
+        if (sptSet[v] == false && dist[v] <= min)
+            min = dist[v], min_index = v;
+    return min_index;
+}
+
+// A utility function to print the constructed distance array
+void printSolution(float *dist, int n)
+{
+    printf("Vertex   Distance from Source\n");
+    for (int i = 0; i < n; i++)
+        printf("%d \t\t %.2f\n", i, dist[i]);
+}
+
+void updateMinVertex(int u, bool *sptSet, float *dist, GraphData *graph, int edge) {
+    int v = graph->edgeArray[edge];
+    if (dist[u] != FLT_MAX) {
+        if (dist[u]+graph->weightArray[edge] < dist[v]) {
+            dist[v] = dist[u] + graph->weightArray[edge];
+        }
+    }
+    
+}
+
+
+// Funtion that implements Dijkstra's single source shortest path algorithm
+// for a graph represented using adjacency matrix representation
+void dijkstra(GraphData *graph){
+    float *dist = (float*) malloc(sizeof(float) * graph->vertexCount);     // The output array.  dist[i] will hold the shortest
+    // distance from src to i
+    bool *sptSet = (bool*) malloc(sizeof(bool) * graph->vertexCount); // sptSet[i] will true if vertex i is included in shortest
+    // path tree or shortest distance from src to i is finalized
+    
+    // Initially, no edges have been travelled
+    int *traversedEdgeCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    for (int iEdge=0; iEdge<graph->edgeCount; iEdge++) {
+        traversedEdgeCountArray[iEdge]=0;
+    }
+    
+    int *parentCountArray = (int*)malloc(graph->vertexCount * sizeof(int));
+    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+        parentCountArray[iVertex]=graph->parentCountArray[iVertex];
+    }
+    
+    float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
+    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+        maxVertexArray[iVertex]=graph->maxVertexArray[iVertex];
+    }
     
     
+    // Initialize all distances as INFINITE and stpSet[] as false
+    for (int i = 0; i < graph->vertexCount; i++)
+        dist[i] = FLT_MAX, sptSet[i] = false;
     
+    // Distance of source vertex from itself is always 0
+    dist[graph->sourceArray[0]] = 0;
+    
+    // Find shortest path for all vertices
+    for (int count = 0; count < graph->vertexCount-1; count++)
+    {
+        // Pick the minimum distance vertex from the set of vertices not
+        // yet processed. u is always equal to src in first iteration.
+        int u = minDistance(dist, sptSet, graph->vertexCount);
+        
+        // Mark the picked vertex as processed
+        sptSet[u] = true;
+        
+        // Get the edges
+        int edgeStart = graph->vertexArray[u];
+        int edgeEnd;
+        if (u + 1 < (graph->vertexCount))
+        {
+            edgeEnd = graph->vertexArray[u + 1];
+        }
+        else
+        {
+            edgeEnd = graph->edgeCount;
+        }
+        // Iterate over the edges
+        
+        for(int edge = edgeStart; edge < edgeEnd; edge++) {
+            int v = graph->edgeArray[edge];
+            if (!sptSet[v]) {
+                
+                if (traversedEdgeCountArray[edge]==0) {
+                    parentCountArray[v]--;
+                }
+                traversedEdgeCountArray[edge]++;
+                // If min node
+                if (maxVertexArray[u]<0) {
+                    if (dist[u] != FLT_MAX) {
+                        if (dist[u]+graph->weightArray[edge] < dist[v]) {
+                            dist[v] = dist[u] + graph->weightArray[edge];
+                        }
+                    }
+                }
+                // If max node
+                else {
+                    if (maxVertexArray[v] < dist[u]+graph->weightArray[edge]) {
+                        maxVertexArray[v] = dist[u]+graph->weightArray[edge];
+                    }
+                    if (parentCountArray[v]==0) {
+                        dist[v] = maxVertexArray[v];
+                    }
+                }
+            }
+        }
+    }
+    printSolution(dist, graph->vertexCount);
 }
