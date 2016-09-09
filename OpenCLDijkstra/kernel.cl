@@ -1,7 +1,7 @@
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -75,11 +75,13 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             // Iterate over the edges
                             float maxEdgeVal = 0;
                             for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                                
-                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]]; // + inverseWeightArray[inverseEdge];
+                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                if (currEdgeVal>maxEdgeVal) {
+                                    maxEdgeVal = currEdgeVal;
+                                }
                             }
                             
-                            costArray[nid] = maxVertexArray[nid];
+                            costArray[nid] = maxEdgeVal;
                             // Mark the target for update
                             maskArray[nid] = 1;
                         }
