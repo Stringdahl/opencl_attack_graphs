@@ -56,7 +56,7 @@ void printInverseGraph(GraphData *graph) {
         }
         printf("Vertex %i has %i parents\n", iNode, nParents);
         for (int iParent=0; iParent<nParents; iParent++) {
-            printf("Vertex %i is child to vertex %i\n", iNode, graph->inverseEdgeArray[graph->inverseVertexArray[iNode]+iParent]);
+            printf("Vertex %i is child to vertex %i with edge weight of %f\n", iNode, graph->inverseEdgeArray[graph->inverseVertexArray[iNode]+iParent], graph->inverseWeightArray[graph->inverseVertexArray[iNode]+iParent]);
         }
     }
 }

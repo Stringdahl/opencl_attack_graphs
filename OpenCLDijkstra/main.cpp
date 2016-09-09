@@ -44,7 +44,7 @@ pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 ///
 ///  Allocate memory for input CUDA buffers and copy the data into device memory
 ///
-void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *aggregatedWeightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVertexArrayDevice)
+void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, GraphData *graph, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *aggregatedWeightArrayDevice, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *traversedEdgeArrayDevice, cl_mem *sourceArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVertexArrayDevice)
 {
     cl_int errNum;
     cl_mem hostVertexArrayBuffer;
@@ -52,6 +52,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     cl_mem hostEdgeArrayBuffer;
     cl_mem hostInverseEdgeArrayBuffer;
     cl_mem hostWeightArrayBuffer;
+    cl_mem hostInverseWeightArrayBuffer;
     cl_mem hostAggregatedWeightArrayBuffer;
     cl_mem hostTraversedEdgeCountArrayBuffer;
     cl_mem hostSourceArrayBuffer;
@@ -106,6 +107,9 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * totalEdgeCount, graph->weightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
+    hostInverseWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                           sizeof(float) * totalEdgeCount, graph->inverseWeightArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
     hostAggregatedWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * totalEdgeCount, aggregatedWeightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -132,6 +136,8 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     *inverseEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * totalEdgeCount, NULL, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    *inverseWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *aggregatedWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -178,6 +184,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                  sizeof(float) * totalEdgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
+    errNum = clEnqueueCopyBuffer(commandQueue, hostInverseWeightArrayBuffer, *inverseWeightArrayDevice, 0, 0,
+                                 sizeof(float) * totalEdgeCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+    
     errNum = clEnqueueCopyBuffer(commandQueue, hostAggregatedWeightArrayBuffer, *aggregatedWeightArrayDevice, 0, 0,
                                  sizeof(float) * totalEdgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
@@ -208,6 +218,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     clReleaseMemObject(hostEdgeArrayBuffer);
     clReleaseMemObject(hostInverseEdgeArrayBuffer);
     clReleaseMemObject(hostWeightArrayBuffer);
+    clReleaseMemObject(hostInverseWeightArrayBuffer);
     clReleaseMemObject(hostAggregatedWeightArrayBuffer);
     clReleaseMemObject(hostTraversedEdgeCountArrayBuffer);
     clReleaseMemObject(hostParentCountArrayBuffer);
@@ -456,6 +467,7 @@ int main(int argc, char** argv)
     cl_mem edgeArrayDevice;                       // device memory used for the input array
     cl_mem inverseEdgeArrayDevice;                       // device memory used for the input array
     cl_mem weightArrayDevice;                       // device memory used for the input array
+    cl_mem inverseWeightArrayDevice;                       // device memory used for the input array
     cl_mem aggregatedWeightArrayDevice;                       // device memory used for the input array
     cl_mem maskArrayDevice;                       // device memory used for the input array
     cl_mem costArrayDevice;                       // device memory used for the input array
@@ -487,7 +499,7 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &aggregatedWeightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &aggregatedWeightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Setting the kernel arguments
     errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &aggregatedWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
@@ -544,8 +556,8 @@ int main(int argc, char** argv)
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
     printMathematicaString(&graph, 0);
-    //printGraph(&graph);
-    //printInverseGraph(&graph);
+    printGraph(&graph);
+    printInverseGraph(&graph);
     //printParents(&graph);
     //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     

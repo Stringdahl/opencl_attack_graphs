@@ -46,6 +46,7 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
+    graph->inverseWeightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
@@ -93,6 +94,7 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
             for(int edge = edgeStart; edge < edgeEnd; edge++){
                 if (graph->edgeArray[edge]==iChild) {
                     graph->inverseEdgeArray[iEdge]=iParent;
+                    graph->inverseWeightArray[iEdge]=graph->weightArray[edge];
                     iEdge ++;
                 }
             }
