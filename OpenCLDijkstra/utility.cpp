@@ -252,4 +252,13 @@ void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *
     }
 }
 
+// A utility function to print the constructed distance array
+void printSolution(float *dist, int n)
+{
+    printf("Vertex   Distance from Source\n");
+    for (int i = 0; i < n; i++)
+        printf("%d \t\t %.2f\n", i, dist[i]);
+}
+
+
 

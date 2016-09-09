@@ -25,6 +25,6 @@ void printMathematicaString(GraphData *graph, int iGraph);
 void printTraversedEdges(cl_command_queue *commandQueue, GraphData *graph, cl_mem *traversedEdgeCountArrayDevice);
 void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_mem *parentCountArrayDevice);
 void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *maxVertexArrayDevice);
-
+void printSolution(float *dist, int n);
 
 #endif /* utility_hpp */

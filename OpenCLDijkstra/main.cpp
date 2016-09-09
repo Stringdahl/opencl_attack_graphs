@@ -420,9 +420,9 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =25;
+    int nVertices =20;
     int nEdgePerVertice = 2;
-    int nGraphs = 100;
+    int nGraphs = 1;
     float probOfMax = 0.1;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
@@ -478,7 +478,7 @@ int main(int argc, char** argv)
         checkError(errNum, CL_SUCCESS);
         //}
         
-        //printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
         
         
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
@@ -504,7 +504,14 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %f milliseconds.\n", diff);
     
-    dijkstra(&graph);
+    float *dist = dijkstra(&graph);
+    
+    for (int iVertex = 0; iVertex < graph.vertexCount; iVertex++) {
+        if (dist[iVertex]!=graph.costArray[iVertex]) {
+            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph.costArray[iVertex]);
+        }
+    }
+
     
     // Shutdown and cleanup
     //

@@ -89,6 +89,7 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
     }
     
     updatingCostArray[tid] = costArray[tid];
+    
 }
 
 
