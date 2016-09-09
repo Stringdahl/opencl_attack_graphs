@@ -77,7 +77,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *edgeArra
 ///
 __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
                                __global int *maskArray, __global float *costArray, __global float *updatingCostArray,
-                               int vertexCount)
+                               int vertexCount, __global float *maxVertexArray)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -89,7 +89,6 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
     }
     
     updatingCostArray[tid] = costArray[tid];
-    
 }
 
 
