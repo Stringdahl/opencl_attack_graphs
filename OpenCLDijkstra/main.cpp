@@ -366,7 +366,7 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 }
 
 
-int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *aggregatedWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
     
     
     // Set the arguments to initializeKernel
@@ -383,14 +383,15 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel1, 0, sizeof(cl_mem), vertexArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 1, sizeof(cl_mem), edgeArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 2, sizeof(cl_mem), weightArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 3, sizeof(cl_mem), maskArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 4, sizeof(cl_mem), costArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 5, sizeof(cl_mem), updatingCostArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(int), &vertexCount);
-    errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(int), &edgeCount);
-    errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(cl_mem), traversedEdgeCountArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(cl_mem), parentCountArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(cl_mem), maxVerticeArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 3, sizeof(cl_mem), aggregatedWeightArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 4, sizeof(cl_mem), maskArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 5, sizeof(cl_mem), costArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(cl_mem), updatingCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(int), &edgeCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(cl_mem), traversedEdgeCountArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(cl_mem), parentCountArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 11, sizeof(cl_mem), maxVerticeArrayDevice);
     
     // Set the arguments to ssspKernel2
     errNum |= clSetKernelArg(*ssspKernel2, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -462,7 +463,7 @@ int main(int argc, char** argv)
     allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &edgeArrayDevice, &weightArrayDevice, &aggregatedWeightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &edgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &aggregatedWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
