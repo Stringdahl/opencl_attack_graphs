@@ -60,6 +60,8 @@ typedef struct
     // Weight array
     float *weightArray;
     
+    float *inverseWeightArray;
+    
 } GraphData;
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);

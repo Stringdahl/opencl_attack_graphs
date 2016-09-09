@@ -61,6 +61,24 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         if (parentCountArray[nid]==0) {
                             // ... update the cost to the highest of all encountered.
                             updatingCostArray[nid] = maxVertexArray[nid];
+                            // Get the edges
+                            int inverseEdgeStart = inverseVertexArray[nid];
+                            int inverseEdgeEnd;
+                            if (nid + 1 < (vertexCount))
+                            {
+                                inverseEdgeEnd = inverseVertexArray[nid + 1];
+                            }
+                            else
+                            {
+                                inverseEdgeEnd = edgeCount;
+                            }
+                            // Iterate over the edges
+                            float maxEdgeVal = 0;
+                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                                
+                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]]; // + inverseWeightArray[inverseEdge];
+                            }
+                            
                             costArray[nid] = maxVertexArray[nid];
                             // Mark the target for update
                             maskArray[nid] = 1;
