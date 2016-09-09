@@ -107,22 +107,33 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
 int minDistance(float *dist, bool *sptSet, int vertexCount)
 {
     // Initialize min value
-    int min = INT_MAX, min_index = 0;
+    float min = FLT_MAX;
+    int min_index = 0;
     
-    for (int v = 0; v < vertexCount; v++)
-        if (sptSet[v] == false && dist[v] <= min)
+    for (int v = 0; v < vertexCount; v++) {
+//        printf("Node %i costs %.2f ", v, dist[v]);
+//        if (sptSet[v] == false) {
+//            printf("and is unprocessed. ");
+//        }
+//        else {
+//            printf("but is already proceessed. ");
+//        }
+        if (sptSet[v] == false && dist[v] <= min) {
             min = dist[v], min_index = v;
+        }
+//        printf("Lowest so far is %i with %.2f\n", min_index, min);        
+    }
     return min_index;
 }
 
-void updateMinVertex(int u, bool *sptSet, float *dist, GraphData *graph, int edge) {
-    int v = graph->edgeArray[edge];
-    if (dist[u] != FLT_MAX) {
-        if (dist[u]+graph->weightArray[edge] < dist[v]) {
-            dist[v] = dist[u] + graph->weightArray[edge];
-        }
+
+
+bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, float *dist) {
+    for (int i = 0; i < vertexCount; i++) {
+        if (!sptSet[i] && dist[i]<FLT_MAX)
+            return true;
     }
-    
+    return false;
 }
 
 
@@ -140,11 +151,13 @@ float* dijkstra(GraphData *graph){
         traversedEdgeCountArray[iEdge]=0;
     }
     
+    // Copy parentCount from graph
     int *parentCountArray = (int*)malloc(graph->vertexCount * sizeof(int));
     for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
         parentCountArray[iVertex]=graph->parentCountArray[iVertex];
     }
     
+    // Copy maxVertex from graph
     float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
     for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
         maxVertexArray[iVertex]=graph->maxVertexArray[iVertex];
@@ -159,23 +172,23 @@ float* dijkstra(GraphData *graph){
     dist[graph->sourceArray[0]] = 0;
     
     // Find shortest path for all vertices
-    for (int count = 0; count < graph->vertexCount-1; count++)
+    while (atLeastOneUnprocessedIsFinite(sptSet, graph->vertexCount, dist))
     {
+        
         // Pick the minimum distance vertex from the set of vertices not
         // yet processed. u is always equal to src in first iteration.
-        int u = minDistance(dist, sptSet, graph->vertexCount);
-        
-        if (maxVertexArray[u]<0 || parentCountArray[u]==0) {
-            
+        int source = minDistance(dist, sptSet, graph->vertexCount);
+        printf("Node %i (of cost %.2f) ...", source, dist[source]);
+        if (maxVertexArray[source]<0 || parentCountArray[source]==0) {
             // Mark the picked vertex as processed
-            sptSet[u] = true;
+            sptSet[source] = true;
             
             // Get the edges
-            int edgeStart = graph->vertexArray[u];
+            int edgeStart = graph->vertexArray[source];
             int edgeEnd;
-            if (u + 1 < (graph->vertexCount))
+            if (source + 1 < (graph->vertexCount))
             {
-                edgeEnd = graph->vertexArray[u + 1];
+                edgeEnd = graph->vertexArray[source + 1];
             }
             else
             {
@@ -184,33 +197,48 @@ float* dijkstra(GraphData *graph){
             // Iterate over the edges
             
             for(int edge = edgeStart; edge < edgeEnd; edge++) {
-                int v = graph->edgeArray[edge];
-                if (!sptSet[v]) {
-                    
-                    if (traversedEdgeCountArray[edge]==0) {
-                        parentCountArray[v]--;
-                    }
-                    traversedEdgeCountArray[edge]++;
+                int target = graph->edgeArray[edge];
+                
+                if (traversedEdgeCountArray[edge]==0) {
+                    parentCountArray[target]--;
+                }
+                traversedEdgeCountArray[edge]++;
+                
+                if (dist[source] != FLT_MAX) {
                     // If min node
-                    if (maxVertexArray[v]<0) {
-                        if (dist[u] != FLT_MAX) {
-                            if (dist[u]+graph->weightArray[edge] < dist[v]) {
-                                dist[v] = dist[u] + graph->weightArray[edge];
+                    if (maxVertexArray[target]<0) {
+                        if (!sptSet[target]) {
+                            
+                            printf(" looking at min node %i (with %i remainaing parents) by edge with weight %.2f.", target, parentCountArray[target], graph->weightArray[edge]);
+                            
+                            if (dist[source]+graph->weightArray[edge] < dist[target]) {
+                                printf(".. updated from %.2f ", dist[target]);
+                                dist[target] = dist[source] + graph->weightArray[edge];
+                                printf("to %.2f", dist[target]);
                             }
+                            printf("\n");
                         }
                     }
+                    
                     // If max node
                     else {
-                        if (maxVertexArray[v] < dist[u]+graph->weightArray[edge]) {
-                            maxVertexArray[v] = dist[u]+graph->weightArray[edge];
+                        printf(" looking at max node %i (with %i remainaing parents, max: %.2f) by edge with weight %.2f.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
+                        if (maxVertexArray[target] < dist[source]+graph->weightArray[edge]) {
+                            maxVertexArray[target] = dist[source]+graph->weightArray[edge];
                         }
-                        if (parentCountArray[v]==0) {
-                            dist[v] = maxVertexArray[v];
+                        if (parentCountArray[target]==0) {
+                            printf(".. updated from %.2f ", dist[target]);
+                            dist[target] = maxVertexArray[target];
+                            printf("to %.2f", dist[target]);
                         }
+                        printf("\n");
                     }
                 }
             }
+            
         }
+        printf("\n");
+
     }
     return dist;
 }

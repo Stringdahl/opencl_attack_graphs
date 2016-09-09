@@ -478,7 +478,7 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     
-    int nVertices =1000;
+    int nVertices =16;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     float probOfMax = 0.1;
@@ -533,12 +533,36 @@ int main(int argc, char** argv)
         //{
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
+        
+        
+        
+        
+        
+        
+        clWaitForEvents(1, &readDone);
+        float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+        float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+        errNum = clEnqueueReadBuffer(commandQueue, costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
+        checkError(errNum, CL_SUCCESS);
+        errNum = clEnqueueReadBuffer(commandQueue, updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+        checkError(errNum, CL_SUCCESS);
+        for (int i =0;i<graph.vertexCount; i++) {
+            if (costArrayHost[i]-updatingCostArrayHost[i]>0.001 || updatingCostArrayHost[i]-costArrayHost[i]>0.001) {
+                printf("updatingCost of node %i is %.2f while cost is %.2f\n", i, updatingCostArrayHost[i], costArrayHost[i]);
+            }
+        }
+        
+        
+        
+        
+        
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         //}
         
+      
         printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
-        
+    
         
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
@@ -564,15 +588,8 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %f milliseconds.\n", diff);
     
-    float *dist = dijkstra(&graph);
-    
-    for (int iVertex = 0; iVertex < graph.vertexCount; iVertex++) {
-        if (dist[iVertex]!=graph.costArray[iVertex]) {
-            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph.costArray[iVertex]);
-        }
-    }
+    compareToCPUComputation(&graph);
 
-    
     // Shutdown and cleanup
     //
     clReleaseProgram(program);

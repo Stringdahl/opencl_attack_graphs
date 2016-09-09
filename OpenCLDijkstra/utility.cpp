@@ -276,5 +276,13 @@ void printSolution(float *dist, int n)
         printf("%d \t\t %.2f\n", i, dist[i]);
 }
 
+void compareToCPUComputation(GraphData *graph) {
+float *dist = dijkstra(graph);
+for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+    if (dist[iVertex]!=graph->costArray[iVertex]) {
+        printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);
+    }
+}
+}
 
 

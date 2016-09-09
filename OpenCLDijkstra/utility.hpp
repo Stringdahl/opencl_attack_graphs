@@ -27,5 +27,7 @@ void printTraversedEdges(cl_command_queue *commandQueue, GraphData *graph, cl_me
 void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_mem *parentCountArrayDevice);
 void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *maxVertexArrayDevice);
 void printSolution(float *dist, int n);
+void compareToCPUComputation(GraphData *graph);
+
 
 #endif /* utility_hpp */
