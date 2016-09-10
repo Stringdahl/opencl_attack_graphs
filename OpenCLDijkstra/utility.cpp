@@ -386,10 +386,11 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     
     printf("\n\n\nIn the shadow\n\n");
     for (int tid = 0; tid < totalVertexCount; tid++) {
-        
+
         int iGraph = tid / vertexCount;
         int localTid = tid % vertexCount;
         
+        printf("tid = %i, iGraph = %i, localTid = %i, maskArray[tid] = %i.\n", tid, iGraph, localTid, maskArray[tid]);
         // Only consider vertices that are marked for update
         if ( maskArray[tid] != 0 ) {
             // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
@@ -409,6 +410,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                         edgeEnd = edgeCount;
                     }
                     // Iterate over the edges
+                    printf("Source %i: Iterating over edges %i to %i.\n", tid, edgeStart, edgeEnd);
                     for(int edge = edgeStart; edge < edgeEnd; edge++)
                     {
                         // nid is the (globally indexed) target node
@@ -423,11 +425,14 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                         // Mark that this edge has been traversed.
                         traversedEdgeCountArray[eid] ++;
                         
+                        printf("Target is %i over edge %i, which has now been traversed %i times. Target now has %i remaining parents.\n", nid, eid, traversedEdgeCountArray[eid], parentCountArray[nid]);
                         // If this is a min node and the incoming coming cost is lower than the previously seen...
+                        printf("maxVertexArray[%i]=%.2f, updatingCostArray[%i]=%.2f, costArray[%i] = %.2f, weightArray[%i] = %.2f.\n", nid, maxVertexArray[nid], nid, updatingCostArray[nid], tid, costArray[tid], eid, weightArray[eid]);
                         if (maxVertexArray[nid]<0 && (updatingCostArray[nid] > (costArray[tid] + weightArray[eid])))
                         {
                             // ... then update the cost of the temporary variable updatingCost.
                             updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
+                            printf("Updating updatingCostArray[%i] to %.2f\n", nid, updatingCostArray[nid]);
                         }
                         
                         // If this is a max node...
