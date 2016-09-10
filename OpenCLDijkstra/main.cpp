@@ -550,7 +550,7 @@ int main(int argc, char** argv)
         //}
         
         //printf("After Kernel2\n");
-        //printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
         
@@ -570,7 +570,7 @@ int main(int argc, char** argv)
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
-    //printMathematicaString(&graph, 0);
+    printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
     //printParents(&graph);
