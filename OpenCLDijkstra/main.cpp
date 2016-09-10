@@ -473,8 +473,8 @@ int main(int argc, char** argv)
     cl_mem parentCountArrayDevice;
     cl_mem maxVerticeArrayDevice;
     cl_mem intUpdateCostArrayDevice;
-    
-    int nVertices =100;
+
+    int nVertices =150;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     float probOfMax = 0.1;
@@ -519,7 +519,6 @@ int main(int argc, char** argv)
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
         count ++;
-        printf("\nStep %i.\n", count);
         // printMaskArray(maskArrayHost, totalVertexCount);
         
         // In order to improve performance, we run some number of iterations
@@ -535,15 +534,15 @@ int main(int argc, char** argv)
         //printf("Before Kernel1\n");
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
-        shadowKernel1(graph.graphCount, graph.vertexCount, graph.edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice);
+        //shadowKernel1(graph.graphCount, graph.vertexCount, graph.edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice);
         
         
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, NULL);
         checkError(errNum, CL_SUCCESS);
         
         
-        printf("After Kernel1\n");
-        dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+        //printf("After Kernel1\n");
+        //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
         
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, NULL);

@@ -1,3 +1,5 @@
+#define PRECISION 10000
+
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
@@ -46,16 +48,16 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     if (maxVertexArray[nid]<0) {
                         float candidateCost = costArray[tid] + weightArray[eid];
                         int candidateMilliCostInt;
-                        if (candidateCost*1000 < INT_MAX)
-                            candidateMilliCostInt = (int)((candidateCost*1000)+0.5);
+                        if (candidateCost*PRECISION < INT_MAX)
+                            candidateMilliCostInt = (int)((candidateCost*PRECISION)+0.5);
                         else
                             candidateMilliCostInt = INT_MAX;
-                        if (updatingCostArray[nid]*1000 < INT_MAX)
-                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*1000)+0.5);
+                        if (updatingCostArray[nid]*PRECISION < INT_MAX)
+                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*PRECISION)+0.5);
                         else
                             intUpdateCostArrayDevice[nid] = INT_MAX;
                         atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
-                        updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/1000;
+                        updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                         
                         //                            if (updatingCostArray[nid] > candidateCost)
                         //                                updatingCostArray[nid] = candidateCost;
