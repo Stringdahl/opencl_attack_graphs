@@ -330,7 +330,7 @@ void printSolution(float *dist, int n)
 void compareToCPUComputation(GraphData *graph) {
     float *dist = dijkstra(graph);
     for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
-        if (dist[iVertex]!=graph->costArray[iVertex]) {
+        if (dist[iVertex]-graph->costArray[iVertex]>0.01 || graph->costArray[iVertex]-dist[iVertex]>0.01) {
             printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);
         }
     }
@@ -386,7 +386,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     
     printf("\n\n\nIn the shadow\n\n");
     for (int tid = 0; tid < totalVertexCount; tid++) {
-
+        
         int iGraph = tid / vertexCount;
         int localTid = tid % vertexCount;
         
@@ -435,15 +435,20 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                                 candidateMilliCostInt = (int)((candidateCost*1000)+0.5);
                             else
                                 candidateMilliCostInt = INT_MAX;
-                            int *updatingMilliCostInt;
+                            int updatingMilliCostInt;
                             if (updatingCostArray[nid]*1000 < INT_MAX)
-                                *updatingMilliCostInt = (int)((updatingCostArray[nid]*1000)+0.5);
+                                updatingMilliCostInt = (int)((updatingCostArray[nid]*1000)+0.5);
                             else
-                                *updatingMilliCostInt = INT_MAX;
-                            printf("candidateCost = %.2f, candidateMilliCostInt = %i, updatingCostArray[nid] = %.2f, *updatingMilliCostInt = %i\n", candidateCost, candidateMilliCostInt, updatingCostArray[nid], *updatingMilliCostInt);
-                            *updatingMilliCostInt=fminf((float)(*updatingMilliCostInt), (float)candidateMilliCostInt);
-                            updatingCostArray[nid] = (float)(*updatingMilliCostInt)/1000;
-                            printf("Updating updatingCostArray[%i] to %.2f\n", nid, updatingCostArray[nid]);
+                                updatingMilliCostInt = INT_MAX;
+                            int *updatingMilliCostIntPtr = &updatingMilliCostInt;
+                            printf("candidateCost = %.2f, candidateMilliCostInt = %i, updatingCostArray[nid] = %.2f, *updatingMilliCostInt = %i\n", candidateCost, candidateMilliCostInt, updatingCostArray[nid], *updatingMilliCostIntPtr);
+                            
+                            *updatingMilliCostIntPtr=(int)fminf((float)(*updatingMilliCostIntPtr), (float)candidateMilliCostInt);
+                            updatingCostArray[nid] = (float)(*updatingMilliCostIntPtr)/1000;
+                            
+//                            if (updatingCostArray[nid] > candidateCost)
+//                                updatingCostArray[nid] = candidateCost;
+                            printf("updatingCostArray[%i] is now %.2f\n", nid, updatingCostArray[nid]);
                         }
                         
                         // If this is a max node...

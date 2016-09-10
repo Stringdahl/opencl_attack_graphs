@@ -1,7 +1,7 @@
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArrayDevice)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -50,13 +50,15 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             candidateMilliCostInt = (int)((candidateCost*1000)+0.5);
                         else
                             candidateMilliCostInt = INT_MAX;
-                        __global int *updatingMilliCostInt;
                         if (updatingCostArray[nid]*1000 < INT_MAX)
-                            *updatingMilliCostInt = (int)((updatingCostArray[nid]*1000)+0.5);
+                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*1000)+0.5);
                         else
-                            *updatingMilliCostInt = INT_MAX;
-                        atomic_min(updatingMilliCostInt, candidateMilliCostInt);
-                        updatingCostArray[nid] = (float)(*updatingMilliCostInt)/1000;
+                            intUpdateCostArrayDevice[nid] = INT_MAX;
+                        atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/1000;
+                        
+                        //                            if (updatingCostArray[nid] > candidateCost)
+                        //                                updatingCostArray[nid] = candidateCost;
                     }
                     
                     // If this is a max node...
