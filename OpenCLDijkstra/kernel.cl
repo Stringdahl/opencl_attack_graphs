@@ -3,7 +3,7 @@
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArrayDevice)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArrayDevice, __global int *intMaxVertexArrayDevice)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -67,10 +67,22 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     if (maxVertexArray[nid]>=0)
                     {
                         // ... and the incoming cost is higher than the previously seen...
-                        if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
-                            // ... then update the maximum cost to the incoming.
-                            maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
-                        }
+                        float candidateCost = costArray[tid] + weightArray[eid];
+                        int candidateMilliCostInt;
+                        if (candidateCost*PRECISION < INT_MAX)
+                            candidateMilliCostInt = (int)((candidateCost*PRECISION)+0.5);
+                        else
+                            candidateMilliCostInt = INT_MAX;
+                        if (updatingCostArray[nid]*PRECISION < INT_MAX)
+                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*PRECISION)+0.5);
+                        else
+                            intUpdateCostArrayDevice[nid] = INT_MAX;
+                        atomic_max(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        maxVertexArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+
+                        //if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
+                            //maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                        //}
                         // If all parents have been visited ...
                         if (parentCountArray[nid]==0) {
                             // ... update the cost to the highest of all encountered.
