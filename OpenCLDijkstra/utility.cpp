@@ -89,6 +89,58 @@ void printMaskArray(int *maskArrayHost, int totalVertexCount) {
     printf("\n");
 }
 
+void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, int iVertex) {
+    
+    int errNum = 0;
+    cl_event readDone;
+    
+    int totalVertexCount = graph->graphCount * graph->vertexCount;
+    int totalEdgeCount = graph->graphCount * graph->edgeCount;
+    
+    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
+    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    int *parentCountArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    
+    
+    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, parentCountArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, maskArrayHost, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+    
+    for (int tid = 0; tid < totalVertexCount; tid++) {
+        if (tid == iVertex || iVertex == -1) {
+            printf("Node %i: Mask: %i, Cost: %.2f, updatingCost: %.2f, max: %.2f, parentCount: %i.\n", tid, maskArrayHost[tid], costArrayHost[tid], updatingCostArrayHost[tid], maxVertexArrayHost[tid], parentCountArrayHost[tid]);
+            
+            int edgeStart = graph->vertexArray[tid];
+            int edgeEnd;
+            if (tid + 1 < (graph->vertexCount))
+            {
+                edgeEnd = graph->vertexArray[tid + 1];
+            }
+            else
+            {
+                edgeEnd = graph->edgeCount;
+            }
+            for(int edge = edgeStart; edge < edgeEnd; edge++)
+            {
+                int nid = graph->edgeArray[edge];
+                printf("Influences node %i through edge %i by weight %.2f.\n", nid, edge, graph->weightArray[edge]);
+            }
+        }
+    }
+}
 
 void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *maskArrayHost, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
     
@@ -141,7 +193,7 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
                     int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
                     int eid = iGraph*graph->edgeCount + edge;
                     
-                    printf("Node %i (of cost %.2f) updated node %i (of cost %.2f, of max %.2f with %i remaining parents) by edge %i with weight %.2f\n", tid, costArrayHost[tid], nid, costArrayHost[nid], maxVertexArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid]);
+                    printf("Node %i (of cost %.2f and updatingCost %.2f) updated node %i (of max %.2f with %i remaining parents) by edge %i with weight %.2f. Node %i now has cost %.2f and updatingCost %.2f.\n", tid, costArrayHost[tid], updatingCostArrayHost[tid], nid, maxVertexArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid], nid, costArrayHost[nid], updatingCostArrayHost[nid]);
                     
                     if (maxVertexArrayHost[nid]>=0)
                     {
@@ -151,7 +203,6 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
                             printf("All parents visited. Set updatingCostArray[nid] (%.2f) to maxVertexArray[nid] (%.2f).\n", updatingCostArrayHost[nid], maxVertexArrayHost[nid]);
                         }
                     }
-                    
                 }
             }
         }
@@ -277,12 +328,150 @@ void printSolution(float *dist, int n)
 }
 
 void compareToCPUComputation(GraphData *graph) {
-float *dist = dijkstra(graph);
-for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
-    if (dist[iVertex]!=graph->costArray[iVertex]) {
-        printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);
+    float *dist = dijkstra(graph);
+    for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+        if (dist[iVertex]!=graph->costArray[iVertex]) {
+            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);
+        }
     }
 }
+
+void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *traversedEdgeCountArrayDevice) {
+    
+    int errNum = 0;
+    cl_event readDone;
+    
+    int totalVertexCount = graphCount*vertexCount;
+    int totalEdgeCount = graphCount*edgeCount;
+    
+    int *vertexArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *inverseVertexArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *edgeArray = (int*) malloc(sizeof(int) * totalEdgeCount);
+    float *weightArray = (float*) malloc(sizeof(float) * totalEdgeCount);
+    float *inverseWeightArray = (float*) malloc(sizeof(float) * totalEdgeCount);
+    int *inverseEdgeArray = (int*) malloc(sizeof(int) * totalEdgeCount);
+    float *costArray = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *updatingCostArray = (float*) malloc(sizeof(float) * totalVertexCount);
+    float *maxVertexArray = (float*) malloc(sizeof(float) * totalVertexCount);
+    int *parentCountArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *maskArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *traversedEdgeCountArray = (int*) malloc(sizeof(int) * totalEdgeCount);
+    
+    
+    errNum = clEnqueueReadBuffer(*commandQueue, *vertexArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, vertexArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseVertexArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, inverseVertexArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *edgeArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, edgeArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseEdgeArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, inverseEdgeArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseWeightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, inverseWeightArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, parentCountArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *traversedEdgeCountArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, traversedEdgeCountArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
+    
+    printf("\n\n\nIn the shadow\n\n");
+    for (int tid = 0; tid < totalVertexCount; tid++) {
+        
+        int iGraph = tid / vertexCount;
+        int localTid = tid % vertexCount;
+        
+        // Only consider vertices that are marked for update
+        if ( maskArray[tid] != 0 ) {
+            // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
+            maskArray[tid] = 0;
+            // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
+            if (maxVertexArray[tid]<0 || parentCountArray[tid]==0) {
+                {
+                    // Get the edges
+                    int edgeStart = vertexArray[localTid];
+                    int edgeEnd;
+                    if (localTid + 1 < (vertexCount))
+                    {
+                        edgeEnd = vertexArray[localTid + 1];
+                    }
+                    else
+                    {
+                        edgeEnd = edgeCount;
+                    }
+                    // Iterate over the edges
+                    for(int edge = edgeStart; edge < edgeEnd; edge++)
+                    {
+                        // nid is the (globally indexed) target node
+                        int nid = iGraph*vertexCount + edgeArray[edge];
+                        // eid is the globbally indexed edge
+                        int eid = iGraph*edgeCount + edge;
+                        
+                        // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
+                        if (traversedEdgeCountArray[eid] == 0) {
+                            parentCountArray[nid]--;
+                        }
+                        // Mark that this edge has been traversed.
+                        traversedEdgeCountArray[eid] ++;
+                        
+                        // If this is a min node and the incoming coming cost is lower than the previously seen...
+                        if (maxVertexArray[nid]<0 && (updatingCostArray[nid] > (costArray[tid] + weightArray[eid])))
+                        {
+                            // ... then update the cost of the temporary variable updatingCost.
+                            updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
+                        }
+                        
+                        // If this is a max node...
+                        if (maxVertexArray[nid]>=0)
+                        {
+                            // ... and the incoming cost is higher than the previously seen...
+                            if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
+                                // ... then update the maximum cost to the incoming.
+                                maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
+                            }
+                            // If all parents have been visited ...
+                            if (parentCountArray[nid]==0) {
+                                // ... update the cost to the highest of all encountered.
+                                updatingCostArray[nid] = maxVertexArray[nid];
+                                // Get the edges
+                                int inverseEdgeStart = inverseVertexArray[nid];
+                                int inverseEdgeEnd;
+                                if (nid + 1 < (vertexCount))
+                                {
+                                    inverseEdgeEnd = inverseVertexArray[nid + 1];
+                                }
+                                else
+                                {
+                                    inverseEdgeEnd = edgeCount;
+                                }
+                                // Iterate over the edges
+                                float maxEdgeVal = 0;
+                                for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                                    float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                    if (currEdgeVal>maxEdgeVal) {
+                                        maxEdgeVal = currEdgeVal;
+                                    }
+                                }
+                                
+                                costArray[nid] = maxEdgeVal;
+                                // Mark the target for update
+                                maskArray[nid] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 

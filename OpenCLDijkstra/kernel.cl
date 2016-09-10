@@ -43,7 +43,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     traversedEdgeCountArray[eid] ++;
                     
                     // If this is a min node and the incoming coming cost is lower than the previously seen...
-                    if (maxVertexArray[nid]<0 && updatingCostArray[nid] > (costArray[tid] + weightArray[eid]))
+                    if (maxVertexArray[nid]<0 && (updatingCostArray[nid] > (costArray[tid] + weightArray[eid])))
                     {
                         // ... then update the cost of the temporary variable updatingCost.
                         updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
