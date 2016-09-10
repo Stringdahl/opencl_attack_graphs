@@ -390,7 +390,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
         int iGraph = tid / vertexCount;
         int localTid = tid % vertexCount;
         
-        printf("tid = %i, iGraph = %i, localTid = %i, maskArray[tid] = %i.\n", tid, iGraph, localTid, maskArray[tid]);
+        //printf("tid = %i, iGraph = %i, localTid = %i, maskArray[tid] = %i.\n", tid, iGraph, localTid, maskArray[tid]);
         // Only consider vertices that are marked for update
         if ( maskArray[tid] != 0 ) {
             // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
