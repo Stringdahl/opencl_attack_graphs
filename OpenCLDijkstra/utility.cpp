@@ -428,10 +428,21 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                         printf("Target is %i over edge %i, which has now been traversed %i times. Target now has %i remaining parents.\n", nid, eid, traversedEdgeCountArray[eid], parentCountArray[nid]);
                         // If this is a min node and the incoming coming cost is lower than the previously seen...
                         printf("maxVertexArray[%i]=%.2f, updatingCostArray[%i]=%.2f, costArray[%i] = %.2f, weightArray[%i] = %.2f.\n", nid, maxVertexArray[nid], nid, updatingCostArray[nid], tid, costArray[tid], eid, weightArray[eid]);
-                        if (maxVertexArray[nid]<0 && (updatingCostArray[nid] > (costArray[tid] + weightArray[eid])))
-                        {
-                            // ... then update the cost of the temporary variable updatingCost.
-                            updatingCostArray[nid] = (costArray[tid] + weightArray[eid]);
+                        if (maxVertexArray[nid]<0) {
+                            float candidateCost = costArray[tid] + weightArray[eid];
+                            int candidateMilliCostInt;
+                            if (candidateCost*1000 < INT_MAX)
+                                candidateMilliCostInt = (int)((candidateCost*1000)+0.5);
+                            else
+                                candidateMilliCostInt = INT_MAX;
+                            int *updatingMilliCostInt;
+                            if (updatingCostArray[nid]*1000 < INT_MAX)
+                                *updatingMilliCostInt = (int)((updatingCostArray[nid]*1000)+0.5);
+                            else
+                                *updatingMilliCostInt = INT_MAX;
+                            printf("candidateCost = %.2f, candidateMilliCostInt = %i, updatingCostArray[nid] = %.2f, *updatingMilliCostInt = %i\n", candidateCost, candidateMilliCostInt, updatingCostArray[nid], *updatingMilliCostInt);
+                            *updatingMilliCostInt=fminf((float)(*updatingMilliCostInt), (float)candidateMilliCostInt);
+                            updatingCostArray[nid] = (float)(*updatingMilliCostInt)/1000;
                             printf("Updating updatingCostArray[%i] to %.2f\n", nid, updatingCostArray[nid]);
                         }
                         

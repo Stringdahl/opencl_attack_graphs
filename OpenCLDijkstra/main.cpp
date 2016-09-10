@@ -580,7 +580,7 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %f milliseconds.\n", diff);
     
-    //compareToCPUComputation(&graph);
+    compareToCPUComputation(&graph);
     
     // Shutdown and cleanup
     //

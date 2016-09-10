@@ -11,6 +11,7 @@
 #include <OpenCL/opencl.h>
 #include <stdio.h>
 #include "graph.hpp"
+#include <math.h>
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 
