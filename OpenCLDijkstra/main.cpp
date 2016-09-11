@@ -481,7 +481,7 @@ int main(int argc, char** argv)
 
     int nVertices =10000;
     int nEdgePerVertice = 2;
-    int nGraphs = 1;
+    int nGraphs = 250;
     float probOfMax = 0.001;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
@@ -566,14 +566,14 @@ int main(int argc, char** argv)
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
     
-    float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
     
     // Read back the results from the device to verify the output
     
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph.costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
-    
+    float diff = ((float)(clock() - startTime) / 1000000.0F ) * 1000;
+
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
     //printMathematicaString(&graph, 0);
@@ -584,7 +584,7 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %f milliseconds.\n", diff);
     
-    compareToCPUComputation(&graph);
+    //compareToCPUComputation(&graph);
     
     // Shutdown and cleanup
     //
