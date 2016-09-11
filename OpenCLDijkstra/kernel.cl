@@ -1,4 +1,13 @@
-#define PRECISION 10000
+#define PRECISION 1000
+
+
+int getMilliInteger(float floatValue) {
+    if (floatValue*PRECISION < INT_MAX)
+        return (int)((floatValue*PRECISION)+0.5);
+    else
+        return INT_MAX;
+
+}
 
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
@@ -34,7 +43,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                 {
                     // nid is the (globally indexed) target node
                     int nid = iGraph*vertexCount + edgeArray[edge];
-                    // eid is the globbally indexed edge
+                    // eid is the globally indexed edge
                     int eid = iGraph*edgeCount + edge;
                     
                     // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
@@ -43,42 +52,29 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     }
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[eid] ++;
-                    
-                    // If this is a min node and the incoming coming cost is lower than the previously seen...
+                    // Convert candidate cost and current updateingCost to integers, because atomic_min() doesn't work for floats.
+                    int candidateMilliCostInt = getMilliInteger(costArray[tid] + weightArray[eid]);
+                    intUpdateCostArrayDevice[nid] = getMilliInteger(updatingCostArray[nid]);
+                    // If this is a min node ...
                     if (maxVertexArray[nid]<0) {
-                        float candidateCost = costArray[tid] + weightArray[eid];
-                        int candidateMilliCostInt;
-                        if (candidateCost*PRECISION < INT_MAX)
-                            candidateMilliCostInt = (int)((candidateCost*PRECISION)+0.5);
-                        else
-                            candidateMilliCostInt = INT_MAX;
-                        if (updatingCostArray[nid]*PRECISION < INT_MAX)
-                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*PRECISION)+0.5);
-                        else
-                            intUpdateCostArrayDevice[nid] = INT_MAX;
+                        // ...atomically choose the lesser of the current and candidate updatingCost
                         atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        // Reconvert the integer representation to float and store in updatingCostArray
                         updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
-                        
-                        //                            if (updatingCostArray[nid] > candidateCost)
-                        //                                updatingCostArray[nid] = candidateCost;
                     }
                     
                     // If this is a max node...
                     if (maxVertexArray[nid]>=0)
                     {
-                        // ... and the incoming cost is higher than the previously seen...
-                        float candidateCost = costArray[tid] + weightArray[eid];
-                        int candidateMilliCostInt;
-                        if (candidateCost*PRECISION < INT_MAX)
-                            candidateMilliCostInt = (int)((candidateCost*PRECISION)+0.5);
-                        else
-                            candidateMilliCostInt = INT_MAX;
-                        if (updatingCostArray[nid]*PRECISION < INT_MAX)
-                            intUpdateCostArrayDevice[nid] = (int)((updatingCostArray[nid]*PRECISION)+0.5);
-                        else
-                            intUpdateCostArrayDevice[nid] = INT_MAX;
-                        atomic_max(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
-                        maxVertexArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+                        // ...atomically choose the greater of the current and candidate updatingCost
+                        //atomic_max(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        
+                        
+                        //But maxVertexArray isn't used!!!
+                        
+                        
+                        // Reconvert the integer representation to float and store in maxVertexArray
+                        //maxVertexArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
 
                         //if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
                             //maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
@@ -86,7 +82,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         // If all parents have been visited ...
                         if (parentCountArray[nid]==0) {
                             // ... update the cost to the highest of all encountered.
-                            updatingCostArray[nid] = maxVertexArray[nid];
+                            //updatingCostArray[nid] = maxVertexArray[nid];
                             // Get the edges
                             int inverseEdgeStart = inverseVertexArray[nid];
                             int inverseEdgeEnd;
@@ -108,6 +104,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             }
                             
                             costArray[nid] = maxEdgeVal;
+                            updatingCostArray[nid] = maxEdgeVal;
                             // Mark the target for update
                             maskArray[nid] = 1;
                         }
@@ -171,3 +168,14 @@ __kernel void initializeBuffers( __global int *maskArray,
         updatingCostArray[tid] = FLT_MAX;
     }
 }
+
+__kernel void DIALS_KERNEL(__global int *vertexArray, __global int *edgeArray, __global float *weightArray,
+                           __global float *costArray, int vertexCount, __global float *maxVertexArray)
+{
+    // access thread id
+    int tid = get_global_id(0);
+    
+
+}
+    
+

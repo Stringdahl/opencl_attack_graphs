@@ -479,7 +479,7 @@ int main(int argc, char** argv)
     cl_mem intUpdateCostArrayDevice;
     cl_mem intMaxVertexArrayDevice;
 
-    int nVertices =150;
+    int nVertices =10000;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     float probOfMax = 0.1;
@@ -555,7 +555,7 @@ int main(int argc, char** argv)
         //}
         
         //printf("After Kernel2\n");
-        printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        //printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
         
@@ -572,10 +572,11 @@ int main(int argc, char** argv)
     
     errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph.costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
+    clWaitForEvents(1, &readDone);
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
-    printMathematicaString(&graph, 0);
+    //printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
     //printParents(&graph);
