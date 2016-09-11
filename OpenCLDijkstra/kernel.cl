@@ -6,7 +6,14 @@ int getMilliInteger(float floatValue) {
         return (int)((floatValue*PRECISION)+0.5);
     else
         return INT_MAX;
+    
+}
 
+int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edgeCount) {
+    if (iVertex + 1 < (vertexCount))
+        return vertexArray[iVertex + 1];
+    else
+        return edgeCount;
 }
 
 ///
@@ -29,15 +36,8 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
             {
                 // Get the edges
                 int edgeStart = vertexArray[localTid];
-                int edgeEnd;
-                if (localTid + 1 < (vertexCount))
-                {
-                    edgeEnd = vertexArray[localTid + 1];
-                }
-                else
-                {
-                    edgeEnd = edgeCount;
-                }
+                int edgeEnd = getEdgeEnd(localTid, vertexCount, vertexArray, edgeCount);
+                
                 // Iterate over the edges
                 for(int edge = edgeStart; edge < edgeEnd; edge++)
                 {
@@ -66,54 +66,29 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     // If this is a max node...
                     if (maxVertexArray[nid]>=0)
                     {
-                        // ...atomically choose the greater of the current and candidate updatingCost
-                        //atomic_max(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
-                        
-                        
-                        //But maxVertexArray isn't used!!!
-                        
-                        
-                        // Reconvert the integer representation to float and store in maxVertexArray
-                        //maxVertexArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
-
-                        //if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
-                            //maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
-                        //}
                         // If all parents have been visited ...
-                        if (parentCountArray[nid]==0) {
-                            // ... update the cost to the highest of all encountered.
-                            //updatingCostArray[nid] = maxVertexArray[nid];
-                            // Get the edges
-                            int inverseEdgeStart = inverseVertexArray[nid];
-                            int inverseEdgeEnd;
-                            if (nid + 1 < (vertexCount))
-                            {
-                                inverseEdgeEnd = inverseVertexArray[nid + 1];
+                        int inverseEdgeStart = inverseVertexArray[nid];
+                        int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
+                        // Iterate over the edges
+                        float maxEdgeVal = 0;
+                        for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                            float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                            if (currEdgeVal>maxEdgeVal) {
+                                maxEdgeVal = currEdgeVal;
                             }
-                            else
-                            {
-                                inverseEdgeEnd = edgeCount;
-                            }
-                            // Iterate over the edges
-                            float maxEdgeVal = 0;
-                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
-                                if (currEdgeVal>maxEdgeVal) {
-                                    maxEdgeVal = currEdgeVal;
-                                }
-                            }
-                            
-                            costArray[nid] = maxEdgeVal;
-                            updatingCostArray[nid] = maxEdgeVal;
-                            // Mark the target for update
-                            maskArray[nid] = 1;
                         }
+                        
+                        costArray[nid] = maxEdgeVal;
+                        updatingCostArray[nid] = maxEdgeVal;
+                        // Mark the target for update
+                        maskArray[nid] = 1;
                     }
                 }
             }
         }
     }
 }
+
 
 ///
 /// This is part 2 of the Kernel from Algorithm 5 in the paper.
@@ -175,7 +150,7 @@ __kernel void DIALS_KERNEL(__global int *vertexArray, __global int *edgeArray, _
     // access thread id
     int tid = get_global_id(0);
     
-
-}
     
+}
+
 

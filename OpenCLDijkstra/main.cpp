@@ -479,7 +479,7 @@ int main(int argc, char** argv)
     cl_mem intUpdateCostArrayDevice;
     cl_mem intMaxVertexArrayDevice;
 
-    int nVertices =10000;
+    int nVertices =500;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
     float probOfMax = 0.1;
