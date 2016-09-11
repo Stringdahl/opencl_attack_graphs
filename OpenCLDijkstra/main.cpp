@@ -482,7 +482,7 @@ int main(int argc, char** argv)
     int nVertices =500;
     int nEdgePerVertice = 2;
     int nGraphs = 1;
-    float probOfMax = 0.1;
+    float probOfMax = 0.001;
     
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
     
