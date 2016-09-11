@@ -330,9 +330,13 @@ void printSolution(float *dist, int n)
 void compareToCPUComputation(GraphData *graph) {
     int iGraph = 0;
     float *dist = dijkstra(graph, iGraph);
+    printf("Checking correctness against sequential implementation.\n");
+    //printf("Source is %i.\n", graph->sourceArray[iGraph]);
     for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
-        if (dist[iVertex]-graph->costArray[iVertex]>0.01 || graph->costArray[iVertex]-dist[iVertex]>0.01) {
-            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);
+        //printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
+        
+        if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
+            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
         }
     }
 }

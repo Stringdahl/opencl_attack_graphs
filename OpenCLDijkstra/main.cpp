@@ -101,6 +101,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * totalEdgeCount, graph->weightArray, &errNum);
+        
     checkError(errNum, CL_SUCCESS);
     hostInverseWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                   sizeof(float) * totalEdgeCount, graph->inverseWeightArray, &errNum);
@@ -606,10 +607,10 @@ int main(int argc, char** argv)
 {
     GraphData graph;
 
-    int nVertices =2000;
+    int nVertices =100;
     int nEdgePerVertice = 2;
-    int nGraphs = 1;
-    float probOfMax = 0.001;
+    int nGraphs = 9;
+    float probOfMax = 0.1;
     
     clock_t start_time = clock();
     printf("Starting clock.\n");

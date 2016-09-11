@@ -55,12 +55,8 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     // Convert candidate cost and current updateingCost to integers, because atomic_min() doesn't work for floats.
                     int candidateMilliCostInt = getMilliInteger(costArray[tid] + weightArray[eid]);
                     intUpdateCostArrayDevice[nid] = getMilliInteger(updatingCostArray[nid]);
+
                     // If this is a min node ...
-                    
-                    
-                    // Något är fel här:
-                    
-                    
                     int inverseEdgeStart = inverseVertexArray[nid];
                     int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
                     if (maxVertexArray[nid]<0) {

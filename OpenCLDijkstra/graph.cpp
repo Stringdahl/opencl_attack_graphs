@@ -32,21 +32,21 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
 ///
 //  Generate a random graph
 //
-void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax)
+void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, float probOfMax)
 {
-    graph->vertexCount = numVertices;
-    graph->graphCount = numGraphs;
+    graph->vertexCount = vertexCount;
+    graph->graphCount = graphCount;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->costArray = (float*) malloc(numGraphs * graph->vertexCount * sizeof(float));
+    graph->costArray = (float*) malloc(graphCount * graph->vertexCount * sizeof(float));
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
-    graph->edgeCount = numVertices * neighborsPerVertex;
+    graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->weightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
-    graph->inverseWeightArray = (float*)malloc(numGraphs * graph->edgeCount * sizeof(float));
+    graph->weightArray = (float*)malloc(graphCount * graph->edgeCount * sizeof(float));
+    graph->inverseWeightArray = (float*)malloc(graphCount * graph->edgeCount * sizeof(float));
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
@@ -67,11 +67,11 @@ void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVert
         graph->parentCountArray[targetVertex]++;
         
     }
-    for(int i = 0; i < numGraphs * graph->edgeCount; i++)
+    for(int i = 0; i < graphCount * graph->edgeCount; i++)
     {
         graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
     }
-    for(int i = 0; i < numGraphs; i++)
+    for(int i = 0; i < graphCount; i++)
     {
         graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
     }
@@ -153,6 +153,7 @@ float* dijkstra(GraphData *graph, int iGraph){
     int *vertexArray = (int*)malloc(vertexCount * sizeof(int));
     int *parentCountArray = (int*)malloc(vertexCount * sizeof(int));
     float *maxVertexArray = (float*)malloc(vertexCount * sizeof(float));
+    
     for (int iVertex=0; iVertex<vertexCount; iVertex++) {
         vertexArray[iVertex]=graph->vertexArray[iVertex];
         parentCountArray[iVertex]=graph->parentCountArray[iVertex];
@@ -162,6 +163,7 @@ float* dijkstra(GraphData *graph, int iGraph){
     int *edgeArray = (int*)malloc(edgeCount * sizeof(int));
     float *weightArray = (float*)malloc(edgeCount * sizeof(float));
     int *traversedEdgeCountArray = (int*)malloc(edgeCount * sizeof(int));
+    
     for (int iEdge=0; iEdge<edgeCount; iEdge++) {
         edgeArray[iEdge] = graph->edgeArray[iEdge];
         weightArray[iEdge] = graph->weightArray[iGraph*edgeCount + iEdge];
@@ -175,6 +177,7 @@ float* dijkstra(GraphData *graph, int iGraph){
     
     // Distance of source vertex from itself is always 0
     dist[sourceVertex] = 0;
+    printf("SOurceVertex = %i.\n", sourceVertex);
     
     // Find shortest path for all vertices
     while (atLeastOneUnprocessedIsFinite(sptSet, vertexCount, dist))
