@@ -407,8 +407,7 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*initializeKernel, 1, sizeof(cl_mem), costArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 2, sizeof(cl_mem), updatingCostArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 3, sizeof(int), &vertexCount);
-    errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(int), &graphCount);
-    errNum |= clSetKernelArg(*initializeKernel, 5, sizeof(cl_mem), sourceArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(cl_mem), sourceArrayDevice);
     
     // Set the arguments to ssspKernel1
     errNum |= clSetKernelArg(*ssspKernel1, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -563,8 +562,8 @@ void calculateGraphs(GraphData *graph) {
         
         //}
         
-        //printf("After Kernel2\n");
-        //printAfterUpdating(&graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+        printf("After Kernel2\n");
+        printAfterUpdating(graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
         
@@ -583,14 +582,6 @@ void calculateGraphs(GraphData *graph) {
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
-    //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
-    //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
-    //printMathematicaString(&graph, 0);
-    //printGraph(&graph);
-    //printInverseGraph(&graph);
-    //printParents(&graph);
-    //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
-    
     printf("Completed calculations in %.2f (kernel 1) + %.2f (kernel 2) = %.2f milliseconds.\n", elapsedKernel1/1000000, elapsedKernel2/1000000, (elapsedKernel1 + elapsedKernel2)/1000000);
     
     // Shutdown and cleanup
@@ -603,13 +594,22 @@ void calculateGraphs(GraphData *graph) {
 
 
 
+
+
+// 1: Race condition
+// 2: Multiple graphs don't calculate properly
+
+
+
+
+
 int main(int argc, char** argv)
 {
     GraphData graph;
 
-    int nVertices =100;
+    int nVertices =9;
     int nEdgePerVertice = 2;
-    int nGraphs = 9;
+    int nGraphs = 3;
     float probOfMax = 0.1;
     
     clock_t start_time = clock();
@@ -623,6 +623,14 @@ int main(int argc, char** argv)
     printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
 
     compareToCPUComputation(&graph);
+
+    //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
+    //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
+    printMathematicaString(&graph, 0);
+    //printGraph(&graph);
+    //printInverseGraph(&graph);
+    //printParents(&graph);
+    //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
 
     return 0;
 }

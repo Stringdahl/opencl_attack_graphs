@@ -132,19 +132,15 @@ __kernel void initializeBuffers( __global int *maskArray,
                                 __global float *costArray,
                                 __global float *updatingCostArray,
                                 int vertexCount,
-                                int nSourceVertices,
                                 __global int *sourceArray)
 {
     // access thread id
     int tid = get_global_id(0);
-    bool isSource = false;
-    
-    for (int i = 0; i < nSourceVertices; i++) {
-        if (sourceArray[i] == tid) {
-            isSource = true;
-        }
-    }
-    if (isSource)
+    int iGraph = tid / vertexCount;
+    int localTid = tid % vertexCount;
+
+
+    if (localTid == sourceArray[iGraph])
     {
         maskArray[tid] = 1;
         costArray[tid] = 0.0;

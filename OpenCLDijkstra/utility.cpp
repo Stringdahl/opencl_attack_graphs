@@ -169,6 +169,7 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
+    printf("%i vertices.\n", totalVertexCount);
     for (int tid = 0; tid < totalVertexCount; tid++) {
         if ( maskArrayHost[tid] != 0 ) {
             printf("Vertex %i, (max: %.2f, %i remaining parents) is considered for updating.\n", tid, maxVertexArrayHost[tid], parentCountArrayHost[tid]);
@@ -259,7 +260,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
         int globalVertex = iGraph*graph->vertexCount + vertex;
-        if (contains(graph->sourceArray, graph->graphCount, globalVertex)) {
+        if (graph->sourceArray[iGraph]==vertex) {
             sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
         }
         else {
@@ -331,7 +332,7 @@ void compareToCPUComputation(GraphData *graph) {
     int iGraph = 0;
     float *dist = dijkstra(graph, iGraph);
     printf("Checking correctness against sequential implementation.\n");
-    //printf("Source is %i.\n", graph->sourceArray[iGraph]);
+    printf("Source is %i.\n", graph->sourceArray[iGraph]);
     for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
         //printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
         

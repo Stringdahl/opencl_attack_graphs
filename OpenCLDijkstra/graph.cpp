@@ -73,7 +73,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     }
     for(int i = 0; i < graphCount; i++)
     {
-        graph->sourceArray[i] = (graph->vertexCount*i + rand() % graph->vertexCount);
+        graph->sourceArray[i] = (rand() % graph->vertexCount);
     }
     
     int iEdge = 0;
@@ -177,7 +177,7 @@ float* dijkstra(GraphData *graph, int iGraph){
     
     // Distance of source vertex from itself is always 0
     dist[sourceVertex] = 0;
-    printf("SOurceVertex = %i.\n", sourceVertex);
+    printf("Source vertex = %i.\n", sourceVertex);
     
     // Find shortest path for all vertices
     while (atLeastOneUnprocessedIsFinite(sptSet, vertexCount, dist))
@@ -186,7 +186,7 @@ float* dijkstra(GraphData *graph, int iGraph){
         // Pick the minimum distance vertex from the set of vertices not
         // yet processed. u is always equal to src in first iteration.
         int source = minDistance(dist, sptSet, vertexCount);
-        //printf("Node %i (of cost %.2f) ...", source, dist[source]);
+        printf("Node %i (of cost %.2f) ...", source, dist[source]);
         if (maxVertexArray[source]<0 || parentCountArray[source]==0) {
             // Mark the picked vertex as processed
             sptSet[source] = true;
@@ -217,35 +217,35 @@ float* dijkstra(GraphData *graph, int iGraph){
                     if (maxVertexArray[target]<0) {
                         if (!sptSet[target]) {
                             
-                            //printf(" looking at min node %i (with %i remainaing parents) by edge with weight %.2f.", target, parentCountArray[target], graph->weightArray[edge]);
+                            printf(" looking at min node %i (with %i remainaing parents) by edge with weight %.2f.", target, parentCountArray[target], graph->weightArray[edge]);
                             
                             if (dist[source]+weightArray[edge] < dist[target]) {
-                                //printf(".. updated from %.2f ", dist[target]);
+                                printf(".. updated from %.2f ", dist[target]);
                                 dist[target] = dist[source] + weightArray[edge];
-                                //printf("to %.2f", dist[target]);
+                                printf("to %.2f", dist[target]);
                             }
-                            //printf("\n");
+                            printf("\n");
                         }
                     }
                     
                     // If max node
                     else {
-                        //printf(" looking at max node %i (with %i remainaing parents, max: %.2f) by edge with weight %.2f.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
+                        printf(" looking at max node %i (with %i remainaing parents, max: %.2f) by edge with weight %.2f.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
                         if (maxVertexArray[target] < dist[source]+weightArray[edge]) {
                             maxVertexArray[target] = dist[source]+weightArray[edge];
                         }
                         if (parentCountArray[target]==0) {
-                            //printf(".. updated from %.2f ", dist[target]);
+                            printf(".. updated from %.2f ", dist[target]);
                             dist[target] = maxVertexArray[target];
-                            //printf("to %.2f", dist[target]);
+                            printf("to %.2f", dist[target]);
                         }
-                        //printf("\n");
+                        printf("\n");
                     }
                 }
             }
             
         }
-        //printf("\n");
+        printf("\n");
 
     }
     return dist;
