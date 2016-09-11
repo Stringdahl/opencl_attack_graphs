@@ -66,6 +66,6 @@ typedef struct
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax);
-float* dijkstra(GraphData *graph);
+float* dijkstra(GraphData *graph, int iGraph);
 
 #endif /* graph_hpp */

@@ -444,13 +444,10 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     return errNum;
 }
 
-
-
-int main(int argc, char** argv)
-{
-    int errNum;                            // error code returned from api calls
-    GraphData graph;
+void calculateGraphs(GraphData *graph) {
     
+    
+    int errNum;                            // error code returned from api calls
     size_t global;                      // global domain size for our calculation
     
     cl_device_id device_id;             // compute device id
@@ -482,17 +479,10 @@ int main(int argc, char** argv)
     
     double elapsedKernel1, elapsedKernel2 = 0;
     cl_ulong time_start_kernel1, time_end_kernel1, time_start_kernel2, time_end_kernel2;
-
-    int nVertices =100000;
-    int nEdgePerVertice = 2;
-    int nGraphs = 250;
-    float probOfMax = 0.001;
-    
-    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
     
     
     
-    int totalVertexCount = graph.graphCount * graph.vertexCount;
+    int totalVertexCount = graph->graphCount * graph->vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
     // printSources(&graph);
@@ -505,10 +495,10 @@ int main(int argc, char** argv)
     createKernels(&initializeKernel, &ssspKernel1, &ssspKernel2, &program);
     
     // Allocate buffers in Device memory
-    allocateOCLBuffers(context, commandQueue, &graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &aggregatedWeightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &intUpdateCostArrayDevice, &intMaxVertexArrayDevice);
+    allocateOCLBuffers(context, commandQueue, graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &aggregatedWeightArrayDevice, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &intUpdateCostArrayDevice, &intMaxVertexArrayDevice);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph.graphCount, graph.vertexCount, graph.edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &aggregatedWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &intUpdateCostArrayDevice, &intMaxVertexArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph->graphCount, graph->vertexCount, graph->edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &aggregatedWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &intUpdateCostArrayDevice, &intMaxVertexArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
@@ -542,19 +532,19 @@ int main(int argc, char** argv)
         //printf("Before Kernel1\n");
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         
-        //shadowKernel1(graph.graphCount, graph.vertexCount, graph.edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice);
+        //shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice);
         
         
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
         checkError(errNum, CL_SUCCESS);
- 
+        
         clWaitForEvents(1, &kernel1event);
         errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel1), &time_start_kernel1, NULL);
         checkError(errNum, CL_SUCCESS);
         errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
         checkError(errNum, CL_SUCCESS);
         elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
-
+        
         
         //printf("After Kernel1\n");
         //dumpBuffers(&graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
@@ -569,7 +559,7 @@ int main(int argc, char** argv)
         errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
         checkError(errNum, CL_SUCCESS);
         elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
-
+        
         //}
         
         //printf("After Kernel2\n");
@@ -580,7 +570,7 @@ int main(int argc, char** argv)
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
         clWaitForEvents(1, &readDone);
-
+        
     }
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
@@ -588,12 +578,12 @@ int main(int argc, char** argv)
     
     // Read back the results from the device to verify the output
     
-    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph.costArray, 0, NULL, NULL );
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph->costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
-
+    
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
-    //printCostOfRandomVertices(graph.costArray, 30, totalVertexCount);
+    //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
     //printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
@@ -602,15 +592,37 @@ int main(int argc, char** argv)
     
     printf("Completed calculations in %.2f (kernel 1) + %.2f (kernel 2) = %.2f milliseconds.\n", elapsedKernel1/1000000, elapsedKernel2/1000000, (elapsedKernel1 + elapsedKernel2)/1000000);
     
-    //compareToCPUComputation(&graph);
-    
     // Shutdown and cleanup
     //
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
     clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
+}
+
+
+
+int main(int argc, char** argv)
+{
+    GraphData graph;
+
+    int nVertices =2000;
+    int nEdgePerVertice = 2;
+    int nGraphs = 1;
+    float probOfMax = 0.001;
     
+    clock_t start_time = clock();
+    printf("Starting clock.\n");
+    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
+    printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+    
+    start_time = clock();
+    printf("Starting clock.\n");
+    calculateGraphs(&graph);
+    printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+
+    compareToCPUComputation(&graph);
+
     return 0;
 }
 

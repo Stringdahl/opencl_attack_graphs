@@ -328,7 +328,8 @@ void printSolution(float *dist, int n)
 }
 
 void compareToCPUComputation(GraphData *graph) {
-    float *dist = dijkstra(graph);
+    int iGraph = 0;
+    float *dist = dijkstra(graph, iGraph);
     for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
         if (dist[iVertex]-graph->costArray[iVertex]>0.01 || graph->costArray[iVertex]-dist[iVertex]>0.01) {
             printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iVertex]);

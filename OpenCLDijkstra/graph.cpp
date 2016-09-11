@@ -139,65 +139,70 @@ bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, float *dist) {
 
 // Funtion that implements Dijkstra's single source shortest path algorithm
 // for a graph represented using adjacency matrix representation
-float* dijkstra(GraphData *graph){
+float* dijkstra(GraphData *graph, int iGraph){
     float *dist = (float*) malloc(sizeof(float) * graph->vertexCount);     // The output array.  dist[i] will hold the shortest
     // distance from src to i
     bool *sptSet = (bool*) malloc(sizeof(bool) * graph->vertexCount); // sptSet[i] will true if vertex i is included in shortest
     // path tree or shortest distance from src to i is finalized
     
-    // Initially, no edges have been travelled
-    int *traversedEdgeCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    for (int iEdge=0; iEdge<graph->edgeCount; iEdge++) {
-        traversedEdgeCountArray[iEdge]=0;
-    }
+    int vertexCount = graph->vertexCount;
+    int edgeCount = graph->edgeCount;
+    int sourceVertex = graph->sourceArray[iGraph];
     
-    // Copy parentCount from graph
-    int *parentCountArray = (int*)malloc(graph->vertexCount * sizeof(int));
-    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
+    // Copy the appropriate graph from GraphData
+    int *vertexArray = (int*)malloc(vertexCount * sizeof(int));
+    int *parentCountArray = (int*)malloc(vertexCount * sizeof(int));
+    float *maxVertexArray = (float*)malloc(vertexCount * sizeof(float));
+    for (int iVertex=0; iVertex<vertexCount; iVertex++) {
+        vertexArray[iVertex]=graph->vertexArray[iVertex];
         parentCountArray[iVertex]=graph->parentCountArray[iVertex];
+        maxVertexArray[iVertex]=graph->maxVertexArray[iVertex];
     }
     
-    // Copy maxVertex from graph
-    float *maxVertexArray = (float*)malloc(graph->vertexCount * sizeof(float));
-    for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
-        maxVertexArray[iVertex]=graph->maxVertexArray[iVertex];
+    int *edgeArray = (int*)malloc(edgeCount * sizeof(int));
+    float *weightArray = (float*)malloc(edgeCount * sizeof(float));
+    int *traversedEdgeCountArray = (int*)malloc(edgeCount * sizeof(int));
+    for (int iEdge=0; iEdge<edgeCount; iEdge++) {
+        edgeArray[iEdge] = graph->edgeArray[iEdge];
+        weightArray[iEdge] = graph->weightArray[iGraph*edgeCount + iEdge];
+        traversedEdgeCountArray[iEdge]=0;
     }
     
     
     // Initialize all distances as INFINITE and stpSet[] as false
-    for (int i = 0; i < graph->vertexCount; i++)
+    for (int i = 0; i < vertexCount; i++)
         dist[i] = FLT_MAX, sptSet[i] = false;
     
     // Distance of source vertex from itself is always 0
-    dist[graph->sourceArray[0]] = 0;
+    dist[sourceVertex] = 0;
     
     // Find shortest path for all vertices
-    while (atLeastOneUnprocessedIsFinite(sptSet, graph->vertexCount, dist))
+    while (atLeastOneUnprocessedIsFinite(sptSet, vertexCount, dist))
     {
         
         // Pick the minimum distance vertex from the set of vertices not
         // yet processed. u is always equal to src in first iteration.
-        int source = minDistance(dist, sptSet, graph->vertexCount);
+        int source = minDistance(dist, sptSet, vertexCount);
         //printf("Node %i (of cost %.2f) ...", source, dist[source]);
         if (maxVertexArray[source]<0 || parentCountArray[source]==0) {
             // Mark the picked vertex as processed
             sptSet[source] = true;
             
             // Get the edges
-            int edgeStart = graph->vertexArray[source];
+            int edgeStart = vertexArray[source];
             int edgeEnd;
-            if (source + 1 < (graph->vertexCount))
+            if (source + 1 < (vertexCount))
             {
-                edgeEnd = graph->vertexArray[source + 1];
+                edgeEnd = vertexArray[source + 1];
             }
             else
             {
-                edgeEnd = graph->edgeCount;
+                edgeEnd = edgeCount;
             }
             // Iterate over the edges
             
             for(int edge = edgeStart; edge < edgeEnd; edge++) {
-                int target = graph->edgeArray[edge];
+                int target = edgeArray[edge];
                 
                 if (traversedEdgeCountArray[edge]==0) {
                     parentCountArray[target]--;
@@ -211,9 +216,9 @@ float* dijkstra(GraphData *graph){
                             
                             //printf(" looking at min node %i (with %i remainaing parents) by edge with weight %.2f.", target, parentCountArray[target], graph->weightArray[edge]);
                             
-                            if (dist[source]+graph->weightArray[edge] < dist[target]) {
+                            if (dist[source]+weightArray[edge] < dist[target]) {
                                 //printf(".. updated from %.2f ", dist[target]);
-                                dist[target] = dist[source] + graph->weightArray[edge];
+                                dist[target] = dist[source] + weightArray[edge];
                                 //printf("to %.2f", dist[target]);
                             }
                             //printf("\n");
@@ -223,8 +228,8 @@ float* dijkstra(GraphData *graph){
                     // If max node
                     else {
                         //printf(" looking at max node %i (with %i remainaing parents, max: %.2f) by edge with weight %.2f.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
-                        if (maxVertexArray[target] < dist[source]+graph->weightArray[edge]) {
-                            maxVertexArray[target] = dist[source]+graph->weightArray[edge];
+                        if (maxVertexArray[target] < dist[source]+weightArray[edge]) {
+                            maxVertexArray[target] = dist[source]+weightArray[edge];
                         }
                         if (parentCountArray[target]==0) {
                             //printf(".. updated from %.2f ", dist[target]);
