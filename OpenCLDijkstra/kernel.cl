@@ -56,32 +56,50 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     int candidateMilliCostInt = getMilliInteger(costArray[tid] + weightArray[eid]);
                     intUpdateCostArrayDevice[nid] = getMilliInteger(updatingCostArray[nid]);
                     // If this is a min node ...
+                    
+                    
+                    // Något är fel här:
+                    
+                    
+                    int inverseEdgeStart = inverseVertexArray[nid];
+                    int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
                     if (maxVertexArray[nid]<0) {
                         // ...atomically choose the lesser of the current and candidate updatingCost
-                        atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
                         // Reconvert the integer representation to float and store in updatingCostArray
-                        updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+                        //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+                        // Iterate over the edges
+                        float minEdgeVal = FLT_MAX;
+                        for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                            float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                            if (currEdgeVal<minEdgeVal) {
+                                minEdgeVal = currEdgeVal;
+                            }
+                        }
+                        updatingCostArray[nid] = minEdgeVal;
+                        // Mark the target for update
+                        //maskArray[nid] = 1;
+
                     }
                     
                     // If this is a max node...
-                    if (maxVertexArray[nid]>=0)
-                    {
-                        // If all parents have been visited ...
-                        int inverseEdgeStart = inverseVertexArray[nid];
-                        int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
-                        // Iterate over the edges
-                        float maxEdgeVal = 0;
-                        for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                            float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
-                            if (currEdgeVal>maxEdgeVal) {
-                                maxEdgeVal = currEdgeVal;
+                    else {
+                        if (parentCountArray[nid]==0) {
+                            // If all parents have been visited ...
+                            // Iterate over the edges
+                            float maxEdgeVal = 0;
+                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                if (currEdgeVal>maxEdgeVal) {
+                                    maxEdgeVal = currEdgeVal;
+                                }
                             }
+                            
+                            costArray[nid] = maxEdgeVal;
+                            updatingCostArray[nid] = maxEdgeVal;
+                            // Mark the target for update
+                            maskArray[nid] = 1;
                         }
-                        
-                        costArray[nid] = maxEdgeVal;
-                        updatingCostArray[nid] = maxEdgeVal;
-                        // Mark the target for update
-                        maskArray[nid] = 1;
                     }
                 }
             }
