@@ -328,14 +328,17 @@ void printSolution(float *dist, int n)
         printf("%d \t\t %.2f\n", i, dist[i]);
 }
 
-void compareToCPUComputation(GraphData *graph) {
+void compareToCPUComputation(GraphData *graph, bool verbose) {
     int iGraph = 0;
-    float *dist = dijkstra(graph, iGraph);
+    float *dist = dijkstra(graph, iGraph, verbose);
     printf("Checking correctness against sequential implementation.\n");
-    printf("Source is %i.\n", graph->sourceArray[iGraph]);
+    if (verbose) {
+        printf("Source is %i.\n", graph->sourceArray[iGraph]);
+    }
     for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
-        //printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
-        
+        if (verbose) {
+            printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
+        }
         if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
             printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
         }
@@ -452,8 +455,8 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                             *updatingMilliCostIntPtr=(int)fminf((float)(*updatingMilliCostIntPtr), (float)candidateMilliCostInt);
                             updatingCostArray[nid] = (float)(*updatingMilliCostIntPtr)/1000;
                             
-//                            if (updatingCostArray[nid] > candidateCost)
-//                                updatingCostArray[nid] = candidateCost;
+                            //                            if (updatingCostArray[nid] > candidateCost)
+                            //                                updatingCostArray[nid] = candidateCost;
                             printf("updatingCostArray[%i] is now %.2f\n", nid, updatingCostArray[nid]);
                         }
                         

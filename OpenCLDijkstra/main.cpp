@@ -607,9 +607,9 @@ int main(int argc, char** argv)
 {
     GraphData graph;
 
-    int nVertices = 20000;
+    int nVertices =9;
     int nEdgePerVertice = 2;
-    int nGraphs = 1000;
+    int nGraphs = 3;
     float probOfMax = 0.1;
     
     clock_t start_time = clock();
@@ -622,7 +622,7 @@ int main(int argc, char** argv)
     calculateGraphs(&graph);
     printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
 
-    //compareToCPUComputation(&graph);
+    compareToCPUComputation(&graph, false);
 
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
