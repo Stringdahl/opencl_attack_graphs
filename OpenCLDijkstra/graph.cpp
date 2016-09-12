@@ -75,6 +75,8 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     for(int i = 0; i < graphCount; i++)
     {
         graph->sourceArray[i] = tempSource;
+        // The source sohluld be min
+        graph->maxVertexArray[tempSource]=-1;
     }
     
     int iEdge = 0;
@@ -131,8 +133,9 @@ int minDistance(float *dist, bool *sptSet, int vertexCount)
 
 bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, float *dist) {
     for (int i = 0; i < vertexCount; i++) {
-        if (!sptSet[i] && dist[i]<FLT_MAX)
+        if (!sptSet[i] && dist[i]<FLT_MAX) {
             return true;
+        }
     }
     return false;
 }

@@ -398,7 +398,6 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *aggregatedWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *intUpdateCostArrayDevice, cl_mem *intMaxVertexArrayDevice) {
     
     int totalVertexCount = graphCount*vertexCount;
-    int totalEdgeCount = graphCount*edgeCount;
     
     // Set the arguments to initializeKernel
     //
@@ -534,13 +533,14 @@ void calculateGraphs(GraphData *graph, bool debug) {
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
         checkError(errNum, CL_SUCCESS);
         
-        clWaitForEvents(1, &kernel1event);
-        errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel1), &time_start_kernel1, NULL);
-        checkError(errNum, CL_SUCCESS);
-        errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
-        checkError(errNum, CL_SUCCESS);
-        elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
-        
+        if (debug) {
+            clWaitForEvents(1, &kernel1event);
+            errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel1), &time_start_kernel1, NULL);
+            checkError(errNum, CL_SUCCESS);
+            errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
+            checkError(errNum, CL_SUCCESS);
+            elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
+        }
         
         if (debug) {
             printf("After Kernel1\n");
@@ -550,13 +550,15 @@ void calculateGraphs(GraphData *graph, bool debug) {
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, &kernel2event);
         checkError(errNum, CL_SUCCESS);
         
-        clWaitForEvents(1, &kernel2event);
-        errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel2), &time_start_kernel2, NULL);
-        checkError(errNum, CL_SUCCESS);
-        errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
-        checkError(errNum, CL_SUCCESS);
-        elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
-        
+        if (debug) {
+            
+            clWaitForEvents(1, &kernel2event);
+            errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel2), &time_start_kernel2, NULL);
+            checkError(errNum, CL_SUCCESS);
+            errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
+            checkError(errNum, CL_SUCCESS);
+            elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
+        }
         //}
         
         if (debug) {
@@ -580,8 +582,9 @@ void calculateGraphs(GraphData *graph, bool debug) {
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
-    printf("Completed calculations in %.2f (kernel 1) + %.2f (kernel 2) = %.2f milliseconds.\n", elapsedKernel1/1000000, elapsedKernel2/1000000, (elapsedKernel1 + elapsedKernel2)/1000000);
-    
+    if (debug) {
+        printf("Completed calculations in %.2f (kernel 1) + %.2f (kernel 2) = %.2f milliseconds.\n", elapsedKernel1/1000000, elapsedKernel2/1000000, (elapsedKernel1 + elapsedKernel2)/1000000);
+    }
     // Shutdown and cleanup
     //
     clReleaseProgram(program);
@@ -605,30 +608,34 @@ int main(int argc, char** argv)
 {
     GraphData graph;
     
-    int nVertices =9;
     int nEdgePerVertice = 2;
     int nGraphs = 3;
-    float probOfMax = 0.1;
+    float probOfMax = 0.5;
     
-    clock_t start_time = clock();
-    printf("Starting clock.\n");
-    generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
-    printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
     
-    //printSources(&graph);
-    //printWeights(&graph);
-    //printInverseGraph(&graph);
-
-    start_time = clock();
-    printf("Starting clock.\n");
-    calculateGraphs(&graph, false);
-    printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
-    
-    compareToCPUComputation(&graph, false);
-    
+    for (int nVertices =5; nVertices < 20; nVertices++) {
+        srand(0);
+        clock_t start_time = clock();
+        //printf("Starting clock.\n");
+        generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
+        //printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+        
+        //printSources(&graph);
+        //printWeights(&graph);
+        //printInverseGraph(&graph);
+        
+        start_time = clock();
+        //printf("Starting clock.\n");
+        calculateGraphs(&graph, false);
+        printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+        
+        printMathematicaString(&graph, 0);
+        
+        compareToCPUComputation(&graph, false);
+        
+    }
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
-    //printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
     //printParents(&graph);

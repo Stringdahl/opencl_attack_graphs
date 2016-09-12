@@ -344,6 +344,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose) {
         }
         if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
             printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
+            exit(1);
         }
     }
 }

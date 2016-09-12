@@ -75,7 +75,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             if (currEdgeVal<minEdgeVal) {
                                 minEdgeVal = currEdgeVal;
                             }
-                            //printf("globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
+                            //printf("In min: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
                         }
                         updatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
@@ -89,11 +89,15 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             // If all parents have been visited ...
                             // Iterate over the edges
                             float maxEdgeVal = 0;
-                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
-                                if (currEdgeVal>maxEdgeVal) {
+                            for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
+                                int localInverseTarget = inverseEdgeArray[localInverseEdge];
+                                int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
+                                int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
+                                float currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                               if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
+                                //printf("In max: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, maxEdgeVal);
                             }
                             
                             costArray[globalTarget] = maxEdgeVal;
