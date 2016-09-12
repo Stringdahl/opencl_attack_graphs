@@ -120,14 +120,15 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
     clWaitForEvents(1, &readDone);
     
     for (int tid = 0; tid < totalVertexCount; tid++) {
+        int localTid = tid & graph -> vertexCount;
         if (tid == iVertex || iVertex == -1) {
             printf("Node %i: Mask: %i, Cost: %.2f, updatingCost: %.2f, max: %.2f, parentCount: %i.\n", tid, maskArrayHost[tid], costArrayHost[tid], updatingCostArrayHost[tid], maxVertexArrayHost[tid], parentCountArrayHost[tid]);
             
-            int edgeStart = graph->vertexArray[tid];
+            int edgeStart = graph->vertexArray[localTid];
             int edgeEnd;
-            if (tid + 1 < (graph->vertexCount))
+            if (localTid + 1 < (graph->vertexCount))
             {
-                edgeEnd = graph->vertexArray[tid + 1];
+                edgeEnd = graph->vertexArray[localTid + 1];
             }
             else
             {
