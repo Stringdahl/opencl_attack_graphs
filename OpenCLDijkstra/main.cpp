@@ -101,7 +101,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(float) * totalEdgeCount, graph->weightArray, &errNum);
-        
+    
     checkError(errNum, CL_SUCCESS);
     hostInverseWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                   sizeof(float) * totalEdgeCount, graph->inverseWeightArray, &errNum);
@@ -486,8 +486,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
     if (debug) {
-    printSources(graph);
-    printWeights(graph);
+        printSources(graph);
+        printWeights(graph);
     }
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
@@ -529,10 +529,10 @@ void calculateGraphs(GraphData *graph, bool debug) {
         //{
         
         if (debug) {
-        printf("Before Kernel1\n");
-        dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-        
-        //shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice);
+            printf("Before Kernel1\n");
+            dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+            
+            shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice, &intUpdateCostArrayDevice);
         }
         
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
@@ -547,8 +547,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
         
         
         if (debug) {
-        printf("After Kernel1\n");
-        dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+            printf("After Kernel1\n");
+            dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         }
         
         errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, &kernel2event);
@@ -564,9 +564,9 @@ void calculateGraphs(GraphData *graph, bool debug) {
         //}
         
         if (debug) {
-        printf("After Kernel2\n");
-        printAfterUpdating(graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
-        dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+            printf("After Kernel2\n");
+            printAfterUpdating(graph, &commandQueue, maskArrayHost, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+            dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
         }
         
         errNum = clEnqueueReadBuffer(commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
@@ -608,7 +608,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
 int main(int argc, char** argv)
 {
     GraphData graph;
-
+    
     int nVertices =9;
     int nEdgePerVertice = 2;
     int nGraphs = 3;
@@ -623,9 +623,9 @@ int main(int argc, char** argv)
     printf("Starting clock.\n");
     calculateGraphs(&graph, true);
     printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
-
+    
     compareToCPUComputation(&graph, false);
-
+    
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
     //printMathematicaString(&graph, 0);
@@ -633,7 +633,7 @@ int main(int argc, char** argv)
     //printInverseGraph(&graph);
     //printParents(&graph);
     //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
-
+    
     return 0;
 }
 

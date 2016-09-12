@@ -348,7 +348,26 @@ void compareToCPUComputation(GraphData *graph, bool verbose) {
     }
 }
 
-void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *traversedEdgeCountArrayDevice) {
+#define PRECISION 1000
+
+
+int getMilliInteger(float floatValue) {
+    if (floatValue*PRECISION < INT_MAX)
+        return (int)((floatValue*PRECISION)+0.5);
+    else
+        return INT_MAX;
+    
+}
+
+int getEdgeEnd(int iVertex, int vertexCount, int *vertexArray, int edgeCount) {
+    if (iVertex + 1 < (vertexCount))
+        return vertexArray[iVertex + 1];
+    else
+        return edgeCount;
+}
+
+
+void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *intUpdateCostArrayDevice) {
     
     int errNum = 0;
     cl_event readDone;
@@ -368,15 +387,16 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     int *parentCountArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *maskArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *traversedEdgeCountArray = (int*) malloc(sizeof(int) * totalEdgeCount);
+    int *intUpdateCostArray = (int*) malloc(sizeof(int) * totalVertexCount);
     
     
-    errNum = clEnqueueReadBuffer(*commandQueue, *vertexArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, vertexArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *vertexArrayDevice, CL_FALSE, 0, sizeof(int) * vertexCount, vertexArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *inverseVertexArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, inverseVertexArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseVertexArrayDevice, CL_FALSE, 0, sizeof(int) * vertexCount, inverseVertexArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *edgeArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, edgeArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *edgeArrayDevice, CL_FALSE, 0, sizeof(int) * edgeCount, edgeArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *inverseEdgeArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, inverseEdgeArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseEdgeArrayDevice, CL_FALSE, 0, sizeof(int) * edgeCount, inverseEdgeArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -394,6 +414,8 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *traversedEdgeCountArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, traversedEdgeCountArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer(*commandQueue, *intUpdateCostArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, intUpdateCostArray, 0, NULL, &readDone);
+    checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
     printf("\n\n\nIn the shadow\n\n");
@@ -402,90 +424,67 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
         int iGraph = tid / vertexCount;
         int localTid = tid % vertexCount;
         
-        //printf("tid = %i, iGraph = %i, localTid = %i, maskArray[tid] = %i.\n", tid, iGraph, localTid, maskArray[tid]);
+        printf("tid = %i, iGraph = %i, localTid = %i, maskArray[%i] = %i.\n", tid, iGraph, localTid, tid, maskArray[tid]);
         // Only consider vertices that are marked for update
         if ( maskArray[tid] != 0 ) {
             // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
             maskArray[tid] = 0;
             // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
+            printf("maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i\n", tid, maxVertexArray[tid], tid, parentCountArray[tid]);
             if (maxVertexArray[tid]<0 || parentCountArray[tid]==0) {
                 {
                     // Get the edges
                     int edgeStart = vertexArray[localTid];
-                    int edgeEnd;
-                    if (localTid + 1 < (vertexCount))
-                    {
-                        edgeEnd = vertexArray[localTid + 1];
-                    }
-                    else
-                    {
-                        edgeEnd = edgeCount;
-                    }
+                    int edgeEnd = getEdgeEnd(localTid, vertexCount, vertexArray, edgeCount);
+                    
+                    printf("edgeStart = %i, edgeEnd = %i.\n", edgeStart, edgeEnd);
                     // Iterate over the edges
-                    printf("Source %i: Iterating over edges %i to %i.\n", tid, edgeStart, edgeEnd);
                     for(int edge = edgeStart; edge < edgeEnd; edge++)
                     {
                         // nid is the (globally indexed) target node
                         int nid = iGraph*vertexCount + edgeArray[edge];
-                        // eid is the globbally indexed edge
+                        // eid is the globally indexed edge
                         int eid = iGraph*edgeCount + edge;
                         
+                        printf("edge = %i, nid = %i, eid = %i, traversedEdgeCountArray[%i] = %i.\n", edge, nid, eid, eid, traversedEdgeCountArray[eid]);
                         // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
                         if (traversedEdgeCountArray[eid] == 0) {
+                            printf("Reducing parentCountArray[%i] by one from %i ", nid, parentCountArray[nid]);
                             parentCountArray[nid]--;
+                            printf(" to %i.\n", parentCountArray[nid]);
                         }
                         // Mark that this edge has been traversed.
+                        printf("Augmenting traversedEdgeCountArray[%i] by one from %i.\n", eid, traversedEdgeCountArray[eid]);
                         traversedEdgeCountArray[eid] ++;
-                        
-                        printf("Target is %i over edge %i, which has now been traversed %i times. Target now has %i remaining parents.\n", nid, eid, traversedEdgeCountArray[eid], parentCountArray[nid]);
-                        // If this is a min node and the incoming coming cost is lower than the previously seen...
-                        printf("maxVertexArray[%i]=%.2f, updatingCostArray[%i]=%.2f, costArray[%i] = %.2f, weightArray[%i] = %.2f.\n", nid, maxVertexArray[nid], nid, updatingCostArray[nid], tid, costArray[tid], eid, weightArray[eid]);
+                        // Convert candidate cost and current updateingCost to integers, because atomic_min() doesn't work for floats.
+                        intUpdateCostArray[nid] = getMilliInteger(updatingCostArray[nid]);
+                        int inverseEdgeStart = inverseVertexArray[nid];
+                        int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
+                        // If this is a min node ...
+                        printf("intUpdateCostArray[%i] = %i, inverseEdgeStart = %i, inverseEdgeEnd = %i, maxVertexArray[%i] = %.2f.\n", nid, intUpdateCostArray[nid], inverseEdgeStart, inverseEdgeEnd, nid, maxVertexArray[nid]);
                         if (maxVertexArray[nid]<0) {
-                            float candidateCost = costArray[tid] + weightArray[eid];
-                            int candidateMilliCostInt;
-                            if (candidateCost*1000 < INT_MAX)
-                                candidateMilliCostInt = (int)((candidateCost*1000)+0.5);
-                            else
-                                candidateMilliCostInt = INT_MAX;
-                            int updatingMilliCostInt;
-                            if (updatingCostArray[nid]*1000 < INT_MAX)
-                                updatingMilliCostInt = (int)((updatingCostArray[nid]*1000)+0.5);
-                            else
-                                updatingMilliCostInt = INT_MAX;
-                            int *updatingMilliCostIntPtr = &updatingMilliCostInt;
-                            printf("candidateCost = %.2f, candidateMilliCostInt = %i, updatingCostArray[nid] = %.2f, *updatingMilliCostInt = %i\n", candidateCost, candidateMilliCostInt, updatingCostArray[nid], *updatingMilliCostIntPtr);
+                            // ...atomically choose the lesser of the current and candidate updatingCost
+                            //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                            // Reconvert the integer representation to float and store in updatingCostArray
+                            //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+                            // Iterate over the edges
+                            float minEdgeVal = FLT_MAX;
+                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
+                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                if (currEdgeVal<minEdgeVal) {
+                                    minEdgeVal = currEdgeVal;
+                                }
+                            }
+                            updatingCostArray[nid] = minEdgeVal;
+                            // Mark the target for update
+                            //maskArray[nid] = 1;
                             
-                            *updatingMilliCostIntPtr=(int)fminf((float)(*updatingMilliCostIntPtr), (float)candidateMilliCostInt);
-                            updatingCostArray[nid] = (float)(*updatingMilliCostIntPtr)/1000;
-                            
-                            //                            if (updatingCostArray[nid] > candidateCost)
-                            //                                updatingCostArray[nid] = candidateCost;
-                            printf("updatingCostArray[%i] is now %.2f\n", nid, updatingCostArray[nid]);
                         }
                         
                         // If this is a max node...
-                        if (maxVertexArray[nid]>=0)
-                        {
-                            // ... and the incoming cost is higher than the previously seen...
-                            if (maxVertexArray[nid] < (costArray[tid] + weightArray[eid])) {
-                                // ... then update the maximum cost to the incoming.
-                                maxVertexArray[nid] = (costArray[tid] + weightArray[eid]);
-                            }
-                            // If all parents have been visited ...
+                        else {
                             if (parentCountArray[nid]==0) {
-                                // ... update the cost to the highest of all encountered.
-                                updatingCostArray[nid] = maxVertexArray[nid];
-                                // Get the edges
-                                int inverseEdgeStart = inverseVertexArray[nid];
-                                int inverseEdgeEnd;
-                                if (nid + 1 < (vertexCount))
-                                {
-                                    inverseEdgeEnd = inverseVertexArray[nid + 1];
-                                }
-                                else
-                                {
-                                    inverseEdgeEnd = edgeCount;
-                                }
+                                // If all parents have been visited ...
                                 // Iterate over the edges
                                 float maxEdgeVal = 0;
                                 for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
@@ -496,6 +495,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                                 }
                                 
                                 costArray[nid] = maxEdgeVal;
+                                updatingCostArray[nid] = maxEdgeVal;
                                 // Mark the target for update
                                 maskArray[nid] = 1;
                             }

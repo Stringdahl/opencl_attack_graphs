@@ -19,7 +19,7 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArrayDevice, __global int *intMaxVertexArrayDevice)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArray, __global int *intMaxVertexArray)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -53,17 +53,16 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[eid] ++;
                     // Convert candidate cost and current updateingCost to integers, because atomic_min() doesn't work for floats.
-                    int candidateMilliCostInt = getMilliInteger(costArray[tid] + weightArray[eid]);
-                    intUpdateCostArrayDevice[nid] = getMilliInteger(updatingCostArray[nid]);
+                    intUpdateCostArray[nid] = getMilliInteger(updatingCostArray[nid]);
 
                     int inverseEdgeStart = inverseVertexArray[nid];
                     int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
                     // If this is a min node ...
                     if (maxVertexArray[nid]<0) {
                         // ...atomically choose the lesser of the current and candidate updatingCost
-                        //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        //atomic_min(&intUpdateCostArray[nid], candidateMilliCostInt);
                         // Reconvert the integer representation to float and store in updatingCostArray
-                        //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
+                        //updatingCostArray[nid] = (float)(intUpdateCostArray[nid])/PRECISION;
                         // Iterate over the edges
                         float minEdgeVal = FLT_MAX;
                         for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
