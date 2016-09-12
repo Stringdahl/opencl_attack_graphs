@@ -56,9 +56,9 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     int candidateMilliCostInt = getMilliInteger(costArray[tid] + weightArray[eid]);
                     intUpdateCostArrayDevice[nid] = getMilliInteger(updatingCostArray[nid]);
 
-                    // If this is a min node ...
                     int inverseEdgeStart = inverseVertexArray[nid];
                     int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
+                    // If this is a min node ...
                     if (maxVertexArray[nid]<0) {
                         // ...atomically choose the lesser of the current and candidate updatingCost
                         //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);

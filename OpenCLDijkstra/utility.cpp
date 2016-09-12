@@ -69,7 +69,7 @@ void printParents(GraphData *graph) {
 
 void printWeights(GraphData *graph) {
     for (int i = 0; i < graph->graphCount*graph->edgeCount; i++) {
-        printf("weightArray[%i] = %f\n", i, graph->weightArray[i]);
+        printf("weightArray[%i] = %.3f\n", i, graph->weightArray[i]);
     }
 }
 
@@ -120,7 +120,9 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
     clWaitForEvents(1, &readDone);
     
     for (int tid = 0; tid < totalVertexCount; tid++) {
-        int localTid = tid & graph -> vertexCount;
+        int localTid = tid % graph -> vertexCount;
+        int iGraph = tid / graph -> vertexCount;
+        
         if (tid == iVertex || iVertex == -1) {
             printf("Node %i: Mask: %i, Cost: %.2f, updatingCost: %.2f, max: %.2f, parentCount: %i.\n", tid, maskArrayHost[tid], costArrayHost[tid], updatingCostArrayHost[tid], maxVertexArrayHost[tid], parentCountArrayHost[tid]);
             
@@ -137,7 +139,7 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
             for(int edge = edgeStart; edge < edgeEnd; edge++)
             {
                 int nid = graph->edgeArray[edge];
-                printf("Influences node %i through edge %i by weight %.2f.\n", nid, edge, graph->weightArray[edge]);
+                printf("Influences node %i through edge %i by weight %.2f.\n", (iGraph*graph->vertexCount + nid), edge, graph->weightArray[iGraph*graph->vertexCount + edge]);
             }
         }
     }
