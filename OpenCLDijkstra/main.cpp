@@ -420,8 +420,8 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(cl_mem), maskArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(cl_mem), costArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(cl_mem), updatingCostArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(int), &totalVertexCount);
-    errNum |= clSetKernelArg(*ssspKernel1, 11, sizeof(int), &totalEdgeCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 11, sizeof(int), &edgeCount);
     errNum |= clSetKernelArg(*ssspKernel1, 12, sizeof(cl_mem), traversedEdgeCountArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 13, sizeof(cl_mem), parentCountArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 14, sizeof(cl_mem), maxVerticeArrayDevice);
@@ -615,13 +615,13 @@ int main(int argc, char** argv)
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
     printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
     
-    printSources(&graph);
-    printWeights(&graph);
-    printInverseGraph(&graph);
+    //printSources(&graph);
+    //printWeights(&graph);
+    //printInverseGraph(&graph);
 
     start_time = clock();
     printf("Starting clock.\n");
-    calculateGraphs(&graph, true);
+    calculateGraphs(&graph, false);
     printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
     
     compareToCPUComputation(&graph, false);

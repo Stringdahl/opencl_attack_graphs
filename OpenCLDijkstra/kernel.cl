@@ -27,17 +27,20 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
     int iGraph = globalSource / vertexCount;
     int localSource = globalSource % vertexCount;
     
+    //printf("globalSource = %i, iGraph = %i, vertexCount = %i, localSource = %i, maskArray[%i] = %i.\n", globalSource, iGraph, vertexCount, localSource, globalSource, maskArray[globalSource]);
     // Only consider vertices that are marked for update
     if ( maskArray[globalSource] != 0 ) {
         // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
         maskArray[globalSource] = 0;
         // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
+        //printf("globalSource = %i, maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i\n", globalSource, globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
         if (maxVertexArray[globalSource]<0 || parentCountArray[globalSource]==0) {
             {
                 // Get the edges
                 int edgeStart = vertexArray[localSource];
                 int edgeEnd = getEdgeEnd(localSource, vertexCount, vertexArray, edgeCount);
                 
+                //printf("globalSource = %i, localSource = %i, edgeStart = %i, edgeEnd = %i.\n", globalSource, localSource, edgeStart, edgeEnd);
                 // Iterate over the edges
                 for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
                 {
@@ -63,6 +66,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                         // Iterate over the edges
                         float minEdgeVal = FLT_MAX;
+                        
                         for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
                             int localInverseTarget = inverseEdgeArray[localInverseEdge];
                             int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
@@ -71,6 +75,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             if (currEdgeVal<minEdgeVal) {
                                 minEdgeVal = currEdgeVal;
                             }
+                            //printf("globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
                         }
                         updatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
