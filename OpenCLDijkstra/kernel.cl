@@ -22,45 +22,45 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
 __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global float *weightArray, __global float *inverseWeightArray, __global float *aggregatedWeightArray, __global int *maskArray, __global float *costArray, __global float *updatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global float *maxVertexArray, __global int *intUpdateCostArray, __global int *intMaxVertexArray)
 {
     // access thread id
-    int tid = get_global_id(0);
+    int globalSource = get_global_id(0);
     
-    int iGraph = tid / vertexCount;
-    int localTid = tid % vertexCount;
+    int iGraph = globalSource / vertexCount;
+    int localSource = globalSource % vertexCount;
     
     // Only consider vertices that are marked for update
-    if ( maskArray[tid] != 0 ) {
+    if ( maskArray[globalSource] != 0 ) {
         // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
-        maskArray[tid] = 0;
+        maskArray[globalSource] = 0;
         // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
-        if (maxVertexArray[tid]<0 || parentCountArray[tid]==0) {
+        if (maxVertexArray[globalSource]<0 || parentCountArray[globalSource]==0) {
             {
                 // Get the edges
-                int edgeStart = vertexArray[localTid];
-                int edgeEnd = getEdgeEnd(localTid, vertexCount, vertexArray, edgeCount);
+                int edgeStart = vertexArray[localSource];
+                int edgeEnd = getEdgeEnd(localSource, vertexCount, vertexArray, edgeCount);
                 
                 // Iterate over the edges
-                for(int edge = edgeStart; edge < edgeEnd; edge++)
+                for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
                 {
                     // nid is the (globally indexed) target node
-                    int nid = iGraph*vertexCount + edgeArray[edge];
+                    int localTarget = edgeArray[localEdge];
+                    int globalTarget = iGraph*vertexCount + edgeArray[localEdge];
                     // eid is the globally indexed edge
-                    int eid = iGraph*edgeCount + edge;
+                    int globalEdge = iGraph*edgeCount + localEdge;
                     
                     // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
-                    if (traversedEdgeCountArray[eid] == 0) {
-                        parentCountArray[nid]--;
+                    if (traversedEdgeCountArray[globalEdge] == 0) {
+                        parentCountArray[globalTarget]--;
                     }
                     // Mark that this edge has been traversed.
-                    traversedEdgeCountArray[eid] ++;
-
-                    int inverseEdgeStart = inverseVertexArray[nid];
-                    int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
+                    traversedEdgeCountArray[globalEdge] ++;
+                    int inverseEdgeStart = inverseVertexArray[localTarget];
+                    int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
                     // If this is a min node ...
-                    if (maxVertexArray[nid]<0) {
+                    if (maxVertexArray[globalTarget]<0) {
                         // ...atomically choose the lesser of the current and candidate updatingCost
-                        //atomic_min(&intUpdateCostArray[nid], candidateMilliCostInt);
+                        //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
                         // Reconvert the integer representation to float and store in updatingCostArray
-                        //updatingCostArray[nid] = (float)(intUpdateCostArray[nid])/PRECISION;
+                        //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                         // Iterate over the edges
                         float minEdgeVal = FLT_MAX;
                         for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
@@ -69,15 +69,15 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 minEdgeVal = currEdgeVal;
                             }
                         }
-                        updatingCostArray[nid] = minEdgeVal;
+                        updatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
                         //maskArray[nid] = 1;
-
+                        
                     }
                     
                     // If this is a max node...
                     else {
-                        if (parentCountArray[nid]==0) {
+                        if (parentCountArray[globalTarget]==0) {
                             // If all parents have been visited ...
                             // Iterate over the edges
                             float maxEdgeVal = 0;
@@ -88,10 +88,10 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 }
                             }
                             
-                            costArray[nid] = maxEdgeVal;
-                            updatingCostArray[nid] = maxEdgeVal;
+                            costArray[globalTarget] = maxEdgeVal;
+                            updatingCostArray[globalTarget] = maxEdgeVal;
                             // Mark the target for update
-                            maskArray[nid] = 1;
+                            maskArray[globalTarget] = 1;
                         }
                     }
                 }
