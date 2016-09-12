@@ -337,22 +337,24 @@ void printSolution(float *dist, int n)
         printf("%d \t\t %.2f\n", i, dist[i]);
 }
 
-void compareToCPUComputation(GraphData *graph, bool verbose) {
-    int iGraph = 1;
-    float *dist = dijkstra(graph, iGraph, verbose);
+void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck) {
     printf("Checking correctness against sequential implementation.\n");
-    if (verbose) {
-        printf("Source is %i.\n", graph->sourceArray[iGraph]);
-    }
-    for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+    for (int iGraph = 0; iGraph<nGraphsToCheck; iGraph++) {
+        float *dist = dijkstra(graph, iGraph, verbose);
         if (verbose) {
-            printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
+            printf("Source is %i.\n", graph->sourceArray[iGraph]);
         }
-        if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
-            printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
-            //exit(1);
+        for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+            if (verbose) {
+                printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
+            }
+            if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
+                printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
+                exit(1);
+            }
         }
     }
+    printf("No errors.\n");
 }
 
 #define PRECISION 1000
