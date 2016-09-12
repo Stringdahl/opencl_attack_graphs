@@ -613,7 +613,7 @@ int main(int argc, char** argv)
     float probOfMax = 0.5;
     
     
-    for (int nVertices =5; nVertices < 20; nVertices++) {
+    for (int nVertices =14; nVertices < 20; nVertices++) {
         srand(0);
         clock_t start_time = clock();
         //printf("Starting clock.\n");
