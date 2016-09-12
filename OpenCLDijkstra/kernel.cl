@@ -63,8 +63,11 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                         // Iterate over the edges
                         float minEdgeVal = FLT_MAX;
-                        for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                            float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                        for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
+                            int localInverseTarget = inverseEdgeArray[localInverseEdge];
+                            int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
+                            int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
+                            float currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
                             if (currEdgeVal<minEdgeVal) {
                                 minEdgeVal = currEdgeVal;
                             }

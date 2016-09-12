@@ -628,7 +628,7 @@ int main(int argc, char** argv)
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
-    printMathematicaString(&graph, 0);
+    //printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
     //printParents(&graph);

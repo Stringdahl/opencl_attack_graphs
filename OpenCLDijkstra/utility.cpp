@@ -469,9 +469,12 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                             // Iterate over the edges
                             float minEdgeVal = FLT_MAX;
                             printf("minEdgeVal = %.2f.\n", minEdgeVal);
-                            for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                                float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
-                                printf("inverseEdge = %i, currEdgeVal = %.2f, inverseEdgeArray[%i] = %i, costArray[%i] = %.2f, inverseWeightArray[%i] = %.2f.\n",inverseEdge, currEdgeVal, inverseEdge, inverseEdgeArray[inverseEdge], inverseEdgeArray[inverseEdge], costArray[inverseEdgeArray[inverseEdge]], inverseEdge, inverseWeightArray[inverseEdge]);
+                            for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
+                                int localInverseTarget = inverseEdgeArray[localInverseEdge];
+                                int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
+                                int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
+                                float currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                                printf("inverseEdge = %i, currEdgeVal = %.2f, inverseEdgeArray[%i] = %i, costArray[%i] = %.2f, inverseWeightArray[%i] = %.2f.\n",localInverseEdge, currEdgeVal, localInverseEdge, inverseEdgeArray[localInverseEdge], globalInverseTarget, costArray[globalInverseTarget], localInverseEdge, inverseWeightArray[globalInverseEdge]);
                                 if (currEdgeVal<minEdgeVal) {
                                     minEdgeVal = currEdgeVal;
                                     printf("Updated minEdgeVal to %.2f.\n", minEdgeVal);
