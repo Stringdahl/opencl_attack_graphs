@@ -485,10 +485,6 @@ void calculateGraphs(GraphData *graph, bool debug) {
     int totalVertexCount = graph->graphCount * graph->vertexCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
-    if (debug) {
-        printSources(graph);
-        printWeights(graph);
-    }
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
     initializeComputing(&device_id, &context, &commandQueue, &program);
@@ -619,6 +615,10 @@ int main(int argc, char** argv)
     generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
     printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
     
+    printSources(&graph);
+    printWeights(&graph);
+    printInverseGraph(&graph);
+
     start_time = clock();
     printf("Starting clock.\n");
     calculateGraphs(&graph, true);
@@ -628,7 +628,7 @@ int main(int argc, char** argv)
     
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
-    //printMathematicaString(&graph, 0);
+    printMathematicaString(&graph, 0);
     //printGraph(&graph);
     //printInverseGraph(&graph);
     //printParents(&graph);

@@ -71,9 +71,10 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     {
         graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
     }
+    int tempSource = (rand() % graph->vertexCount);
     for(int i = 0; i < graphCount; i++)
     {
-        graph->sourceArray[i] = (rand() % graph->vertexCount);
+        graph->sourceArray[i] = tempSource;
     }
     
     int iEdge = 0;

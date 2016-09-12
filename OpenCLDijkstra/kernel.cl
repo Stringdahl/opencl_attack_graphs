@@ -52,8 +52,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     }
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[eid] ++;
-                    // Convert candidate cost and current updateingCost to integers, because atomic_min() doesn't work for floats.
-                    intUpdateCostArray[nid] = getMilliInteger(updatingCostArray[nid]);
 
                     int inverseEdgeStart = inverseVertexArray[nid];
                     int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
