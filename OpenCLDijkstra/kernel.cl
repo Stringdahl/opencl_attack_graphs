@@ -52,7 +52,8 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     
                     // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
                     if (traversedEdgeCountArray[globalEdge] == 0) {
-                        parentCountArray[globalTarget]--;
+                       atomic_dec(&parentCountArray[globalTarget]);
+                       // parentCountArray[globalTarget]--;
                     }
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[globalEdge] ++;
