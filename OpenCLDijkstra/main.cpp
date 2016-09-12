@@ -609,11 +609,11 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 3;
+    int nGraphs = 100;
     float probOfMax = 0.5;
     
     
-    for (int nVertices =14; nVertices < 15; nVertices++) {
+    for (int nVertices =1000; nVertices < 10000; nVertices=nVertices+1000) {
         srand(0);
         clock_t start_time = clock();
         //printf("Starting clock.\n");
@@ -629,7 +629,7 @@ int main(int argc, char** argv)
         calculateGraphs(&graph, false);
         printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
-        printMathematicaString(&graph, 0);
+        //printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false);
         

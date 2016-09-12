@@ -27,20 +27,20 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
     int iGraph = globalSource / vertexCount;
     int localSource = globalSource % vertexCount;
     
-    printf("Start of Kernel 1: globalSource = %i, iGraph = %i, vertexCount = %i, localSource = %i, maskArray[%i] = %i, updatingCostArray[%i] = %.2f, costArray[%i] = %.2f.\n", globalSource, iGraph, vertexCount, localSource, globalSource, maskArray[globalSource], globalSource, updatingCostArray[globalSource], globalSource, costArray[globalSource]);
+    //printf("Start of Kernel 1: globalSource = %i, iGraph = %i, vertexCount = %i, localSource = %i, maskArray[%i] = %i, updatingCostArray[%i] = %.2f, costArray[%i] = %.2f.\n", globalSource, iGraph, vertexCount, localSource, globalSource, maskArray[globalSource], globalSource, updatingCostArray[globalSource], globalSource, costArray[globalSource]);
     // Only consider vertices that are marked for update
     if ( maskArray[globalSource] != 0 ) {
         // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
         maskArray[globalSource] = 0;
         // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
-        printf("Check max and parents: globalSource = %i, maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i\n", globalSource, globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
+        //printf("Check max and parents: globalSource = %i, maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i\n", globalSource, globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
         if (maxVertexArray[globalSource]<0 || parentCountArray[globalSource]==0) {
             {
                 // Get the edges
                 int edgeStart = vertexArray[localSource];
                 int edgeEnd = getEdgeEnd(localSource, vertexCount, vertexArray, edgeCount);
                 
-                printf("globalSource = %i, localSource = %i, edgeStart = %i, edgeEnd = %i.\n", globalSource, localSource, edgeStart, edgeEnd);
+                //printf("globalSource = %i, localSource = %i, edgeStart = %i, edgeEnd = %i.\n", globalSource, localSource, edgeStart, edgeEnd);
                 // Iterate over the edges
                 for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
                 {
@@ -59,7 +59,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     traversedEdgeCountArray[globalEdge] ++;
                     int inverseEdgeStart = inverseVertexArray[localTarget];
                     int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
-                    printf("Before min/max: globalSource = %i, globalTarget = %i, maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i.\n", globalSource, globalTarget, globalTarget, maxVertexArray[globalTarget], globalTarget, parentCountArray[globalTarget]);
+                    //printf("Before min/max: globalSource = %i, globalTarget = %i, maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i.\n", globalSource, globalTarget, globalTarget, maxVertexArray[globalTarget], globalTarget, parentCountArray[globalTarget]);
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
                         // ...atomically choose the lesser of the current and candidate updatingCost
@@ -77,7 +77,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             if (currEdgeVal<minEdgeVal) {
                                 minEdgeVal = currEdgeVal;
                             }
-                            printf("In min: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
+                            //printf("In min: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
                         }
                         updatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
@@ -105,7 +105,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
-                                printf("In max: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, maxEdgeVal);
+                                //printf("In max: globalSource = %i, globalTarget = %i, currEdgeVal = %.2f, minEdgeVal = %.2f.\n", globalSource, globalTarget, currEdgeVal, maxEdgeVal);
                             }
                             
                             costArray[globalTarget] = maxEdgeVal;
