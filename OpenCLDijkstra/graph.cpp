@@ -97,7 +97,9 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
             for(int edge = edgeStart; edge < edgeEnd; edge++){
                 if (graph->edgeArray[edge]==iChild) {
                     graph->inverseEdgeArray[iEdge]=iParent;
-                    graph->inverseWeightArray[iEdge]=graph->weightArray[edge];
+                    for (int iGraph = 0; iGraph < graphCount; iGraph++) {
+                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
+                    }
                     iEdge ++;
                 }
             }

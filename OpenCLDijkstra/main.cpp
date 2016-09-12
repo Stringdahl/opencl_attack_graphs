@@ -609,11 +609,11 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 1000;
+    int nGraphs = 2;
     float probOfMax = 0.5;
     
     
-    for (int nVertices = 20000; nVertices <= 20000; nVertices=nVertices+10000) {
+    for (int nVertices = 5; nVertices <= 5; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("Starting clock.\n");
@@ -623,15 +623,16 @@ int main(int argc, char** argv)
         //printSources(&graph);
         //printWeights(&graph);
         //printInverseGraph(&graph);
+        printInverseWeights(&graph);
         
         start_time = clock();
         //printf("Starting clock.\n");
         calculateGraphs(&graph, false);
         printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
-        //printMathematicaString(&graph, 0);
+        printMathematicaString(&graph, 0);
         
-        compareToCPUComputation(&graph, false);
+        compareToCPUComputation(&graph, true);
         
     }
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
