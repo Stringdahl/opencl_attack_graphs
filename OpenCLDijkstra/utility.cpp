@@ -461,7 +461,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                         int inverseEdgeStart = inverseVertexArray[nid];
                         int inverseEdgeEnd = getEdgeEnd(nid, vertexCount, inverseVertexArray, edgeCount);
                         // If this is a min node ...
-                        printf("intUpdateCostArray[%i] = %i, inverseEdgeStart = %i, inverseEdgeEnd = %i, maxVertexArray[%i] = %.2f.\n", nid, intUpdateCostArray[nid], inverseEdgeStart, inverseEdgeEnd, nid, maxVertexArray[nid]);
+                        printf("updatingCostArray[%i] = %.2f, intUpdateCostArray[%i] = %i, inverseEdgeStart = %i, inverseEdgeEnd = %i, maxVertexArray[%i] = %.2f.\n", nid, updatingCostArray[nid], nid, intUpdateCostArray[nid], inverseEdgeStart, inverseEdgeEnd, nid, maxVertexArray[nid]);
                         if (maxVertexArray[nid]<0) {
                             // ...atomically choose the lesser of the current and candidate updatingCost
                             //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
@@ -469,13 +469,17 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                             //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                             // Iterate over the edges
                             float minEdgeVal = FLT_MAX;
+                            printf("minEdgeVal = %.2f.\n", minEdgeVal);
                             for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
                                 float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                printf("inverseEdge = %i, currEdgeVal = %.2f, inverseEdgeArray[%i] = %i, costArray[%i] = %.2f, inverseWeightArray[%i] = %.2f.\n",inverseEdge, currEdgeVal, inverseEdge, inverseEdgeArray[inverseEdge], inverseEdgeArray[inverseEdge], costArray[inverseEdgeArray[inverseEdge]], inverseEdge, inverseWeightArray[inverseEdge]);
                                 if (currEdgeVal<minEdgeVal) {
                                     minEdgeVal = currEdgeVal;
+                                    printf("Updated minEdgeVal to %.2f.\n", minEdgeVal);
                                 }
                             }
                             updatingCostArray[nid] = minEdgeVal;
+                            printf("Updated updatingCostArray[%i] to %.2f.\n", nid, updatingCostArray[nid]);
                             // Mark the target for update
                             //maskArray[nid] = 1;
                             
