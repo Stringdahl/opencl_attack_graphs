@@ -609,16 +609,16 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 100;
+    int nGraphs = 1000;
     float probOfMax = 0.5;
     
     
-    for (int nVertices =1000; nVertices < 10000; nVertices=nVertices+1000) {
+    for (int nVertices = 20000; nVertices <= 20000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
-        //printf("Starting clock.\n");
+        printf("Starting clock.\n");
         generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
-        //printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+        printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
         //printSources(&graph);
         //printWeights(&graph);
