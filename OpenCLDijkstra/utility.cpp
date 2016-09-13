@@ -240,20 +240,13 @@ bool contains(int *array, int arrayLength, int value) {
 }
 
 void printMathematicaString(GraphData *graph, int iGraph) {
-    char str[64*graph->edgeCount];
+    char str[128*graph->edgeCount];
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
         int globalSource = iGraph*graph->vertexCount + localSource;
         int edgeStart = graph->vertexArray[localSource];
-        int edgeEnd;
-        if (localSource + 1 < (graph->vertexCount)) {
-            edgeEnd = graph->vertexArray[localSource + 1];
-        }
-        else {
-            edgeEnd = graph->edgeCount;
-        }
-        
+        int edgeEnd = getEdgeEnd(localSource, graph->vertexCount, graph->vertexArray, graph->edgeCount);
         for(int edge = edgeStart; edge < edgeEnd; edge++) {
             int localTarget = graph->edgeArray[edge];
             int globalTarget = iGraph*graph->vertexCount + localTarget;
@@ -265,6 +258,18 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         int globalVertex = iGraph*graph->vertexCount + vertex;
         const char* sourceString = costToString(graph->costArray[globalVertex]);
         sprintf(str + strlen(str), "%i -> %i [%s], ", globalVertex, globalVertex, sourceString);
+    }
+    sprintf(str + strlen(str)-2, "}, EdgeLabels -> {");
+    for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        int globalSource = iGraph*graph->vertexCount + localSource;
+        int edgeStart = graph->vertexArray[localSource];
+        int edgeEnd = getEdgeEnd(localSource, graph->vertexCount, graph->vertexArray, graph->edgeCount);
+        for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++) {
+            int localTarget = graph->edgeArray[localEdge];
+            int globalTarget = iGraph*graph->vertexCount + localTarget;
+            int globalEdge = iGraph*graph->edgeCount + localEdge;
+            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %.2f, ", globalSource, globalTarget, graph->weightArray[globalEdge]);
+        }
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
@@ -341,10 +346,11 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
     if (nGraphsToCheck>graph->graphCount) {
         nGraphsToCheck=graph->graphCount;
     }
-    printf("Checking correctness against sequential implementation.\n");
+    printf("Checking correctness against sequential implementation in %i randomly sampled graphs.\n", nGraphsToCheck);
     int nInfinite = 0;
     int iErrors = 0;
-    for (int iGraph = 0; iGraph<nGraphsToCheck; iGraph++) {
+    for (int iCheck = 0; iCheck<nGraphsToCheck; iCheck++) {
+        int iGraph = rand() % graph->graphCount;
         float *dist = dijkstra(graph, iGraph, verbose);
         if (verbose) {
             printf("Source is %i.\n", graph->sourceArray[iGraph]);
@@ -364,7 +370,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
         }
     }
     printf("%i errors.\n", iErrors);
-    printf("%i infinite-time attack steps.\n", nInfinite);
+    printf("On average %i infinite-time attack steps per graph.\n", nInfinite/nGraphsToCheck);
 }
 
 #define PRECISION 1000
