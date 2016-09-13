@@ -609,11 +609,11 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 1000;
-    float probOfMax = 0.5;
+    int nGraphs = 2;
+    float probOfMax = 0.1;
     
     
-    for (int nVertices = 10000; nVertices <= 20000; nVertices=nVertices+10000) {
+    for (int nVertices = 50; nVertices <= 50; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i attack steps per sample. %i samples.\n", nVertices, nGraphs);
@@ -630,7 +630,7 @@ int main(int argc, char** argv)
         calculateGraphs(&graph, false);
         printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
-        //printMathematicaString(&graph, 0);
+        printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         

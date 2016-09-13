@@ -267,13 +267,13 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         sprintf(str + strlen(str), "%i -> %i [%s], ", globalVertex, globalVertex, sourceString);
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
-    for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
-        int globalVertex = iGraph*graph->vertexCount + vertex;
-        if (graph->sourceArray[iGraph]==vertex) {
+    for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
+        int globalVertex = iGraph*graph->vertexCount + localVertex;
+        if (graph->sourceArray[iGraph]==localVertex) {
             sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
         }
         else {
-            if (graph->maxVertexArray[globalVertex]>=0) {
+            if (graph->maxVertexArray[localVertex]>=0) {
                 sprintf(str + strlen(str), "%i -> \"Square\", ", globalVertex);
             }
         }
@@ -338,7 +338,12 @@ void printSolution(float *dist, int n)
 }
 
 void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck) {
+    if (nGraphsToCheck>graph->graphCount) {
+        nGraphsToCheck=graph->graphCount;
+    }
     printf("Checking correctness against sequential implementation.\n");
+    int nInfinite = 0;
+    int iErrors = 0;
     for (int iGraph = 0; iGraph<nGraphsToCheck; iGraph++) {
         float *dist = dijkstra(graph, iGraph, verbose);
         if (verbose) {
@@ -350,11 +355,16 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
             }
             if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
                 printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
-                exit(1);
+                iErrors++;
+               // exit(1);
+            }
+            if (graph->costArray[iGraph*graph->vertexCount + iVertex] == FLT_MAX) {
+                nInfinite++;
             }
         }
     }
-    printf("No errors.\n");
+    printf("%i errors.\n", iErrors);
+    printf("%i infinite-time attack steps.\n", nInfinite);
 }
 
 #define PRECISION 1000
