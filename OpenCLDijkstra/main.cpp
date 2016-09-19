@@ -612,7 +612,7 @@ int main(int argc, char** argv)
     float probOfMax = 0.1;
     
     
-    for (int nVertices = 10000; nVertices <= 10000; nVertices=nVertices+10000) {
+    for (int nVertices = 1000; nVertices <= 1000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i attack steps per sample. %i samples.\n", nVertices, nGraphs);

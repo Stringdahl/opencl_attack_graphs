@@ -54,24 +54,20 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     //printf("Before min/max: globalSource = %i, globalTarget = %i, maxVertexArray[%i] = %i, parentCountArray[%i] = %i.\n", globalSource, globalTarget, globalTarget, maxVertexArray[globalTarget], globalTarget, parentCountArray[globalTarget]);
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
+                        int currentCost;
+//                        if (costArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
+//                            currentCost = COST_MAX;
+//                        else
+                            currentCost = costArray[globalSource] + weightArray[globalEdge];
+                        
                         // ...atomically choose the lesser of the current and candidate updatingCost
-                        //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
+                        atomic_min(&updatingCostArray[globalTarget], currentCost);
                         // Reconvert the integer representation to float and store in updatingCostArray
                         //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                         // Iterate over the edges
                         int minEdgeVal = COST_MAX;
                         
-                        for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
-                            int localInverseTarget = inverseEdgeArray[localInverseEdge];
-                            int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
-                            int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
-                            int currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
-                            if (currEdgeVal<minEdgeVal) {
-                                minEdgeVal = currEdgeVal;
-                            }
-                            //printf("In min: globalSource = %i, globalTarget = %i, currEdgeVal = %i, minEdgeVal = %i.\n", globalSource, globalTarget, currEdgeVal, minEdgeVal);
-                        }
-                        updatingCostArray[globalTarget] = minEdgeVal;
+                        //updatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
                         //maskArray[nid] = 1;
                         
@@ -100,7 +96,15 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 }
                                 //printf("In max: globalSource = %i, globalTarget = %i, currEdgeVal = %i, minEdgeVal = %i.\n", globalSource, globalTarget, currEdgeVal, maxEdgeVal);
                             }
-                            
+//                            int currentCost;
+//                            if (costArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
+//                                currentCost = COST_MAX;
+//                            else
+//                                currentCost = costArray[globalSource] + weightArray[globalEdge];
+//                            
+//                            atomic_max(&updatingCostArray[globalTarget], currentCost);
+//                            atomic_max(&costArray[globalTarget], currentCost);
+
                             costArray[globalTarget] = maxEdgeVal;
                             updatingCostArray[globalTarget] = maxEdgeVal;
                             // Mark the target for update
