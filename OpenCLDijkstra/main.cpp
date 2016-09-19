@@ -17,9 +17,8 @@
 
 
 
-///
-//  Macros
-//
+
+#define COST_MAX 2147482646
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
 #define NUM_ASYNCHRONOUS_ITERATIONS 10  // Number of async loop iterations before attempting to read results back
 
@@ -68,7 +67,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
         traversedEdgeCountArray[iEdge]=0;
     }
     
-    float *aggregatedWeightArray = (float*)malloc(totalEdgeCount * sizeof(float));
+    int *aggregatedWeightArray = (int*)malloc(totalEdgeCount * sizeof(int));
     for (int iEdge=0; iEdge<totalEdgeCount; iEdge++) {
         aggregatedWeightArray[iEdge]=0;
     }
@@ -78,7 +77,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
         parentCountArray[iVertex]=graph->parentCountArray[iVertex % graph->vertexCount];
     }
     
-    float *maxVertexArray = (float*)malloc(totalVertexCount * sizeof(float));
+    int *maxVertexArray = (int*)malloc(totalVertexCount * sizeof(int));
     for (int iGraph=0; iGraph<graph->graphCount; iGraph++) {
         for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
             maxVertexArray[iGraph*graph->vertexCount + iVertex]=graph->maxVertexArray[iVertex];
@@ -100,14 +99,14 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * graph->edgeCount, graph->inverseEdgeArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(float) * totalEdgeCount, graph->weightArray, &errNum);
+                                           sizeof(int) * totalEdgeCount, graph->weightArray, &errNum);
     
     checkError(errNum, CL_SUCCESS);
     hostInverseWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                  sizeof(float) * totalEdgeCount, graph->inverseWeightArray, &errNum);
+                                                  sizeof(int) * totalEdgeCount, graph->inverseWeightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostAggregatedWeightArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                                     sizeof(float) * totalEdgeCount, aggregatedWeightArray, &errNum);
+                                                     sizeof(int) * totalEdgeCount, aggregatedWeightArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostTraversedEdgeCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                        sizeof(int) * totalEdgeCount, traversedEdgeCountArray, &errNum);
@@ -119,7 +118,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostMaxVertexArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                              sizeof(float) * totalVertexCount, maxVertexArray, &errNum);
+                                              sizeof(int) * totalVertexCount, maxVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     // Now create all of the GPU buffers
@@ -131,21 +130,21 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *inverseEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * totalEdgeCount, NULL, &errNum);
+    *weightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *inverseWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(float) * totalEdgeCount, NULL, &errNum);
+    *inverseWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *aggregatedWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * totalEdgeCount, NULL, &errNum);
+    *aggregatedWeightArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *maskArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *costArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * totalVertexCount, NULL, &errNum);
+    *costArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *updatingCostArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * totalVertexCount, NULL, &errNum);
+    *updatingCostArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *parentCountArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(float) * totalVertexCount, NULL, &errNum);
+    *maxVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -177,15 +176,15 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostWeightArrayBuffer, *weightArrayDevice, 0, 0,
-                                 sizeof(float) * totalEdgeCount, 0, NULL, NULL);
+                                 sizeof(int) * totalEdgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostInverseWeightArrayBuffer, *inverseWeightArrayDevice, 0, 0,
-                                 sizeof(float) * totalEdgeCount, 0, NULL, NULL);
+                                 sizeof(int) * totalEdgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostAggregatedWeightArrayBuffer, *aggregatedWeightArrayDevice, 0, 0,
-                                 sizeof(float) * totalEdgeCount, 0, NULL, NULL);
+                                 sizeof(int) * totalEdgeCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostParentCountArrayBuffer, *parentCountArrayDevice, 0, 0,
@@ -193,7 +192,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostMaxVertexArrayBuffer, *maxVertexArrayDevice, 0, 0,
-                                 sizeof(float) * totalVertexCount, 0, NULL, NULL);
+                                 sizeof(int) * totalVertexCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostTraversedEdgeCountArrayBuffer, *traversedEdgeArrayDevice, 0, 0,
@@ -505,6 +504,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &global, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
+    
+    
     errNum = clEnqueueReadBuffer( commandQueue, maskArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     
@@ -526,9 +527,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
             if (debug) {
                 printf("Before Kernel1\n");
                 dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-                
-                shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice, &intUpdateCostArrayDevice);
-            }
+             }
             
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
             checkError(errNum, CL_SUCCESS);
@@ -578,7 +577,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     
     // Read back the results from the device to verify the output
     
-    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(float) * totalVertexCount, graph->costArray, 0, NULL, NULL );
+    errNum = clEnqueueReadBuffer( commandQueue, costArrayDevice, CL_TRUE, 0, sizeof(int) * totalVertexCount, graph->costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
@@ -609,11 +608,11 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 1000;
+    int nGraphs = 10;
     float probOfMax = 0.1;
     
     
-    for (int nVertices = 20000; nVertices <= 20000; nVertices=nVertices+10000) {
+    for (int nVertices = 10000; nVertices <= 10000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i attack steps per sample. %i samples.\n", nVertices, nGraphs);

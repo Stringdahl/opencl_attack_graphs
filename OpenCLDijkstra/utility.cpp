@@ -13,6 +13,7 @@
 //  Macros
 //
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
+#define COST_MAX 2147482646
 
 
 ///
@@ -21,11 +22,11 @@
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 
 
-void printCostOfRandomVertices(float *costArrayHost, int verticesToPrint, int totalVerticeCount) {
+void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int totalVerticeCount) {
     for(int i = 0; i < verticesToPrint; i++)
     {
         int iVertice = rand() % totalVerticeCount;
-        printf("Cost of node %i is %f\n", iVertice, costArrayHost[iVertice]);
+        printf("Cost of node %i is %i\n", iVertice, costArrayHost[iVertice]);
     }
 }
 
@@ -40,7 +41,7 @@ void printGraph(GraphData *graph) {
         }
         printf("Vertex %i has %i children\n", iNode, nChildren);
         for (int iChild=0; iChild<nChildren; iChild++) {
-            printf("Vertex %i is parent to vertex %i with edge weight of %f\n", iNode, graph->edgeArray[graph->vertexArray[iNode]+iChild], graph->weightArray[graph->vertexArray[iNode]+iChild]);
+            printf("Vertex %i is parent to vertex %i with edge weight of %i\n", iNode, graph->edgeArray[graph->vertexArray[iNode]+iChild], graph->weightArray[graph->vertexArray[iNode]+iChild]);
         }
     }
 }
@@ -56,7 +57,7 @@ void printInverseGraph(GraphData *graph) {
         }
         printf("Vertex %i has %i parents\n", iNode, nParents);
         for (int iParent=0; iParent<nParents; iParent++) {
-            printf("Vertex %i is child to vertex %i with edge weight of %f\n", iNode, graph->inverseEdgeArray[graph->inverseVertexArray[iNode]+iParent], graph->inverseWeightArray[graph->inverseVertexArray[iNode]+iParent]);
+            printf("Vertex %i is child to vertex %i with edge weight of %i\n", iNode, graph->inverseEdgeArray[graph->inverseVertexArray[iNode]+iParent], graph->inverseWeightArray[graph->inverseVertexArray[iNode]+iParent]);
         }
     }
 }
@@ -69,13 +70,13 @@ void printParents(GraphData *graph) {
 
 void printWeights(GraphData *graph) {
     for (int i = 0; i < graph->graphCount*graph->edgeCount; i++) {
-        printf("weightArray[%i] = %.3f\n", i, graph->weightArray[i]);
+        printf("weightArray[%i] = %i\n", i, graph->weightArray[i]);
     }
 }
 
 void printInverseWeights(GraphData *graph) {
     for (int i = 0; i < graph->graphCount*graph->edgeCount; i++) {
-        printf("inverseWeightArray[%i] = %.3f\n", i, graph->inverseWeightArray[i]);
+        printf("inverseWeightArray[%i] = %i\n", i, graph->inverseWeightArray[i]);
     }
 }
 
@@ -103,25 +104,25 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
     int totalVertexCount = graph->graphCount * graph->vertexCount;
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
     
-    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
-    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    int *costArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *updatingCostArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *weightArrayHost = (int*) malloc(sizeof(int) * totalEdgeCount);
+    int *maxVertexArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *parentCountArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
     
-    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, parentCountArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *maskArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, maskArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
@@ -130,7 +131,7 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
         int iGraph = tid / graph -> vertexCount;
         
         if (tid == iVertex || iVertex == -1) {
-            printf("Node %i: Mask: %i, Cost: %.2f, updatingCost: %.2f, max: %.2f, parentCount: %i.\n", tid, maskArrayHost[tid], costArrayHost[tid], updatingCostArrayHost[tid], maxVertexArrayHost[tid], parentCountArrayHost[tid]);
+            printf("Node %i: Mask: %i, Cost: %i, updatingCost: %i, max: %i, parentCount: %i.\n", tid, maskArrayHost[tid], costArrayHost[tid], updatingCostArrayHost[tid], maxVertexArrayHost[tid], parentCountArrayHost[tid]);
             
             int edgeStart = graph->vertexArray[localTid];
             int edgeEnd;
@@ -145,7 +146,7 @@ void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskA
             for(int edge = edgeStart; edge < edgeEnd; edge++)
             {
                 int nid = graph->edgeArray[edge];
-                printf("Influences node %i through edge %i by weight %.2f.\n", (iGraph*graph->vertexCount + nid), edge, graph->weightArray[iGraph*graph->vertexCount + edge]);
+                printf("Influences node %i through edge %i by weight %i.\n", (iGraph*graph->vertexCount + nid), edge, graph->weightArray[iGraph*graph->vertexCount + edge]);
             }
         }
     }
@@ -159,20 +160,20 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
     int totalVertexCount = graph->graphCount * graph->vertexCount;
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
     
-    float *costArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *updatingCostArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *weightArrayHost = (float*) malloc(sizeof(float) * totalEdgeCount);
-    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * totalVertexCount);
+    int *costArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *updatingCostArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *weightArrayHost = (int*) malloc(sizeof(int) * totalEdgeCount);
+    int *maxVertexArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *parentCountArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
     
     
-    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, costArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, updatingCostArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maxVertexArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, weightArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, parentCountArrayHost, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -181,7 +182,7 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
     printf("%i vertices.\n", totalVertexCount);
     for (int tid = 0; tid < totalVertexCount; tid++) {
         if ( maskArrayHost[tid] != 0 ) {
-            printf("Vertex %i, (max: %.2f, %i remaining parents) is considered for updating.\n", tid, maxVertexArrayHost[tid], parentCountArrayHost[tid]);
+            printf("Vertex %i, (max: %i, %i remaining parents) is considered for updating.\n", tid, maxVertexArrayHost[tid], parentCountArrayHost[tid]);
             if (maxVertexArrayHost[tid]<0 || parentCountArrayHost[tid]==0) {
                 
                 int iGraph = tid / graph->vertexCount;
@@ -203,14 +204,14 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
                     int nid = iGraph*graph->vertexCount + graph->edgeArray[edge];
                     int eid = iGraph*graph->edgeCount + edge;
                     
-                    printf("Node %i (of cost %.2f and updatingCost %.2f) updated node %i (of max %.2f with %i remaining parents) by edge %i with weight %.2f. Node %i now has cost %.2f and updatingCost %.2f.\n", tid, costArrayHost[tid], updatingCostArrayHost[tid], nid, maxVertexArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid], nid, costArrayHost[nid], updatingCostArrayHost[nid]);
+                    printf("Node %i (of cost %i and updatingCost %i) updated node %i (of max %i with %i remaining parents) by edge %i with weight %i. Node %i now has cost %i and updatingCost %i.\n", tid, costArrayHost[tid], updatingCostArrayHost[tid], nid, maxVertexArrayHost[nid], parentCountArrayHost[nid], edge, graph->weightArray[eid], nid, costArrayHost[nid], updatingCostArrayHost[nid]);
                     
                     if (maxVertexArrayHost[nid]>=0)
                     {
                         printf("Updated a max node.\n");
-                        printf("Perhaps maxVertexArray was increased. It is now %.2f.\n", maxVertexArrayHost[nid]);
+                        printf("Perhaps maxVertexArray was increased. It is now %i.\n", maxVertexArrayHost[nid]);
                         if (parentCountArrayHost[nid]==0) {
-                            printf("All parents visited. Set updatingCostArray[nid] (%.2f) to maxVertexArray[nid] (%.2f).\n", updatingCostArrayHost[nid], maxVertexArrayHost[nid]);
+                            printf("All parents visited. Set updatingCostArray[nid] (%i) to maxVertexArray[nid] (%i).\n", updatingCostArrayHost[nid], maxVertexArrayHost[nid]);
                         }
                     }
                 }
@@ -219,13 +220,13 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
     }
 }
 
-const char* costToString(float cost) {
+const char* costToString(int cost) {
     static char str[8];
     if (cost > 99999) {
         sprintf(str, "inf");
     }
     else {
-        sprintf(str, "%.2f", cost);
+        sprintf(str, "%i", cost);
     }
     return str;
 }
@@ -268,7 +269,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
             int localTarget = graph->edgeArray[localEdge];
             int globalTarget = iGraph*graph->vertexCount + localTarget;
             int globalEdge = iGraph*graph->edgeCount + localEdge;
-            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %.2f, ", globalSource, globalTarget, graph->weightArray[globalEdge]);
+            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %i, ", globalSource, globalTarget, graph->weightArray[globalEdge]);
         }
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
@@ -319,7 +320,7 @@ void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_me
 }
 
 void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *maxVertexArrayDevice) {
-    float *maxVertexArrayHost = (float*) malloc(sizeof(float) * graph->graphCount*graph->vertexCount);
+    int *maxVertexArrayHost = (int*) malloc(sizeof(int) * graph->graphCount*graph->vertexCount);
     cl_event readDone;
     
     int errNum = clEnqueueReadBuffer(*commandQueue, *maxVertexArrayDevice, CL_FALSE, 0, sizeof(int) * graph->graphCount*graph->vertexCount, maxVertexArrayHost, 0, NULL, &readDone);
@@ -329,17 +330,17 @@ void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *
     for (int iGraph=0; iGraph < graph->graphCount; iGraph++) {
         for (int iVertex=0; iVertex<graph->vertexCount; iVertex++) {
             int iGlobalVertex =iGraph * graph->vertexCount + iVertex;
-            printf("Max of vertex %i is %.2f.\n",iGlobalVertex, maxVertexArrayHost[iGlobalVertex]);
+            printf("Max of vertex %i is %i.\n",iGlobalVertex, maxVertexArrayHost[iGlobalVertex]);
         }
     }
 }
 
 // A utility function to print the constructed distance array
-void printSolution(float *dist, int n)
+void printSolution(int *dist, int n)
 {
     printf("Vertex   Distance from Source\n");
     for (int i = 0; i < n; i++)
-        printf("%d \t\t %.2f\n", i, dist[i]);
+        printf("%d \t\t %i\n", i, dist[i]);
 }
 
 void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck) {
@@ -351,20 +352,20 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
     int iErrors = 0;
     for (int iCheck = 0; iCheck<nGraphsToCheck; iCheck++) {
         int iGraph = rand() % graph->graphCount;
-        float *dist = dijkstra(graph, iGraph, verbose);
+        int *dist = dijkstra(graph, iGraph, verbose);
         if (verbose) {
             printf("Source is %i.\n", graph->sourceArray[iGraph]);
         }
         for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
             if (verbose) {
-                printf("%i: CPU=%.2f, GPU=%.2f\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
+                printf("%i: CPU=%i, GPU=%i\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
             }
-            if (dist[iVertex]-graph->costArray[iGraph*graph->vertexCount + iVertex]>0.01 || graph->costArray[iGraph*graph->vertexCount + iVertex]-dist[iVertex]>0.01) {
-                printf("CPU computed %.2f for vertex %i while GPU computed %.2f\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
+            if (dist[iVertex] != graph->costArray[iGraph*graph->vertexCount + iVertex] || graph->costArray[iGraph*graph->vertexCount + iVertex] != dist[iVertex]) {
+                printf("CPU computed %i for vertex %i while GPU computed %i\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
                 iErrors++;
                // exit(1);
             }
-            if (graph->costArray[iGraph*graph->vertexCount + iVertex] == FLT_MAX) {
+            if (graph->costArray[iGraph*graph->vertexCount + iVertex] == COST_MAX) {
                 nInfinite++;
             }
         }
@@ -375,14 +376,6 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
 
 #define PRECISION 1000
 
-
-int getMilliInteger(float floatValue) {
-    if (floatValue*PRECISION < INT_MAX)
-        return (int)((floatValue*PRECISION)+0.5);
-    else
-        return INT_MAX;
-    
-}
 
 int getEdgeEnd(int iVertex, int vertexCount, int *vertexArray, int edgeCount) {
     if (iVertex + 1 < (vertexCount))
@@ -403,12 +396,12 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     int *vertexArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *inverseVertexArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *edgeArray = (int*) malloc(sizeof(int) * totalEdgeCount);
-    float *weightArray = (float*) malloc(sizeof(float) * totalEdgeCount);
-    float *inverseWeightArray = (float*) malloc(sizeof(float) * totalEdgeCount);
+    int *weightArray = (int*) malloc(sizeof(int) * totalEdgeCount);
+    int *inverseWeightArray = (int*) malloc(sizeof(int) * totalEdgeCount);
     int *inverseEdgeArray = (int*) malloc(sizeof(int) * totalEdgeCount);
-    float *costArray = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *updatingCostArray = (float*) malloc(sizeof(float) * totalVertexCount);
-    float *maxVertexArray = (float*) malloc(sizeof(float) * totalVertexCount);
+    int *costArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *updatingCostArray = (int*) malloc(sizeof(int) * totalVertexCount);
+    int *maxVertexArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *parentCountArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *maskArray = (int*) malloc(sizeof(int) * totalVertexCount);
     int *traversedEdgeCountArray = (int*) malloc(sizeof(int) * totalEdgeCount);
@@ -423,15 +416,15 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *inverseEdgeArrayDevice, CL_FALSE, 0, sizeof(int) * edgeCount, inverseEdgeArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, weightArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *weightArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, weightArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *inverseWeightArrayDevice, CL_FALSE, 0, sizeof(float) * totalEdgeCount, inverseWeightArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *inverseWeightArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, inverseWeightArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, costArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *costArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, costArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, updatingCostArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *updatingCostArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, updatingCostArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
-    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(float) * totalVertexCount, maxVertexArray, 0, NULL, &readDone);
+    errNum = clEnqueueReadBuffer(*commandQueue, *maxVerticeArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, maxVertexArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
     errNum = clEnqueueReadBuffer(*commandQueue, *parentCountArrayDevice, CL_FALSE, 0, sizeof(int) * totalVertexCount, parentCountArray, 0, NULL, &readDone);
     checkError(errNum, CL_SUCCESS);
@@ -455,7 +448,7 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
             // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
             maskArray[globalSource] = 0;
             // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
-            printf("maxVertexArray[%i] = %.2f, parentCountArray[%i] = %i\n", globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
+            printf("maxVertexArray[%i] = %i, parentCountArray[%i] = %i\n", globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
             if (maxVertexArray[globalSource]<0 || parentCountArray[globalSource]==0) {
                 {
                     // Get the edges
@@ -485,28 +478,28 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                         int inverseEdgeStart = inverseVertexArray[localTarget];
                         int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
                         // If this is a min node ...
-                        printf("updatingCostArray[%i] = %.2f, inverseEdgeStart = %i, inverseEdgeEnd = %i, maxVertexArray[%i] = %.2f.\n", globalTarget, updatingCostArray[globalTarget], inverseEdgeStart, inverseEdgeEnd, globalTarget, maxVertexArray[globalTarget]);
+                        printf("updatingCostArray[%i] = %i, inverseEdgeStart = %i, inverseEdgeEnd = %i, maxVertexArray[%i] = %i.\n", globalTarget, updatingCostArray[globalTarget], inverseEdgeStart, inverseEdgeEnd, globalTarget, maxVertexArray[globalTarget]);
                         if (maxVertexArray[globalTarget]<0) {
                             // ...atomically choose the lesser of the current and candidate updatingCost
                             //atomic_min(&intUpdateCostArrayDevice[nid], candidateMilliCostInt);
                             // Reconvert the integer representation to float and store in updatingCostArray
                             //updatingCostArray[nid] = (float)(intUpdateCostArrayDevice[nid])/PRECISION;
                             // Iterate over the edges
-                            float minEdgeVal = FLT_MAX;
-                            printf("minEdgeVal = %.2f.\n", minEdgeVal);
+                            int minEdgeVal = COST_MAX;
+                            printf("minEdgeVal = %i.\n", minEdgeVal);
                             for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
                                 int localInverseTarget = inverseEdgeArray[localInverseEdge];
                                 int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
                                 int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
-                                float currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
-                                printf("inverseEdge = %i, currEdgeVal = %.2f, inverseEdgeArray[%i] = %i, costArray[%i] = %.2f, inverseWeightArray[%i] = %.2f.\n",localInverseEdge, currEdgeVal, localInverseEdge, inverseEdgeArray[localInverseEdge], globalInverseTarget, costArray[globalInverseTarget], localInverseEdge, inverseWeightArray[globalInverseEdge]);
+                                int currEdgeVal = costArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                                printf("inverseEdge = %i, currEdgeVal = %i, inverseEdgeArray[%i] = %i, costArray[%i] = %i, inverseWeightArray[%i] = %i.\n",localInverseEdge, currEdgeVal, localInverseEdge, inverseEdgeArray[localInverseEdge], globalInverseTarget, costArray[globalInverseTarget], localInverseEdge, inverseWeightArray[globalInverseEdge]);
                                 if (currEdgeVal<minEdgeVal) {
                                     minEdgeVal = currEdgeVal;
-                                    printf("Updated minEdgeVal to %.2f.\n", minEdgeVal);
+                                    printf("Updated minEdgeVal to %i.\n", minEdgeVal);
                                 }
                             }
                             updatingCostArray[globalTarget] = minEdgeVal;
-                            printf("Updated updatingCostArray[%i] to %.2f.\n", globalTarget, updatingCostArray[globalTarget]);
+                            printf("Updated updatingCostArray[%i] to %i.\n", globalTarget, updatingCostArray[globalTarget]);
                             // Mark the target for update
                             //maskArray[nid] = 1;
                             
@@ -518,9 +511,9 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
                             if (parentCountArray[globalTarget]==0) {
                                 // If all parents have been visited ...
                                 // Iterate over the edges
-                                float maxEdgeVal = 0;
+                                int maxEdgeVal = 0;
                                 for(int inverseEdge = inverseEdgeStart; inverseEdge < inverseEdgeEnd; inverseEdge++) {
-                                    float currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
+                                    int currEdgeVal = costArray[inverseEdgeArray[inverseEdge]] + inverseWeightArray[inverseEdge];
                                     if (currEdgeVal>maxEdgeVal) {
                                         maxEdgeVal = currEdgeVal;
                                     }

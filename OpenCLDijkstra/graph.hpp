@@ -52,20 +52,20 @@ typedef struct
     int edgeCount;
     
     // Cost array
-    float *costArray;
+    int *costArray;
     
     // Number of parents to each vertex
     int *parentCountArray;
     
     // Weight array
-    float *weightArray;
+    int *weightArray;
     
-    float *inverseWeightArray;
+    int *inverseWeightArray;
     
 } GraphData;
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax);
-float* dijkstra(GraphData *graph, int iGraph, bool verbose);
+int* dijkstra(GraphData *graph, int iGraph, bool verbose);
 
 #endif /* graph_hpp */

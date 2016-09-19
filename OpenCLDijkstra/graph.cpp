@@ -8,6 +8,9 @@
 
 #include "graph.hpp"
 
+
+#define COST_MAX 2147482646
+
 ///
 //  Namespaces
 //
@@ -39,14 +42,14 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->costArray = (float*) malloc(graphCount * graph->vertexCount * sizeof(float));
+    graph->costArray = (int*) malloc(graphCount * graph->vertexCount * sizeof(int));
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->weightArray = (float*)malloc(graphCount * graph->edgeCount * sizeof(float));
-    graph->inverseWeightArray = (float*)malloc(graphCount * graph->edgeCount * sizeof(float));
+    graph->weightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
+    graph->inverseWeightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
@@ -69,7 +72,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     }
     for(int i = 0; i < graphCount * graph->edgeCount; i++)
     {
-        graph->weightArray[i] = (float)(rand() % 1000) / 1000.0f;
+        graph->weightArray[i] = (rand() % 1000);
     }
     int tempSource = (rand() % graph->vertexCount);
     for(int i = 0; i < graphCount; i++)
@@ -109,14 +112,14 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
 
 // A utility function to find the vertex with minimum distance value, from
 // the set of vertices not yet included in shortest path tree
-int minDistance(float *dist, bool *sptSet, int vertexCount)
+int minDistance(int *dist, bool *sptSet, int vertexCount)
 {
     // Initialize min value
-    float min = FLT_MAX;
+    int min = COST_MAX;
     int min_index = 0;
     
     for (int v = 0; v < vertexCount; v++) {
-        //        printf("Node %i costs %.2f ", v, dist[v]);
+        //        printf("Node %i costs %i ", v, dist[v]);
         //        if (sptSet[v] == false) {
         //            printf("and is unprocessed. ");
         //        }
@@ -126,16 +129,16 @@ int minDistance(float *dist, bool *sptSet, int vertexCount)
         if (sptSet[v] == false && dist[v] <= min) {
             min = dist[v], min_index = v;
         }
-        //        printf("Lowest so far is %i with %.2f\n", min_index, min);
+        //        printf("Lowest so far is %i with %i\n", min_index, min);
     }
     return min_index;
 }
 
 
 
-bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, float *dist) {
+bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, int *dist) {
     for (int i = 0; i < vertexCount; i++) {
-        if (!sptSet[i] && dist[i]<FLT_MAX) {
+        if (!sptSet[i] && dist[i]<COST_MAX) {
             return true;
         }
     }
@@ -145,8 +148,8 @@ bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, float *dist) {
 
 // Funtion that implements Dijkstra's single source shortest path algorithm
 // for a graph represented using adjacency matrix representation
-float* dijkstra(GraphData *graph, int iGraph, bool verbose){
-    float *dist = (float*) malloc(sizeof(float) * graph->vertexCount);     // The output array.  dist[i] will hold the shortest
+int* dijkstra(GraphData *graph, int iGraph, bool verbose){
+    int *dist = (int*) malloc(sizeof(int) * graph->vertexCount);     // The output array.  dist[i] will hold the shortest
     // distance from src to i
     bool *sptSet = (bool*) malloc(sizeof(bool) * graph->vertexCount); // sptSet[i] will true if vertex i is included in shortest
     // path tree or shortest distance from src to i is finalized
@@ -158,7 +161,7 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
     // Copy the appropriate graph from GraphData
     int *vertexArray = (int*)malloc(vertexCount * sizeof(int));
     int *parentCountArray = (int*)malloc(vertexCount * sizeof(int));
-    float *maxVertexArray = (float*)malloc(vertexCount * sizeof(float));
+    int *maxVertexArray = (int*)malloc(vertexCount * sizeof(int));
     
     for (int iVertex=0; iVertex<vertexCount; iVertex++) {
         vertexArray[iVertex]=graph->vertexArray[iVertex];
@@ -167,7 +170,7 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
     }
     
     int *edgeArray = (int*)malloc(edgeCount * sizeof(int));
-    float *weightArray = (float*)malloc(edgeCount * sizeof(float));
+    int *weightArray = (int*)malloc(edgeCount * sizeof(int));
     int *traversedEdgeCountArray = (int*)malloc(edgeCount * sizeof(int));
     
     for (int iEdge=0; iEdge<edgeCount; iEdge++) {
@@ -179,7 +182,7 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
     
     // Initialize all distances as INFINITE and stpSet[] as false
     for (int i = 0; i < vertexCount; i++)
-        dist[i] = FLT_MAX, sptSet[i] = false;
+        dist[i] = COST_MAX, sptSet[i] = false;
     
     // Distance of source vertex from itself is always 0
     dist[sourceVertex] = 0;
@@ -194,7 +197,7 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
         // yet processed. u is always equal to src in first iteration.
         int source = minDistance(dist, sptSet, vertexCount);
         if (verbose) {
-            printf("Node %i (of cost %.2f) ...", source, dist[source]);
+            printf("Node %i (of cost %i) ...", source, dist[source]);
         }
         if (maxVertexArray[source]<0 || parentCountArray[source]==0) {
             // Mark the picked vertex as processed
@@ -221,20 +224,20 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
                 }
                 traversedEdgeCountArray[edge]++;
                 
-                if (dist[source] != FLT_MAX) {
+                if (dist[source] != COST_MAX) {
                     // If min node
                     if (maxVertexArray[target]<0) {
                         if (!sptSet[target]) {
                             if (verbose) {
-                                printf(" looking at min node %i (with %i remainaing parents) by edge with weight %.2f.", target, parentCountArray[target], graph->weightArray[edge]);
+                                printf(" looking at min node %i (with %i remainaing parents) by edge with weight %i.", target, parentCountArray[target], graph->weightArray[edge]);
                             }
                             if (dist[source]+weightArray[edge] < dist[target]) {
                                 if (verbose) {
-                                    printf(".. updated from %.2f ", dist[target]);
+                                    printf(".. updated from %i ", dist[target]);
                                 }
                                 dist[target] = dist[source] + weightArray[edge];
                                 if (verbose) {
-                                    printf("to %.2f", dist[target]);
+                                    printf("to %i", dist[target]);
                                 }
                             }
                             if (verbose) {
@@ -246,18 +249,18 @@ float* dijkstra(GraphData *graph, int iGraph, bool verbose){
                     // If max node
                     else {
                         if (verbose) {
-                            printf(" looking at max node %i (with %i remainaing parents, max: %.2f) by edge with weight %.2f.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
+                            printf(" looking at max node %i (with %i remainaing parents, max: %i) by edge with weight %i.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
                         }
                         if (maxVertexArray[target] < dist[source]+weightArray[edge]) {
                             maxVertexArray[target] = dist[source]+weightArray[edge];
                         }
                         if (parentCountArray[target]==0) {
                             if (verbose) {
-                                printf(".. updated from %.2f ", dist[target]);
+                                printf(".. updated from %i ", dist[target]);
                             }
                             dist[target] = maxVertexArray[target];
                             if (verbose) {
-                                printf("to %.2f", dist[target]);
+                                printf("to %i", dist[target]);
                             }
                         }
                         if (verbose) {
