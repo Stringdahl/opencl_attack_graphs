@@ -340,7 +340,7 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
     }
     
     // Create the compute program from the source file
-    *program = loadAndBuildProgram(*context, "/Users/pontus/Dropbox/Pontus/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
+    *program = loadAndBuildProgram(*context, "/Users/pontus/Library/Mobile Documents/com~apple~CloudDocs/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
     if (!program)
     {
         printf("Error: Failed to create compute program!\n");
@@ -613,7 +613,7 @@ int main(int argc, char** argv)
     float probOfMax = 0.1;
     
     
-    for (int nVertices = 25000; nVertices <= 25000; nVertices=nVertices+10000) {
+    for (int nVertices = 20000; nVertices <= 20000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i attack steps per sample. %i samples.\n", nVertices, nGraphs);
