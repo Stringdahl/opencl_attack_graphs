@@ -520,46 +520,46 @@ void calculateGraphs(GraphData *graph, bool debug) {
         // than necessary at times, but it will in most cases be faster because
         // we are doing less stalling of the GPU waiting for results.
         
-        //for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
-        //{
-        
-        if (debug) {
-            printf("Before Kernel1\n");
-            dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+        for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
+        {
             
-            shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice, &intUpdateCostArrayDevice);
-        }
-        
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
-        checkError(errNum, CL_SUCCESS);
-        
-        if (debug) {
-            clWaitForEvents(1, &kernel1event);
-            errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel1), &time_start_kernel1, NULL);
-            checkError(errNum, CL_SUCCESS);
-            errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
-            checkError(errNum, CL_SUCCESS);
-            elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
-        }
-        
-        if (debug) {
-            printf("After Kernel1\n");
-            dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-        }
-        
-        errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, &kernel2event);
-        checkError(errNum, CL_SUCCESS);
-        
-        if (debug) {
+            if (debug) {
+                printf("Before Kernel1\n");
+                dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+                
+                shadowKernel1(graph->graphCount, graph->vertexCount, graph->edgeCount, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &traversedEdgeCountArrayDevice, &intUpdateCostArrayDevice);
+            }
             
-            clWaitForEvents(1, &kernel2event);
-            errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel2), &time_start_kernel2, NULL);
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
             checkError(errNum, CL_SUCCESS);
-            errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
+            
+            if (debug) {
+                clWaitForEvents(1, &kernel1event);
+                errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel1), &time_start_kernel1, NULL);
+                checkError(errNum, CL_SUCCESS);
+                errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
+                checkError(errNum, CL_SUCCESS);
+                elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
+            }
+            
+            if (debug) {
+                printf("After Kernel1\n");
+                dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
+            }
+            
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, &kernel2event);
             checkError(errNum, CL_SUCCESS);
-            elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
+            
+            if (debug) {
+                
+                clWaitForEvents(1, &kernel2event);
+                errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_start_kernel2), &time_start_kernel2, NULL);
+                checkError(errNum, CL_SUCCESS);
+                errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
+                checkError(errNum, CL_SUCCESS);
+                elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
+            }
         }
-        //}
         
         if (debug) {
             printf("After Kernel2\n");
