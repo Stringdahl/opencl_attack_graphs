@@ -543,6 +543,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
                 errNum = clGetEventProfilingInfo(kernel1event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel1), &time_end_kernel1, NULL);
                 checkError(errNum, CL_SUCCESS);
                 elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
+                clReleaseEvent(kernel1event);
+
             }
             
             if (debug) {
@@ -561,6 +563,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
                 errNum = clGetEventProfilingInfo(kernel2event, CL_PROFILING_COMMAND_END, sizeof(time_end_kernel2), &time_end_kernel2, NULL);
                 checkError(errNum, CL_SUCCESS);
                 elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
+                clReleaseEvent(kernel2event);
+
             }
         }
         
@@ -611,8 +615,13 @@ void calculateGraphs(GraphData *graph, bool debug) {
   
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
+    clReleaseKernel(ssspKernel1);
+    clReleaseKernel(ssspKernel2);
     clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
+    clReleaseEvent(readDone);
+    clReleaseDevice(device_id);
+    
 }
 
 
@@ -629,12 +638,12 @@ int main(int argc, char** argv)
     float probOfMax = 0.1;
     
     
-    for (int nVertices =20000; nVertices <=20000; nVertices=nVertices+10000) {
+    for (int nVertices =100000; nVertices <=100000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
         generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
-        printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+        printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         //printSources(&graph);
         //printWeights(&graph);
@@ -647,6 +656,7 @@ int main(int argc, char** argv)
 
 //        printf("{");
         for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
+            printf("%i/%i, ", iGraphSet, graphSetCount);
             calculateGraphs(&graph, false);
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
                 //printf("iGraphSet = %i, iGlobalVertex = %i\n.", iGraphSet, iGlobalVertex);
@@ -659,7 +669,7 @@ int main(int argc, char** argv)
             updateGraphWithNewRandomWeights(&graph);
         }
 //        printf("}\n");
-        printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
+        printf("Time to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         //printMathematicaString(&graph, 0);
         
