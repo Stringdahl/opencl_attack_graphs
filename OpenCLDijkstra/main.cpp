@@ -20,7 +20,7 @@
 
 #define COST_MAX 2147482646
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
-#define NUM_ASYNCHRONOUS_ITERATIONS 10  // Number of async loop iterations before attempting to read results back
+#define NUM_ASYNCHRONOUS_ITERATIONS 20  // Number of async loop iterations before attempting to read results back
 
 ///
 //  Utility functions adapted from NVIDIA GPU Computing SDK
@@ -208,6 +208,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     }
     checkError(errNum, CL_SUCCESS);
     
+    free(traversedEdgeCountArray);
+    free(aggregatedWeightArray);
+    free(parentCountArray);
+    free(maxVertexArray);
     clReleaseMemObject(hostVertexArrayBuffer);
     clReleaseMemObject(hostInverseVertexArrayBuffer);
     clReleaseMemObject(hostEdgeArrayBuffer);
@@ -514,7 +518,6 @@ void calculateGraphs(GraphData *graph, bool debug) {
     int count = 0;
     while(!maskArrayEmpty(maskArrayHost, totalVertexCount))
     {
-        count ++;
         
         // In order to improve performance, we run some number of iterations
         // without reading the results.  This might result in running more iterations
@@ -523,7 +526,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
         
         for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
         {
-            
+            count ++;
+
             if (debug) {
                 printf("Before Kernel1\n");
                 dumpBuffers(graph, &commandQueue, &maskArrayDevice, &costArrayDevice, &updatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
@@ -573,7 +577,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     }
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
-    
+    //printf("%i iterations over the two kernels.\n", count);
     
     // Read back the results from the device to verify the output
     
@@ -586,18 +590,30 @@ void calculateGraphs(GraphData *graph, bool debug) {
     }
     // Shutdown and cleanup
     //
+    free(maskArrayHost);
+    
+    clReleaseMemObject(vertexArrayDevice);
+    clReleaseMemObject(inverseVertexArrayDevice);
+    clReleaseMemObject(edgeArrayDevice);
+    clReleaseMemObject(inverseEdgeArrayDevice);
+    clReleaseMemObject(weightArrayDevice);
+    clReleaseMemObject(inverseWeightArrayDevice);
+    clReleaseMemObject(aggregatedWeightArrayDevice);
+    clReleaseMemObject(maskArrayDevice);
+    clReleaseMemObject(costArrayDevice);
+    clReleaseMemObject(updatingCostArrayDevice);
+    clReleaseMemObject(traversedEdgeCountArrayDevice);
+    clReleaseMemObject(sourceArrayDevice);
+    clReleaseMemObject(parentCountArrayDevice);
+    clReleaseMemObject(maxVerticeArrayDevice);
+    clReleaseMemObject(intUpdateCostArrayDevice);
+    clReleaseMemObject(intMaxVertexArrayDevice);
+  
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
     clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
 }
-
-
-
-
-
-// 1: Race condition
-// 2: Multiple graphs don't calculate properly
 
 
 
@@ -609,11 +625,11 @@ int main(int argc, char** argv)
     
     int nEdgePerVertice = 2;
     int nGraphs = 100;
-    int graphSetCount = 25;
+    int graphSetCount = 100;
     float probOfMax = 0.1;
     
     
-    for (int nVertices =80000; nVertices <=80000; nVertices=nVertices+10000) {
+    for (int nVertices =20000; nVertices <=20000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
