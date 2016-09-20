@@ -11,7 +11,7 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
 ///
 /// This is part 1 of the Kernel from Algorithm 4 in the paper
 ///
-__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global int *weightArray, __global int *inverseWeightArray, __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global int *maxVertexArray)
+__kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global int *weightArray, __global int *inverseWeightArray, __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray, __global int *sumCostArray, __global int *sumUpdatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global int *maxVertexArray)
 {
     // access thread id
     int globalSource = get_global_id(0);
@@ -44,29 +44,29 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     
                     // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
                     if (traversedEdgeCountArray[globalEdge] == 0) {
-                       atomic_dec(&parentCountArray[globalTarget]);
-                       // parentCountArray[globalTarget]--;
+                        atomic_dec(&parentCountArray[globalTarget]);
+                        // parentCountArray[globalTarget]--;
                     }
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[globalEdge] ++;
                     int inverseEdgeStart = inverseVertexArray[localTarget];
                     int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
                     //printf("Before min/max: globalSource = %i, globalTarget = %i, maxVertexArray[%i] = %i, parentCountArray[%i] = %i.\n", globalSource, globalTarget, globalTarget, maxVertexArray[globalTarget], globalTarget, parentCountArray[globalTarget]);
+                    
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
-                        int currentCost;
-//                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
-//                            currentCost = COST_MAX;
-//                        else
-                            currentCost = maxCostArray[globalSource] + weightArray[globalEdge];
+                        int currentMaxCost;
+                        //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
+                        //                            currentMaxCost = COST_MAX;
+                        //                        else
+                        currentMaxCost = maxCostArray[globalSource] + weightArray[globalEdge];
                         
                         // ...atomically choose the lesser of the current and candidate updatingCost
-                        atomic_min(&maxUpdatingCostArray[globalTarget], currentCost);
+                        atomic_min(&maxUpdatingCostArray[globalTarget], currentMaxCost);
+                        atomic_min(&sumUpdatingCostArray[globalTarget], currentMaxCost);
                         // Reconvert the integer representation to float and store in maxUpdatingCostArray
                         // Iterate over the edges
-                        int minEdgeVal = COST_MAX;
                         
-                        //maxUpdatingCostArray[globalTarget] = minEdgeVal;
                         // Mark the target for update
                         //maskArray[nid] = 1;
                         
@@ -78,30 +78,28 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             // If all parents have been visited ...
                             // Iterate over the edges
                             int maxEdgeVal = 0;
+                            int sumEdgeVal = 0;
                             
                             for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
                                 int localInverseTarget = inverseEdgeArray[localInverseEdge];
                                 int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
                                 int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
                                 int currEdgeVal = maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
-                               if (currEdgeVal>maxEdgeVal) {
+                                if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
-                               // printf("In max: globalSource = %i, globalTarget = %i, currEdgeVal = %i, minEdgeVal = %i.\n", globalSource, globalTarget, currEdgeVal, maxEdgeVal);
+                                sumEdgeVal = sumEdgeVal + currEdgeVal;
                             }
-//                            int currentCost;
-//                            if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
-//                                currentCost = COST_MAX;
-//                            else
-//                                currentCost = maxCostArray[globalSource] + weightArray[globalEdge];
-//                            
-//                            atomic_max(&maxUpdatingCostArray[globalTarget], currentCost);
-//                            atomic_max(&maxCostArray[globalTarget], currentCost);
-
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
+                            sumCostArray[globalTarget] = sumEdgeVal;
+                            sumUpdatingCostArray[globalTarget] = sumEdgeVal;
                             // Mark the target for update
                             maskArray[globalTarget] = 1;
+//                            if (sumEdgeVal!=maxEdgeVal) {
+//                                printf("In max: globalSource = %i, globalTarget = %i, maxEdgeVal = %i, sumEdgeVal = %i.\n", globalSource, globalTarget, maxEdgeVal, sumEdgeVal);
+//                            }
+                            
                         }
                     }
                 }
@@ -115,8 +113,7 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
 /// This is part 2 of the Kernel from Algorithm 5 in the paper.
 ///
 __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global int *weightArray,
-                               __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray,
-                               int vertexCount, __global int *maxVertexArray)
+                               __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray, __global int *sumCostArray, __global int *sumUpdatingCostArray, int vertexCount, __global int *maxVertexArray)
 {
     // access thread id
     int tid = get_global_id(0);
@@ -126,8 +123,14 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
         maxCostArray[tid] = maxUpdatingCostArray[tid];
         maskArray[tid] = 1;
     }
+    if (sumCostArray[tid] > sumUpdatingCostArray[tid])
+    {
+        sumCostArray[tid] = sumUpdatingCostArray[tid];
+        maskArray[tid] = 1;
+    }
     
     maxUpdatingCostArray[tid] = maxCostArray[tid];
+    sumUpdatingCostArray[tid] = sumCostArray[tid];
 }
 
 
@@ -138,6 +141,8 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
 __kernel void initializeBuffers( __global int *maskArray,
                                 __global int *maxCostArray,
                                 __global int *maxUpdatingCostArray,
+                                __global int *sumCostArray,
+                                __global int *sumUpdatingCostArray,
                                 int vertexCount,
                                 __global int *sourceArray)
 {
@@ -145,19 +150,23 @@ __kernel void initializeBuffers( __global int *maskArray,
     int tid = get_global_id(0);
     int iGraph = tid / vertexCount;
     int localTid = tid % vertexCount;
-
-
+    
+    
     if (localTid == sourceArray[iGraph])
     {
         maskArray[tid] = 1;
         maxCostArray[tid] = 0;
         maxUpdatingCostArray[tid] = 0;
+        sumCostArray[tid] = 0;
+        sumUpdatingCostArray[tid] = 0;
     }
     else
     {
         maskArray[tid] = 0;
         maxCostArray[tid] = COST_MAX;
         maxUpdatingCostArray[tid] = COST_MAX;
+        sumCostArray[tid] = COST_MAX;
+        sumUpdatingCostArray[tid] = COST_MAX;
     }
 }
 

@@ -54,6 +54,9 @@ typedef struct
     // Cost array
     int *costArray;
     
+    // Sum cost array
+    int *sumCostArray;
+    
     // Number of parents to each vertex
     int *parentCountArray;
     

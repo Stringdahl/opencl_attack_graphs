@@ -392,7 +392,7 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 }
 
 
-int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *maxCostArrayDevice, cl_mem *maxUpdatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *maxCostArrayDevice, cl_mem *maxUpdatingCostArrayDevice, cl_mem *sumCostArrayDevice, cl_mem *sumUpdatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
     
     int totalVertexCount = graphCount*vertexCount;
     
@@ -402,8 +402,10 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*initializeKernel, 0, sizeof(cl_mem), maskArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 1, sizeof(cl_mem), maxCostArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 2, sizeof(cl_mem), maxUpdatingCostArrayDevice);
-    errNum |= clSetKernelArg(*initializeKernel, 3, sizeof(int), &vertexCount);
-    errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(cl_mem), sourceArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 3, sizeof(cl_mem), sumCostArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(cl_mem), sumUpdatingCostArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 5, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*initializeKernel, 6, sizeof(cl_mem), sourceArrayDevice);
     
     // Set the arguments to ssspKernel1
     errNum |= clSetKernelArg(*ssspKernel1, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -415,11 +417,13 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel1, 6, sizeof(cl_mem), maskArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 7, sizeof(cl_mem), maxCostArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel1, 8, sizeof(cl_mem), maxUpdatingCostArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(int), &vertexCount);
-    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(int), &edgeCount);
-    errNum |= clSetKernelArg(*ssspKernel1, 11, sizeof(cl_mem), traversedEdgeCountArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 12, sizeof(cl_mem), parentCountArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel1, 13, sizeof(cl_mem), maxVerticeArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 9, sizeof(cl_mem), sumCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 10, sizeof(cl_mem), sumUpdatingCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 11, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 12, sizeof(int), &edgeCount);
+    errNum |= clSetKernelArg(*ssspKernel1, 13, sizeof(cl_mem), traversedEdgeCountArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 14, sizeof(cl_mem), parentCountArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel1, 15, sizeof(cl_mem), maxVerticeArrayDevice);
     
     // Set the arguments to ssspKernel2
     errNum |= clSetKernelArg(*ssspKernel2, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -428,8 +432,10 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel2, 3, sizeof(cl_mem), maskArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel2, 4, sizeof(cl_mem), maxCostArrayDevice);
     errNum |= clSetKernelArg(*ssspKernel2, 5, sizeof(cl_mem), maxUpdatingCostArrayDevice);
-    errNum |= clSetKernelArg(*ssspKernel2, 6, sizeof(int), &totalVertexCount);
-    errNum |= clSetKernelArg(*ssspKernel2, 7, sizeof(cl_mem), maxVerticeArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 6, sizeof(cl_mem), sumCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 7, sizeof(cl_mem), sumUpdatingCostArrayDevice);
+    errNum |= clSetKernelArg(*ssspKernel2, 8, sizeof(int), &totalVertexCount);
+    errNum |= clSetKernelArg(*ssspKernel2, 9, sizeof(cl_mem), maxVerticeArrayDevice);
     if (errNum != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", errNum);
@@ -488,7 +494,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     allocateOCLBuffers(context, commandQueue, graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph->graphCount, graph->vertexCount, graph->edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph->graphCount, graph->vertexCount, graph->edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
@@ -577,6 +583,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
     
     errNum = clEnqueueReadBuffer( commandQueue, maxCostArrayDevice, CL_TRUE, 0, sizeof(int) * totalVertexCount, graph->costArray, 0, NULL, NULL );
     checkError(errNum, CL_SUCCESS);
+    errNum = clEnqueueReadBuffer( commandQueue, sumCostArrayDevice, CL_TRUE, 0, sizeof(int) * totalVertexCount, graph->sumCostArray, 0, NULL, NULL );
+    checkError(errNum, CL_SUCCESS);
     clWaitForEvents(1, &readDone);
     
     if (debug) {
@@ -624,7 +632,7 @@ int main(int argc, char** argv)
     int nEdgePerVertice = 2;
     int nGraphs = 10;
     int graphSetCount = 10;
-    float probOfMax = 0.2;
+    float probOfMax = 0.3;
     
     
     for (int nVertices =100; nVertices <=100; nVertices=nVertices+10000) {
@@ -646,13 +654,18 @@ int main(int argc, char** argv)
             printf("%i/%i, ", iGraphSet, graphSetCount);
             updateGraphWithNewRandomWeights(&graph);
             calculateGraphs(&graph, false);
+            for (int i=0; i<graph.vertexCount; i++) {
+                if (graph.costArray[i] != graph.sumCostArray[i])
+                    printf("graph->costArray[%i] = %i, graph->sumCostArray[%i) = %i.\n", i, graph.costArray[i], i, graph.sumCostArray[i]);
+            }
+
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
                 costArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
             }
         }
         printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
-        //printMathematicaString(&graph, 0);
+        printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         

@@ -43,6 +43,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->costArray = (int*) malloc(graphCount * graph->vertexCount * sizeof(int));
+    graph->sumCostArray = (int*) malloc(graphCount * graph->vertexCount * sizeof(int));
     graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
     graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));

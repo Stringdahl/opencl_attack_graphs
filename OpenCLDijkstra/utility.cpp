@@ -243,6 +243,12 @@ bool contains(int *array, int arrayLength, int value) {
 void printMathematicaString(GraphData *graph, int iGraph) {
     char str[128*graph->edgeCount];
     
+    for (int i=0; i<graph->vertexCount; i++) {
+        if (graph->costArray[i] != graph->sumCostArray[i])
+            printf("graph->costArray[%i] = %i, graph->sumCostArray[%i) = %i.\n", i, graph->costArray[i], i, graph->sumCostArray[i]);
+    }
+
+    
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
         int globalSource = iGraph*graph->vertexCount + localSource;
@@ -257,8 +263,10 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
         int globalVertex = iGraph*graph->vertexCount + vertex;
-        const char* sourceString = costToString(graph->costArray[globalVertex]);
-        sprintf(str + strlen(str), "%i -> %i [%s], ", globalVertex, globalVertex, sourceString);
+        const char* maxSourceString = costToString(graph->costArray[globalVertex]);
+        sprintf(str + strlen(str), "%i -> %i \"[%s-", globalVertex, globalVertex, maxSourceString);
+        const char* sumSourceString = costToString(graph->sumCostArray[globalVertex]);
+        sprintf(str + strlen(str), "%s]\", ", sumSourceString);
     }
     sprintf(str + strlen(str)-2, "}, EdgeLabels -> {");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
