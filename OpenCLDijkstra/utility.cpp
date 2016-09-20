@@ -396,15 +396,23 @@ void maxSumDifference(GraphData *graph) {
     long diff = 0;
     long sum = 0;
     int nDiff = 0;
+    float maxDiff = 0;
+    int iMaxDiff = -1;
     int totalVerticeCount = graph->graphCount*graph->vertexCount;
     for (int i=0; i<totalVerticeCount; i++) {
         sum = sum + graph->costArray[i];
         if (graph->sumCostArray[i] != graph->costArray[i]) {
             diff = diff + graph->sumCostArray[i] - graph->costArray[i];
             nDiff ++;
+            float currDiff = 100*(float)(graph->sumCostArray[i] - graph->costArray[i])/graph->costArray[i];
+            if (currDiff > maxDiff) {
+                maxDiff = currDiff;
+                iMaxDiff = i;
+            }
         }
     }
-    printf("The average difference between max and sum is %f%% per node. %i nodes of a total of %i were approximated.\n", 100*(float)diff/(float)sum, nDiff, totalVerticeCount);
+    printf("The average difference between max and sum is %f%% per node. %.2f%% of nodes were approximated.\n", 100*(float)diff/(float)sum, 100*(float)nDiff/totalVerticeCount);
+    printf("The biggeste single difference was %.2f%% in node %i (%i).\n", maxDiff, iMaxDiff % graph->graphCount, iMaxDiff);
 }
 
 
