@@ -247,7 +247,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         if (graph->costArray[i] != graph->sumCostArray[i])
             printf("graph->costArray[%i] = %i, graph->sumCostArray[%i) = %i.\n", i, graph->costArray[i], i, graph->sumCostArray[i]);
     }
-
+    
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
@@ -371,7 +371,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
             if (dist[iVertex] != graph->costArray[iGraph*graph->vertexCount + iVertex] || graph->costArray[iGraph*graph->vertexCount + iVertex] != dist[iVertex]) {
                 printf("CPU computed %i for vertex %i while GPU computed %i\n", dist[iVertex], iVertex, graph->costArray[iGraph*graph->vertexCount + iVertex]);
                 iErrors++;
-               // exit(1);
+                // exit(1);
             }
             if (graph->costArray[iGraph*graph->vertexCount + iVertex] == COST_MAX) {
                 nInfinite++;
@@ -379,7 +379,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
         }
     }
     printf("%i errors.\n", iErrors);
-    printf("On average %i infinite-time attack steps per graph.\n", nInfinite/nGraphsToCheck);
+    printf("On average %.0f%% infinite-time attack steps.\n", 100*(float)nInfinite/(nGraphsToCheck*graph->vertexCount));
 }
 
 #define PRECISION 1000
@@ -392,7 +392,20 @@ int getEdgeEnd(int iVertex, int vertexCount, int *vertexArray, int edgeCount) {
         return edgeCount;
 }
 
-
+void maxSumDifference(GraphData *graph) {
+    long diff = 0;
+    long sum = 0;
+    int nDiff = 0;
+    int totalVerticeCount = graph->graphCount*graph->vertexCount;
+    for (int i=0; i<totalVerticeCount; i++) {
+        sum = sum + graph->costArray[i];
+        if (graph->sumCostArray[i] != graph->costArray[i]) {
+            diff = diff + graph->sumCostArray[i] - graph->costArray[i];
+            nDiff ++;
+        }
+    }
+    printf("The average difference between max and sum is %f%% per node. %i nodes of a total of %i were approximated.\n", 100*(float)diff/(float)sum, nDiff, totalVerticeCount);
+}
 
 
 

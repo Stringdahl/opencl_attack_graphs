@@ -632,10 +632,10 @@ int main(int argc, char** argv)
     int nEdgePerVertice = 2;
     int nGraphs = 10;
     int graphSetCount = 10;
-    float probOfMax = 0.3;
+    float probOfMax = 0.1;
     
     
-    for (int nVertices =100; nVertices <=100; nVertices=nVertices+10000) {
+    for (int nVertices =1000; nVertices <=1000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
@@ -648,24 +648,26 @@ int main(int argc, char** argv)
         //printInverseWeights(&graph);
         
         start_time = clock();
-        int *costArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
+        int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
+        int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
 
         for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
             printf("%i/%i, ", iGraphSet, graphSetCount);
             updateGraphWithNewRandomWeights(&graph);
             calculateGraphs(&graph, false);
-            for (int i=0; i<graph.vertexCount; i++) {
-                if (graph.costArray[i] != graph.sumCostArray[i])
-                    printf("graph->costArray[%i] = %i, graph->sumCostArray[%i) = %i.\n", i, graph.costArray[i], i, graph.sumCostArray[i]);
-            }
-
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
-                costArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
+                maxCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
+                sumCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.sumCostArray[iGlobalVertex];
             }
         }
         printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+
         
-        printMathematicaString(&graph, 0);
+        
+        maxSumDifference(&graph);
+        
+        
+        //printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         
