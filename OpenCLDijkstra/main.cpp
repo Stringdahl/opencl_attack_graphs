@@ -608,14 +608,15 @@ int main(int argc, char** argv)
     GraphData graph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 10;
+    int nGraphs = 100;
+    int graphSetCount = 25;
     float probOfMax = 0.1;
     
     
-    for (int nVertices = 1000; nVertices <= 1000; nVertices=nVertices+10000) {
+    for (int nVertices =80000; nVertices <=80000; nVertices=nVertices+10000) {
         srand(0);
         clock_t start_time = clock();
-        printf("%i attack steps per sample. %i samples.\n", nVertices, nGraphs);
+        printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
         generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
         printf("Time to generate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
@@ -626,12 +627,27 @@ int main(int argc, char** argv)
         
         start_time = clock();
         //printf("Starting clock.\n");
-        calculateGraphs(&graph, false);
+        int *costArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
+
+//        printf("{");
+        for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
+            calculateGraphs(&graph, false);
+            for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
+                //printf("iGraphSet = %i, iGlobalVertex = %i\n.", iGraphSet, iGlobalVertex);
+                costArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
+//                int iLocalVertex = iGlobalVertex % graph.vertexCount;
+//                if (iLocalVertex ==9) {
+//                    printf("%i, ", costArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex]);
+//                }
+            }
+            updateGraphWithNewRandomWeights(&graph);
+        }
+//        printf("}\n");
         printf("Time to calculate graph, including overhead: %.2f milliseconds.\n", (float)(clock()-start_time)/1000);
         
         //printMathematicaString(&graph, 0);
         
-        compareToCPUComputation(&graph, false, 10);
+        //compareToCPUComputation(&graph, false, 10);
         
     }
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
