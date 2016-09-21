@@ -112,7 +112,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                        sizeof(int) * totalEdgeCount, traversedEdgeCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(int) * graph->graphCount, graph->sourceArray, &errNum);
+                                           sizeof(int) * graph->sourceCount, graph->sourceArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostParentCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
@@ -150,7 +150,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->graphCount, NULL, &errNum);
+    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->sourceCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     
@@ -194,7 +194,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostSourceArrayBuffer, *sourceArrayDevice, 0, 0,
-                                 sizeof(int) * graph->graphCount, 0, NULL, NULL);
+                                 sizeof(int) * graph->sourceCount, 0, NULL, NULL);
     if (errNum != CL_SUCCESS)
     {
         printf("Error: Failed to enqueue source array buffer!\n");
@@ -392,7 +392,7 @@ int createKernels(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel
 }
 
 
-int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *maxCostArrayDevice, cl_mem *maxUpdatingCostArrayDevice, cl_mem *sumCostArrayDevice, cl_mem *sumUpdatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
+int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, int graphCount, int vertexCount, int edgeCount, int sourceCount,  cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *maxCostArrayDevice, cl_mem *maxUpdatingCostArrayDevice, cl_mem *sumCostArrayDevice, cl_mem *sumUpdatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice) {
     
     int totalVertexCount = graphCount*vertexCount;
     
@@ -405,7 +405,8 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*initializeKernel, 3, sizeof(cl_mem), sumCostArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 4, sizeof(cl_mem), sumUpdatingCostArrayDevice);
     errNum |= clSetKernelArg(*initializeKernel, 5, sizeof(int), &vertexCount);
-    errNum |= clSetKernelArg(*initializeKernel, 6, sizeof(cl_mem), sourceArrayDevice);
+    errNum |= clSetKernelArg(*initializeKernel, 6, sizeof(int), &sourceCount);
+    errNum |= clSetKernelArg(*initializeKernel, 7, sizeof(cl_mem), sourceArrayDevice);
     
     // Set the arguments to ssspKernel1
     errNum |= clSetKernelArg(*ssspKernel1, 0, sizeof(cl_mem), vertexArrayDevice);
@@ -494,7 +495,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     allocateOCLBuffers(context, commandQueue, graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Setting the kernel arguments
-    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph->graphCount, graph->vertexCount, graph->edgeCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
+    errNum = setKernelArguments(&initializeKernel, &ssspKernel1, &ssspKernel2, graph->graphCount, graph->vertexCount, graph->edgeCount, graph->sourceCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
@@ -629,28 +630,31 @@ int main(int argc, char** argv)
 {
     GraphData graph;
     
-    int nEdgePerVertice = 3;
-    int nGraphs = 10;
-    int graphSetCount = 10;
-    float probOfMax = 0.3;
+    int nEdgePerVertice = 2;
+    int nGraphs = 2;
+    int nSources = 2;
+    int graphSetCount = 1;
+    float probOfMax = 0.2;
     
     
     
     
-    for (int nVertices =24; nVertices <=24; nVertices=nVertices+1) {
+    for (int nVertices =100; nVertices <=100; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
-        generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
+        generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
-        writeGraphToFile(&graph);
+        //printGraph(&graph);
+
+       // writeGraphToFile(&graph);
         
         GraphData readGraph;
         char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
-        readGraphFromFile(&readGraph, filePath);
+       // readGraphFromFile(&readGraph, filePath);
 
-        printGraph(&readGraph);
+       // printGraph(&readGraph);
         
         //printSources(&graph);
         //printWeights(&graph);
@@ -662,7 +666,6 @@ int main(int argc, char** argv)
         int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
 
         for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
-            printf("%i/%i, ", iGraphSet, graphSetCount);
             updateGraphWithNewRandomWeights(&graph);
             calculateGraphs(&graph, false);
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
@@ -674,7 +677,7 @@ int main(int argc, char** argv)
         
         maxSumDifference(&graph);
         
-        printMathematicaString(&graph, 0);
+        //printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         

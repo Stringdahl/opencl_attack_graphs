@@ -96,9 +96,9 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             sumUpdatingCostArray[globalTarget] = sumEdgeVal;
                             // Mark the target for update
                             maskArray[globalTarget] = 1;
-//                            if (sumEdgeVal!=maxEdgeVal) {
-//                                printf("In max: globalSource = %i, globalTarget = %i, maxEdgeVal = %i, sumEdgeVal = %i.\n", globalSource, globalTarget, maxEdgeVal, sumEdgeVal);
-//                            }
+                            //                            if (sumEdgeVal!=maxEdgeVal) {
+                            //                                printf("In max: globalSource = %i, globalTarget = %i, maxEdgeVal = %i, sumEdgeVal = %i.\n", globalSource, globalTarget, maxEdgeVal, sumEdgeVal);
+                            //                            }
                             
                         }
                     }
@@ -144,24 +144,28 @@ __kernel void initializeBuffers( __global int *maskArray,
                                 __global int *sumCostArray,
                                 __global int *sumUpdatingCostArray,
                                 int vertexCount,
+                                int sourceCount,
                                 __global int *sourceArray)
 {
     // access thread id
     int tid = get_global_id(0);
     int iGraph = tid / vertexCount;
     int localTid = tid % vertexCount;
+    bool isSource = false;
     
-    
-    if (localTid == sourceArray[iGraph])
-    {
+    for (int iSource = 0; iSource < sourceCount; iSource++) {
+        if (localTid == sourceArray[iSource]) {
+            isSource = true;
+        }
+    }
+    if (isSource) {
         maskArray[tid] = 1;
         maxCostArray[tid] = 0;
         maxUpdatingCostArray[tid] = 0;
         sumCostArray[tid] = 0;
         sumUpdatingCostArray[tid] = 0;
     }
-    else
-    {
+    else {
         maskArray[tid] = 0;
         maxCostArray[tid] = COST_MAX;
         maxUpdatingCostArray[tid] = COST_MAX;

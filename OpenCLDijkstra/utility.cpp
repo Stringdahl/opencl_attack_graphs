@@ -35,6 +35,16 @@ void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int tota
     }
 }
 
+bool contains(int *array, int arrayLength, int value) {
+    for (int i = 0; i < arrayLength; i++) {
+        if (array[i]==value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void printGraph(GraphData *graph) {
     int nChildren;
     for (int iNode=0; iNode<graph->vertexCount; iNode++) {
@@ -45,6 +55,9 @@ void printGraph(GraphData *graph) {
             nChildren = graph->edgeCount-graph->vertexArray[iNode];
         }
         printf("Vertex %i has %i children\n", iNode, nChildren);
+        if (contains(graph->sourceArray, graph->sourceCount, iNode)) {
+            printf("Vertex %i is source.\n", iNode);
+        }
         for (int iChild=0; iChild<nChildren; iChild++) {
             printf("Vertex %i is parent to vertex %i with edge weight of %i\n", iNode, graph->edgeArray[graph->vertexArray[iNode]+iChild], graph->weightArray[graph->vertexArray[iNode]+iChild]);
         }
@@ -87,7 +100,7 @@ void printInverseWeights(GraphData *graph) {
 
 void printSources(GraphData *graph) {
     printf("Nodes ");
-    for (int i = 0; i < graph->graphCount; i++) {
+    for (int i = 0; i < graph->sourceCount; i++) {
         printf("%i, ", graph->sourceArray[i]);
     }
     printf("are sources.\n");
@@ -236,23 +249,8 @@ const char* costToString(int cost) {
     return str;
 }
 
-bool contains(int *array, int arrayLength, int value) {
-    for (int i = 0; i < arrayLength; i++) {
-        if (array[i]==value) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void printMathematicaString(GraphData *graph, int iGraph) {
     char str[128*graph->edgeCount];
-    
-    for (int i=0; i<graph->vertexCount; i++) {
-        if (graph->costArray[i] != graph->sumCostArray[i])
-            printf("graph->costArray[%i] = %i, graph->sumCostArray[%i) = %i.\n", i, graph->costArray[i], i, graph->sumCostArray[i]);
-    }
-    
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
@@ -269,7 +267,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
         int globalVertex = iGraph*graph->vertexCount + vertex;
         const char* maxSourceString = costToString(graph->costArray[globalVertex]);
-        sprintf(str + strlen(str), "%i -> %i \"[%s-", globalVertex, globalVertex, maxSourceString);
+        sprintf(str + strlen(str), "%i -> \"%i [%s-", globalVertex, globalVertex, maxSourceString);
         const char* sumSourceString = costToString(graph->sumCostArray[globalVertex]);
         sprintf(str + strlen(str), "%s]\", ", sumSourceString);
     }
@@ -288,7 +286,7 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
         int globalVertex = iGraph*graph->vertexCount + localVertex;
-        if (graph->sourceArray[iGraph]==localVertex) {
+        if (contains(graph->sourceArray, graph->sourceCount, localVertex)) {
             sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
         }
         else {
@@ -364,11 +362,10 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
     int nInfinite = 0;
     int iErrors = 0;
     for (int iCheck = 0; iCheck<nGraphsToCheck; iCheck++) {
-        int iGraph = rand() % graph->graphCount;
+        //int iGraph = rand() % graph->graphCount;
+        int iGraph = iCheck;
+        printf("Checking graph %i.\n", iGraph);
         int *dist = dijkstra(graph, iGraph, verbose);
-        if (verbose) {
-            printf("Source is %i.\n", graph->sourceArray[iGraph]);
-        }
         for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
             if (verbose) {
                 printf("%i: CPU=%i, GPU=%i\n", iVertex, dist[iVertex], graph->costArray[iGraph*graph->vertexCount + iVertex]);
@@ -434,7 +431,7 @@ void writeGraphToFile(GraphData *graph) {
     }
     myfile << graph->edgeArray[graph->edgeCount - 1] << "\n";
     
-    for (int iSource = 0; iSource < graph->graphCount - 1; iSource++) {
+    for (int iSource = 0; iSource < graph->sourceCount - 1; iSource++) {
         myfile << graph->sourceArray[iSource] << ",";
     }
     myfile << graph->sourceArray[graph->graphCount - 1] << "\n";

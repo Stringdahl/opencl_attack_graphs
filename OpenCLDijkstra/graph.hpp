@@ -71,7 +71,7 @@ typedef struct
 } GraphData;
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
-void generateRandomGraph(GraphData *graph, int numVertices, int neighborsPerVertex, int numGraphs, float probOfMax);
+void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax);
 void updateGraphWithNewRandomWeights(GraphData *graph);
 int* dijkstra(GraphData *graph, int iGraph, bool verbose);
 

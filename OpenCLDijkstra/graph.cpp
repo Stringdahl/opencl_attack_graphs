@@ -18,6 +18,16 @@ using namespace std;
 
 
 
+bool containes(int *array, int arrayLength, int value) {
+    for (int i = 0; i < arrayLength; i++) {
+        if (array[i]==value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 ///
 /// Check for error condition and exit if found.  Print file and line number
 /// of error. (from NVIDIA SDK)
@@ -35,16 +45,17 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
 ///
 //  Generate a random graph
 //
-void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, float probOfMax)
+void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax)
 {
     graph->vertexCount = vertexCount;
     graph->graphCount = graphCount;
+    graph->sourceCount = sourceCount;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->costArray = (int*) malloc(graphCount * graph->vertexCount * sizeof(int));
-    graph->sumCostArray = (int*) malloc(graphCount * graph->vertexCount * sizeof(int));
-    graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
+    graph->costArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
+    graph->sumCostArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
+    graph->sourceArray = (int*) malloc(graph->sourceCount * sizeof(int));
     graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
@@ -53,9 +64,6 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->inverseWeightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
     
     
-    //temporarily set sourceCount to graphCount
-    
-    graph->sourceCount = graphCount;
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
@@ -80,12 +88,15 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     {
         graph->weightArray[i] = (rand() % 1000);
     }
-    int tempSource = (rand() % graph->vertexCount);
-    for(int i = 0; i < graphCount; i++)
-    {
-        graph->sourceArray[i] = tempSource;
-        // The source sohluld be min
-        graph->maxVertexArray[tempSource]=-1;
+    
+    for(int iSource = 0; iSource < graph->sourceCount; iSource++) {
+        int tempSource = (rand() % graph->vertexCount);
+        while (containes(graph->sourceArray, graph->sourceCount, tempSource)) {
+            tempSource = (rand() % graph->vertexCount);
+        }
+        graph->sourceArray[iSource] = tempSource;
+        // The source should be min
+        graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
     }
     
     int iEdge = 0;
@@ -195,7 +206,6 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
     
     int vertexCount = graph->vertexCount;
     int edgeCount = graph->edgeCount;
-    int sourceVertex = graph->sourceArray[iGraph];
     
     // Copy the appropriate graph from GraphData
     int *vertexArray = (int*)malloc(vertexCount * sizeof(int));
@@ -223,11 +233,14 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
     for (int i = 0; i < vertexCount; i++)
         dist[i] = COST_MAX, sptSet[i] = false;
     
-    // Distance of source vertex from itself is always 0
-    dist[sourceVertex] = 0;
-    if (verbose) {
-        printf("Source vertex = %i.\n", sourceVertex);
-    }
+    // Distance of  vertex from itself is always 0
+        for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
+            dist[graph->sourceArray[iSource]] = 0;
+            if (verbose) {
+                printf("Source vertex = %i in CPU.\n", iGraph*graph->vertexCount + graph->sourceArray[iSource]);
+            }
+        }
+    
     // Find shortest path for all vertices
     while (atLeastOneUnprocessedIsFinite(sptSet, vertexCount, dist))
     {
