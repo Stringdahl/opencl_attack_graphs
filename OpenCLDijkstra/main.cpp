@@ -647,8 +647,10 @@ int main(int argc, char** argv)
         writeGraphToFile(&graph);
         
         GraphData readGraph;
-        readGraphFromFile(&readGraph);
+        char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
+        readGraphFromFile(&readGraph, filePath);
 
+        printGraph(&readGraph);
         
         //printSources(&graph);
         //printWeights(&graph);

@@ -423,28 +423,66 @@ void maxSumDifference(GraphData *graph) {
 void writeGraphToFile(GraphData *graph) {
     ofstream myfile;
     myfile.open ("/Users/pontus/Documents/myGraph.cvs");
-    myfile << graph->graphCount << ", " << graph->vertexCount << ", " << graph->edgeCount << ", " << graph->sourceCount << "\n";
+    myfile << graph->graphCount << "," << graph->vertexCount << "," << graph->edgeCount << "," << graph->graphCount << "\n";
     for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
-        myfile << graph->vertexArray[iVertex] << ", ";
+        myfile << graph->vertexArray[iVertex] << ",";
     }
     myfile << graph->vertexArray[graph->vertexCount - 1] << "\n";
-
+    
+    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
+        myfile << graph->edgeArray[iEdge] << ",";
+    }
+    myfile << graph->edgeArray[graph->edgeCount - 1] << "\n";
+    
+    for (int iSource = 0; iSource < graph->graphCount - 1; iSource++) {
+        myfile << graph->sourceArray[iSource] << ",";
+    }
+    myfile << graph->sourceArray[graph->graphCount - 1] << "\n";
+    
+    for (int iWeight = 0; iWeight < graph->graphCount * graph->edgeCount- 1; iWeight++) {
+        myfile << graph->weightArray[iWeight] << ",";
+    }
+    myfile << graph->weightArray[graph->graphCount * graph->edgeCount - 1] << "\n";
+    
     myfile.close();
 }
 
-void readGraphFromFile(GraphData *graph) {
-    string line;
+void readGraphFromFile(GraphData *graph, char filePath[512]) {
+    char line[64];
     ifstream myfile;
-    myfile.open ("/Users/pontus/Documents/myGraph.cvs");
+    myfile.open (filePath);
     if (myfile.is_open())
     {
-        while ( getline (myfile, line, ',') )
-        {
-            cout << line << '\n';
+        myfile.getline (line, 64, ',');
+        graph->graphCount = (int)std::strtol(line, NULL, 10);
+        myfile.getline (line, 64, ',');
+        graph->vertexCount = (int)std::strtol(line, NULL, 10);
+        myfile.getline (line, 64, ',');
+        graph->edgeCount = (int)std::strtol(line, NULL, 10);
+        myfile.getline (line, 64, ',');
+        graph->graphCount = (int)std::strtol(line, NULL, 10);
+        graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+        for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
+            myfile.getline (line, 64, ',');
+            graph->vertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
         }
-        myfile.close();
+        graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
+        for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
+            myfile.getline (line, 64, ',');
+            graph->edgeArray[iEdge] = (int)std::strtol(line, NULL, 10);
+        }
+        graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
+        for (int iSource = 0; iSource<graph->graphCount; iSource++) {
+            myfile.getline (line, 64, ',');
+            graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
+        }
+        graph->weightArray = (int*) malloc(graph->graphCount * graph->edgeCount * sizeof(int));
+        for (int iWeight = 0; iWeight<(graph->graphCount * graph->edgeCount); iWeight++) {
+            myfile.getline (line, 64, ',');
+            graph->weightArray[iWeight] = (int)std::strtol(line, NULL, 10);
+        }
+      myfile.close();
     }
-    
     else cout << "Unable to open file";
 }
 
