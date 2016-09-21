@@ -632,15 +632,23 @@ int main(int argc, char** argv)
     int nEdgePerVertice = 3;
     int nGraphs = 10;
     int graphSetCount = 10;
-    float probOfMax = 0.6;
+    float probOfMax = 0.3;
     
     
-    for (int nVertices =1000; nVertices <=1000; nVertices=nVertices+1) {
+    
+    
+    for (int nVertices =24; nVertices <=24; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
         generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+        
+        writeGraphToFile(&graph);
+        
+        GraphData readGraph;
+        readGraphFromFile(&readGraph);
+
         
         //printSources(&graph);
         //printWeights(&graph);
@@ -664,7 +672,7 @@ int main(int argc, char** argv)
         
         maxSumDifference(&graph);
         
-        //printMathematicaString(&graph, 0);
+        printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         

@@ -15,6 +15,11 @@
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
 #define COST_MAX 2147482646
 
+///
+//  Namespaces
+//
+using namespace std;
+
 
 ///
 //  Utility functions adapted from NVIDIA GPU Computing SDK
@@ -415,5 +420,31 @@ void maxSumDifference(GraphData *graph) {
     printf("The biggeste single difference was %.2f%% in node %i (%i).\n", maxDiff, iMaxDiff % graph->graphCount, iMaxDiff);
 }
 
+void writeGraphToFile(GraphData *graph) {
+    ofstream myfile;
+    myfile.open ("/Users/pontus/Documents/myGraph.cvs");
+    myfile << graph->graphCount << ", " << graph->vertexCount << ", " << graph->edgeCount << ", " << graph->sourceCount << "\n";
+    for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
+        myfile << graph->vertexArray[iVertex] << ", ";
+    }
+    myfile << graph->vertexArray[graph->vertexCount - 1] << "\n";
 
+    myfile.close();
+}
+
+void readGraphFromFile(GraphData *graph) {
+    string line;
+    ifstream myfile;
+    myfile.open ("/Users/pontus/Documents/myGraph.cvs");
+    if (myfile.is_open())
+    {
+        while ( getline (myfile, line, ',') )
+        {
+            cout << line << '\n';
+        }
+        myfile.close();
+    }
+    
+    else cout << "Unable to open file";
+}
 

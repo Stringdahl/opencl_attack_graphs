@@ -26,30 +26,32 @@
 //
 typedef struct
 {
-    // This contains a pointer to the edge list for each vertex
-    int *vertexArray;
-
-    int *inverseVertexArray;
-
-    // maxVerticeArray[i] is greater than 0 if vertex i is max, and -1 if min. It contains the highest value so far.
-    int *maxVertexArray;
+    // Graph count
+    int graphCount;
     
     // Vertex count
     int vertexCount;
     
+    // Edge count
+    int edgeCount;
+    
+    // Source count
+    int sourceCount;
+    
+    // This contains a pointer to the edge list for each vertex
+    int *vertexArray;
+
+    // maxVerticeArray[i] is greater than 0 if vertex i is max, and -1 if min. It contains the highest value so far.
+    int *maxVertexArray;
+    
     // This contains a pointer to the source array
     int *sourceArray;
     
-    // Graph count
-    int graphCount;
-    
     // This contains pointers to the vertices that each edge is attached to
     int *edgeArray;
-
-    int *inverseEdgeArray;
-
-    // Edge count
-    int edgeCount;
+    
+    // Weight array
+    int *weightArray;
     
     // Cost array
     int *costArray;
@@ -60,9 +62,10 @@ typedef struct
     // Number of parents to each vertex
     int *parentCountArray;
     
-    // Weight array
-    int *weightArray;
-    
+    int *inverseVertexArray;
+
+    int *inverseEdgeArray;
+
     int *inverseWeightArray;
     
 } GraphData;
