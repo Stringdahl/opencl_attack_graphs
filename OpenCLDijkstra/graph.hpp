@@ -72,6 +72,7 @@ typedef struct
 
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax);
+void completeRandomGraph(GraphData *graph);
 void updateGraphWithNewRandomWeights(GraphData *graph);
 int* dijkstra(GraphData *graph, int iGraph, bool verbose);
 

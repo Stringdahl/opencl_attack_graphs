@@ -127,6 +127,65 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     }
 }
 
+///
+//  Complete a partial random graph
+//
+void completeRandomGraph(GraphData *graph)
+{
+    graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
+    graph->costArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
+    graph->sumCostArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
+    graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
+    graph->inverseWeightArray = (int*)malloc(graph->graphCount * graph->edgeCount * sizeof(int));
+    
+    
+    
+    for(int i = 0; i < graph->vertexCount; i++)
+    {
+        graph->parentCountArray[i] = 0;
+    }
+    
+    for(int i = 0; i < graph->edgeCount; i++)
+    {
+        graph->parentCountArray[graph->edgeArray[i]]++;
+    }
+    
+    for(int iSource = 0; iSource < graph->sourceCount; iSource++) {
+        // The source should be min
+        graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
+    }
+    
+    int iEdge = 0;
+    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
+        graph->inverseVertexArray[iChild] = iEdge;
+        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
+            // Get the edges
+            int edgeStart = graph->vertexArray[iParent];
+            int edgeEnd;
+            if (iParent + 1 < (graph->vertexCount))
+            {
+                edgeEnd = graph->vertexArray[iParent + 1];
+            }
+            else
+            {
+                edgeEnd = graph->edgeCount;
+            }
+            for(int edge = edgeStart; edge < edgeEnd; edge++){
+                if (graph->edgeArray[edge]==iChild) {
+                    graph->inverseEdgeArray[iEdge]=iParent;
+                    for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
+                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
+                    }
+                    iEdge ++;
+                }
+            }
+        }
+    }
+}
+
+
 
 void updateGraphWithNewRandomWeights(GraphData *graph) {
     for(int i = 0; i < graph->graphCount * graph->edgeCount; i++)

@@ -628,37 +628,37 @@ void calculateGraphs(GraphData *graph, bool debug) {
 
 int main(int argc, char** argv)
 {
-    GraphData graph;
+    GraphData graph, writeGraph;
     
     int nEdgePerVertice = 2;
     int nGraphs = 2;
-    int nSources = 2;
+    int nSources = 3;
     int graphSetCount = 1;
     float probOfMax = 0.2;
     
     
     
     
-    for (int nVertices =100; nVertices <=100; nVertices=nVertices+1) {
+    for (int nVertices =200; nVertices <=200; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
-        generateRandomGraph(&graph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
+        generateRandomGraph(&writeGraph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         //printGraph(&graph);
 
-       // writeGraphToFile(&graph);
+        writeGraphToFile(&writeGraph);
         
         GraphData readGraph;
         char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
-       // readGraphFromFile(&readGraph, filePath);
-
-       // printGraph(&readGraph);
+        readGraphFromFile(&graph, filePath);
+        completeRandomGraph(&graph);
+        printGraph(&graph);
         
         //printSources(&graph);
         //printWeights(&graph);
-        //printInverseGraph(&graph);
+        printInverseGraph(&graph);
         //printInverseWeights(&graph);
         
         start_time = clock();
