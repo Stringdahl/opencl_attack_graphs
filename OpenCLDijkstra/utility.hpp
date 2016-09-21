@@ -37,7 +37,7 @@ int getEdgeEnd(int iVertex, int vertexCount, int *vertexArray, int edgeCount);
 void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck);
 void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *intUpdateCostArrayDevice);
 void maxSumDifference(GraphData *graph);
-void writeGraphToFile(GraphData *graph);
+void writeGraphToFile(GraphData *graph, char filePath[512]);
 void readGraphFromFile(GraphData *graph, char filePath[512]);
 
 #endif /* utility_hpp */

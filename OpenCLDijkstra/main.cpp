@@ -639,26 +639,25 @@ int main(int argc, char** argv)
     
     
     
-    for (int nVertices =200; nVertices <=200; nVertices=nVertices+1) {
+    for (int nVertices =2000; nVertices <=2000; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
         generateRandomGraph(&writeGraph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
-        //printGraph(&graph);
-
-        writeGraphToFile(&writeGraph);
-        
-        GraphData readGraph;
+        // writing and reading to excercise those functions
         char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
+        writeGraphToFile(&writeGraph, filePath);
         readGraphFromFile(&graph, filePath);
-        completeRandomGraph(&graph);
-        printGraph(&graph);
+        completeReadGraph(&graph);
+        
+        
+        //printGraph(&graph);
         
         //printSources(&graph);
         //printWeights(&graph);
-        printInverseGraph(&graph);
+        //printInverseGraph(&graph);
         //printInverseWeights(&graph);
         
         start_time = clock();

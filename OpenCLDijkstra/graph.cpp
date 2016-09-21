@@ -128,9 +128,9 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
 }
 
 ///
-//  Complete a partial random graph
+//  Compute all values that can be derived from a graph as read by readGraphFromFile.
 //
-void completeRandomGraph(GraphData *graph)
+void completeReadGraph(GraphData *graph)
 {
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));

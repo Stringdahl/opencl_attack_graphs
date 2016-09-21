@@ -367,9 +367,9 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
     int nInfinite = 0;
     int iErrors = 0;
     for (int iCheck = 0; iCheck<nGraphsToCheck; iCheck++) {
-        int iGraph = rand() % graph->graphCount;
-        // int iGraph = iCheck;
-        printf("Checking graph %i.\n", iGraph);
+        //int iGraph = rand() % graph->graphCount;
+        int iGraph = iCheck;
+        //printf("Checking graph %i.\n", iGraph);
         int *dist = dijkstra(graph, iGraph, verbose);
         for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
             if (verbose) {
@@ -422,9 +422,9 @@ void maxSumDifference(GraphData *graph) {
     printf("The biggeste single difference was %.2f%% in node %i (%i).\n", maxDiff, iMaxDiff % graph->graphCount, iMaxDiff);
 }
 
-void writeGraphToFile(GraphData *graph) {
+void writeGraphToFile(GraphData *graph, char filePath[512]) {
     ofstream myfile;
-    myfile.open ("/Users/pontus/Documents/myGraph.cvs");
+    myfile.open (filePath);
     myfile << graph->graphCount << "," << graph->vertexCount << "," << graph->edgeCount << "," << graph->graphCount << ",\n";
     for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
         myfile << graph->vertexArray[iVertex] << ",";
@@ -462,21 +462,16 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
     {
         myfile.getline (line, 64, ',');
         graph->graphCount = (int)std::strtol(line, NULL, 10);
-        printf("reading graphCount = %i\n", graph->graphCount);
         myfile.getline (line, 64, ',');
         graph->vertexCount = (int)std::strtol(line, NULL, 10);
-        printf("reading vertexCount = %i\n", graph->vertexCount);
         myfile.getline (line, 64, ',');
         graph->edgeCount = (int)std::strtol(line, NULL, 10);
-        printf("reading edgeCount = %i\n", graph->edgeCount);
         myfile.getline (line, 64, ',');
         graph->sourceCount = (int)std::strtol(line, NULL, 10);
-        printf("reading sourceCount = %i\n", graph->sourceCount);
         graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
         for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
             myfile.getline (line, 64, ',');
             graph->vertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
-            printf("reading vertexArray[%i] = %i\n", iVertex, graph->vertexArray[iVertex]);
         }
         graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
         for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
