@@ -483,7 +483,6 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
         for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
             myfile.getline (line, 64, ',');
             graph->maxVertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
-            printf("reading maxVerticeArray[%i] = %i.\n", iVertex, graph->maxVertexArray[iVertex]);
         }
         graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
         for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
