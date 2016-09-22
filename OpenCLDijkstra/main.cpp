@@ -631,15 +631,15 @@ int main(int argc, char** argv)
     GraphData graph, writeGraph;
     
     int nEdgePerVertice = 2;
-    int nGraphs = 2;
-    int nSources = 3;
+    int nGraphs = 1;
+    int nSources = 1;
     int graphSetCount = 1;
     float probOfMax = 0.2;
     
     
     
     
-    for (int nVertices =2000; nVertices <=2000; nVertices=nVertices+1) {
+    for (int nVertices =30; nVertices <=30; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
@@ -653,12 +653,12 @@ int main(int argc, char** argv)
         completeReadGraph(&graph);
         
         
-        //printGraph(&graph);
-        
-        //printSources(&graph);
-        //printWeights(&graph);
-        //printInverseGraph(&graph);
-        //printInverseWeights(&graph);
+//        printGraph(&graph);
+//        printSources(&graph);
+//        printWeights(&graph);
+//        printMax(&graph);
+//        printInverseGraph(&graph);
+//        printInverseWeights(&graph);
         
         start_time = clock();
         int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
@@ -676,7 +676,7 @@ int main(int argc, char** argv)
         
         maxSumDifference(&graph);
         
-        //printMathematicaString(&graph, 0);
+        printMathematicaString(&graph, 0);
         
         compareToCPUComputation(&graph, false, 10);
         

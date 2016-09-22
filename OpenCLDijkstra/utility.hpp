@@ -24,6 +24,7 @@ void printInverseWeights(GraphData *graph);
 void printGraph(GraphData *graph);
 void printInverseGraph(GraphData *graph);
 void printParents(GraphData *graph);
+void printMax(GraphData *graph);
 void printSources(GraphData *graph);
 void printMaskArray(int *maskArrayHost, int totalVertexCount);
 void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice,int iVertex);

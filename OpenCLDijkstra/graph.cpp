@@ -133,7 +133,6 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
 void completeReadGraph(GraphData *graph)
 {
     graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->costArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->sumCostArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
