@@ -363,7 +363,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
     if (nGraphsToCheck>graph->graphCount) {
         nGraphsToCheck=graph->graphCount;
     }
-    printf("Checking correctness against sequential implementation in %i randomly sampled graphs.\n", nGraphsToCheck);
+    printf("Checking correctness against sequential implementation in %i graphs.\n", nGraphsToCheck);
     int nInfinite = 0;
     int iErrors = 0;
     for (int iCheck = 0; iCheck<nGraphsToCheck; iCheck++) {
