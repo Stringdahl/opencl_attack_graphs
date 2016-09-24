@@ -274,9 +274,12 @@ const char* costToString(int cost) {
 
 void printMathematicaString(GraphData *graph, int iGraph) {
     char str[128*graph->edgeCount];
+    int *hasEdge = (int*) malloc(sizeof(int) * graph->vertexCount);
+    
     
     sprintf(str, "Graph[{");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        hasEdge[localSource]=0;
         int globalSource = iGraph*graph->vertexCount + localSource;
         int edgeStart = graph->vertexArray[localSource];
         int edgeEnd = getEdgeEnd(localSource, graph->vertexCount, graph->vertexArray, graph->edgeCount);
@@ -284,15 +287,20 @@ void printMathematicaString(GraphData *graph, int iGraph) {
             int localTarget = graph->edgeArray[edge];
             int globalTarget = iGraph*graph->vertexCount + localTarget;
             sprintf(str + strlen(str), "%i \\[DirectedEdge] %i, ", globalSource, globalTarget);
+            hasEdge[localSource]=1;
+            hasEdge[localTarget]=1;
         }
     }
+    
     sprintf(str + strlen(str)-2, "}, VertexLabels -> {");
     for (int vertex = 0; vertex < graph->vertexCount; vertex++) {
-        int globalVertex = iGraph*graph->vertexCount + vertex;
-        const char* maxSourceString = costToString(graph->costArray[globalVertex]);
-        sprintf(str + strlen(str), "%i -> \"%i [%s-", globalVertex, globalVertex, maxSourceString);
-        const char* sumSourceString = costToString(graph->sumCostArray[globalVertex]);
-        sprintf(str + strlen(str), "%s]\", ", sumSourceString);
+        if (hasEdge[vertex]) {
+            int globalVertex = iGraph*graph->vertexCount + vertex;
+            const char* maxSourceString = costToString(graph->costArray[globalVertex]);
+            sprintf(str + strlen(str), "%i -> \"%i [%s-", globalVertex, globalVertex, maxSourceString);
+            const char* sumSourceString = costToString(graph->sumCostArray[globalVertex]);
+            sprintf(str + strlen(str), "%s]\", ", sumSourceString);
+        }
     }
     sprintf(str + strlen(str)-2, "}, EdgeLabels -> {");
     for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
@@ -309,13 +317,15 @@ void printMathematicaString(GraphData *graph, int iGraph) {
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
-        int globalVertex = iGraph*graph->vertexCount + localVertex;
-        if (contains(graph->sourceArray, graph->sourceCount, localVertex)) {
-            sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
-        }
-        else {
-            if (graph->maxVertexArray[localVertex]>=0) {
-                sprintf(str + strlen(str), "%i -> \"Square\", ", globalVertex);
+        if (hasEdge[localVertex]) {
+            int globalVertex = iGraph*graph->vertexCount + localVertex;
+            if (contains(graph->sourceArray, graph->sourceCount, localVertex)) {
+                sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
+            }
+            else {
+                if (graph->maxVertexArray[localVertex]>=0) {
+                    sprintf(str + strlen(str), "%i -> \"Square\", ", globalVertex);
+                }
             }
         }
     }

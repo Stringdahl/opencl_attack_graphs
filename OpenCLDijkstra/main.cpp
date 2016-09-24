@@ -689,7 +689,7 @@ int main(int argc, char** argv)
     
     //testRandomGraphs(10, 10, 1, 100, 2, 0.2);
     
-    char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
+    char filePath[512] = "/Users/pontus/Documents/myGraph2.cvs";
     computeGraphsFromFile(filePath);
     
     
