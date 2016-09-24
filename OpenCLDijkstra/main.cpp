@@ -633,54 +633,23 @@ void calculateGraphs(GraphData *graph, bool debug) {
     
 }
 
+void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int verticeCount, int edgePerVerticeCount, float probOfMax) {
 
-
-
-
-int main(int argc, char** argv)
-{
-    GraphData graph, writeGraph;
-    
-    int nEdgePerVertice = 2;
-    int nGraphs = 1;
-    int nSources = 1;
-    int graphSetCount = 1;
-    float probOfMax = 0.2;
-    
-    
-    
+    GraphData graph;
     
     for (int nVertices =10; nVertices <=10; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
-        //generateRandomGraph(&writeGraph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
+        generateRandomGraph(&graph, verticeCount, edgePerVerticeCount, graphCount, sourceCount, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
-        
-        // writing and reading to excercise those functions
-        char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
-        //writeGraphToFile(&writeGraph, filePath);
-        readGraphFromFile(&graph, filePath);
-        completeReadGraph(&graph);
-        
-        //printMathematicaString(&graph, 0);
-
-        
         printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", graph.vertexCount*graph.graphCount*graphSetCount, graph.vertexCount, graph.graphCount*graphSetCount, graphSetCount);
-        
-        
-        //        printGraph(&graph);
-        //        printSources(&graph);
-        //        printWeights(&graph);
-        //        printMax(&graph);
-        //        printInverseGraph(&graph);
-        //        printInverseWeights(&graph);
         
         start_time = clock();
         int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
         int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
         
         for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
-            //updateGraphWithNewRandomWeights(&graph);
+            updateGraphWithNewRandomWeights(&graph);
             calculateGraphs(&graph, false);
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
                 maxCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
@@ -690,25 +659,41 @@ int main(int argc, char** argv)
         printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         maxSumDifference(&graph);
- 
-        printMathematicaString(&graph, 0);
-
+        compareToCPUComputation(&graph, false, 10);
         //printMathematicaString(&graph, 0);
-        
-        //compareToCPUComputation(&graph, false, 10);
-        
+
     }
+    
+    
+    
+}
+
+void computeGraphsFromFile(char filePath[]) {
+    GraphData graph;
+    
+    srand(0);
+    readGraphFromFile(&graph, filePath);
+    completeReadGraph(&graph);
+    clock_t start_time = clock();
+    calculateGraphs(&graph, false);
+    printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+    printMathematicaString(&graph, 0);
     for (int i = 0; i<graph.vertexCount; i++) {
         printCostOfVertex(&graph, i);
     }
-    
+}
 
-    //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
-    //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
+
+int main(int argc, char** argv)
+{
+    
+    //testRandomGraphs(10, 10, 1, 100, 2, 0.2);
+    
+    char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
+    computeGraphsFromFile(filePath);
+    
+    
     //printGraph(&graph);
-    //printInverseGraph(&graph);
-    //printParents(&graph);
-    //printMaxVertices(&commandQueue, &graph, &maxVerticeArrayDevice);
     
     return 0;
 }
