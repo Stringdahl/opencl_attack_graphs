@@ -34,7 +34,7 @@ void printSources(GraphData *graph);
 void printMaskArray(int *maskArrayHost, int totalVertexCount);
 void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice,int iVertex);
 void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *maskArrayHost, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice);
-void printMathematicaString(GraphData *graph, int iGraph);
+void printMathematicaString(GraphData *graph, int iGraph, bool printSum);
 void printTraversedEdges(cl_command_queue *commandQueue, GraphData *graph, cl_mem *traversedEdgeCountArrayDevice);
 void printVisitedParents(cl_command_queue *commandQueue, GraphData *graph, cl_mem *parentCountArrayDevice);
 void printMaxVertices(cl_command_queue *commandQueue, GraphData *graph, cl_mem *maxVertexArrayDevice);
@@ -45,5 +45,6 @@ void shadowKernel1(int graphCount, int vertexCount, int edgeCount, cl_mem *verte
 void maxSumDifference(GraphData *graph);
 void writeGraphToFile(GraphData *graph, char filePath[512]);
 void readGraphFromFile(GraphData *graph, char filePath[512]);
+void getMedianGraph(GraphData *graph);
 
 #endif /* utility_hpp */

@@ -677,10 +677,11 @@ void computeGraphsFromFile(char filePath[]) {
     clock_t start_time = clock();
     calculateGraphs(&graph, false);
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
-    printMathematicaString(&graph, 0);
-//    for (int i = 0; i<graph.vertexCount; i++) {
-//        printCostOfVertex(&graph, i);
-//    }
+    //getMedianGraph(&graph);
+    printGraph(&graph);
+    printMathematicaString(&graph, 0, false);
+    
+
 }
 
 
@@ -689,9 +690,8 @@ int main(int argc, char** argv)
     
     //testRandomGraphs(10, 10, 1, 100, 2, 0.2);
     
-    char filePath[512] = "/Users/pontus/Documents/myGraph2.cvs";
+    char filePath[512] = "/Users/pontus/Documents/myGraph4.cvs";
     computeGraphsFromFile(filePath);
-    
     
     //printGraph(&graph);
     

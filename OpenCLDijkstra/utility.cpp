@@ -76,7 +76,9 @@ void printGraph(GraphData *graph) {
             printf("Vertex %i is source.\n", iNode);
         }
         for (int iChild=0; iChild<nChildren; iChild++) {
-            printf("Vertex %i is parent to vertex %i with edge weight of %i\n", iNode, graph->edgeArray[graph->vertexArray[iNode]+iChild], graph->weightArray[graph->vertexArray[iNode]+iChild]);
+            int edge = graph->vertexArray[iNode]+iChild;
+            int target = graph->edgeArray[edge];
+            printf("According to edge %i, vertex %i (%i) is parent to vertex %i (%i) with edge weight of %i\n", edge, iNode, graph->costArray[iNode], target, graph->costArray[target], graph->weightArray[edge]);
         }
     }
 }
@@ -272,7 +274,30 @@ const char* costToString(int cost) {
     return str;
 }
 
-void printMathematicaString(GraphData *graph, int iGraph) {
+int compare(const void * a, const void * b)
+{
+    return ( *(int*)a - *(int*)b );
+}
+
+int median(int array[], int nArray)
+{
+    qsort (array, nArray, sizeof(int), compare);
+    return array[nArray/2];
+}
+
+// This function is destructuve, overwriting the first sample of costs with median values.
+void getMedianGraph(GraphData *graph) {
+    int *costSampleArray = (int*) malloc(sizeof(int) * graph->graphCount);
+    for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+        for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
+            costSampleArray[iGraph] = graph->costArray[iGraph*graph->vertexCount + iVertex];
+        }
+        graph->costArray[iVertex] = median(costSampleArray, graph->graphCount);
+        //printf("Median value of node %i is %i.\n", iVertex, median(costSampleArray, graph->graphCount));
+    }
+}
+
+void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
     char str[128*graph->edgeCount];
     int *hasEdge = (int*) malloc(sizeof(int) * graph->vertexCount);
     
@@ -297,9 +322,14 @@ void printMathematicaString(GraphData *graph, int iGraph) {
         if (hasEdge[vertex]) {
             int globalVertex = iGraph*graph->vertexCount + vertex;
             const char* maxSourceString = costToString(graph->costArray[globalVertex]);
-            sprintf(str + strlen(str), "%i -> \"%i [%s-", globalVertex, globalVertex, maxSourceString);
+            sprintf(str + strlen(str), "%i -> \"%i [%s", globalVertex, globalVertex, maxSourceString);
+            if (printSum) {
             const char* sumSourceString = costToString(graph->sumCostArray[globalVertex]);
-            sprintf(str + strlen(str), "%s]\", ", sumSourceString);
+            sprintf(str + strlen(str), "-%s]\", ", sumSourceString);
+            }
+            else {
+                sprintf(str + strlen(str), "]\", ");
+            }
         }
     }
     sprintf(str + strlen(str)-2, "}, EdgeLabels -> {");
@@ -485,6 +515,7 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
 
 void readGraphFromFile(GraphData *graph, char filePath[512]) {
     char line[64];
+    char line2[256];
     ifstream myfile;
     myfile.open (filePath);
     if (myfile.is_open())
@@ -507,21 +538,22 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
             myfile.getline (line, 64, ',');
             graph->maxVertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
         }
-        graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
-        for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
-            myfile.getline (line, 64, ',');
-            graph->edgeArray[iEdge] = (int)std::strtol(line, NULL, 10);
-        }
         graph->sourceArray = (int*) malloc(graph->sourceCount * sizeof(int));
         for (int iSource = 0; iSource<graph->sourceCount; iSource++) {
             myfile.getline (line, 64, ',');
             graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
+        }
+        graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
+        for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
+            myfile.getline (line, 64, ',');
+            graph->edgeArray[iEdge] = (int)std::strtol(line, NULL, 10);
         }
         graph->weightArray = (int*) malloc(graph->graphCount * graph->edgeCount * sizeof(int));
         for (int iWeight = 0; iWeight<(graph->graphCount * graph->edgeCount); iWeight++) {
             myfile.getline (line, 64, ',');
             graph->weightArray[iWeight] = (int)std::strtol(line, NULL, 10);
         }
+        
         myfile.close();
     }
     else cout << "Unable to open file";
