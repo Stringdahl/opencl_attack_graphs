@@ -9,12 +9,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <OpenCL/opencl.h>
 #include <pthread.h>
 #include<time.h>
 #include "graph.hpp"
 #include "utility.hpp"
 
+#define __CL_ENABLE_EXCEPTIONS
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl.cpp>
+#else
+#include <CL/cl.hpp>
+#endif
 
 
 
