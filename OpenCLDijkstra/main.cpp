@@ -16,7 +16,7 @@
 
 #define __CL_ENABLE_EXCEPTIONS
 #if defined(__APPLE__) || defined(__MACOSX)
-#include <OpenCL/cl.cpp>
+#include <OpenCL/cl.h>
 #else
 #include <CL/cl.hpp>
 #endif
