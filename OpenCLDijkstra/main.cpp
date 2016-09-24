@@ -678,9 +678,9 @@ void computeGraphsFromFile(char filePath[]) {
     calculateGraphs(&graph, false);
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     printMathematicaString(&graph, 0);
-    for (int i = 0; i<graph.vertexCount; i++) {
-        printCostOfVertex(&graph, i);
-    }
+//    for (int i = 0; i<graph.vertexCount; i++) {
+//        printCostOfVertex(&graph, i);
+//    }
 }
 
 

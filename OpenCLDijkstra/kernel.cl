@@ -55,7 +55,7 @@ int trueValueOfAndVertice(int globalTarget,  int vertexCount, int edgeCount,  __
             int localInverseParent1 = inverseEdgeArray[localInverseEdge1];
             int localInverseParent2 = inverseEdgeArray[localInverseEdge2];
             //printf("In node %i, looking for lca.\n", globalTarget);
-//            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
+            //            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
         }
     }
     return 0;
@@ -85,7 +85,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                 int edgeStart = vertexArray[localSource];
                 int edgeEnd = getEdgeEnd(localSource, vertexCount, vertexArray, edgeCount);
                 
-                //printf("globalSource = %i, localSource = %i, edgeStart = %i, edgeEnd = %i.\n", globalSource, localSource, edgeStart, edgeEnd);
                 // Iterate over the edges
                 for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
                 {
@@ -104,7 +103,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     traversedEdgeCountArray[globalEdge] ++;
                     int inverseEdgeStart = inverseVertexArray[localTarget];
                     int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
-                    //printf("Before min/max: globalSource = %i, globalTarget = %i, maxVertexArray[%i] = %i, parentCountArray[%i] = %i.\n", globalSource, globalTarget, globalTarget, maxVertexArray[globalTarget], globalTarget, parentCountArray[globalTarget]);
                     
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
@@ -112,11 +110,24 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
                         //                            currentMaxCost = COST_MAX;
                         //                        else
-                        currentMaxCost = maxCostArray[globalSource] + weightArray[globalEdge];
+                        if (maxCostArray[globalSource] + weightArray[globalEdge] < COST_MAX)
+                            currentMaxCost = maxCostArray[globalSource] + weightArray[globalEdge];
+                        else
+                            currentMaxCost = COST_MAX;
+                        
+                        // This is shakey:
+                        if(currentMaxCost<0) {
+                            printf("Error! currentMaxCost below 0. Resetting currentMaxCost to COST_MAX\n");
+                            currentMaxCost = COST_MAX;
+                        }
+                        
+                        //printf("Node %i with cost %i tried to update min-node %i of cost %i by weight %i.\n", globalSource, maxCostArray[globalSource], globalTarget, maxCostArray[globalTarget], weightArray[globalEdge]);
                         
                         // ...atomically choose the lesser of the current and candidate updatingCost
                         atomic_min(&maxUpdatingCostArray[globalTarget], currentMaxCost);
                         atomic_min(&sumUpdatingCostArray[globalTarget], currentMaxCost);
+                        
+                        //printf("New value of %i is %i.\n", globalTarget, maxCostArray[globalTarget]);
                         // Reconvert the integer representation to float and store in maxUpdatingCostArray
                         // Iterate over the edges
                         
@@ -138,23 +149,33 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 int localInverseTarget = inverseEdgeArray[localInverseEdge];
                                 int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
                                 int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
-                                int currEdgeVal = maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                                int currEdgeVal;
+                                if (maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge]< COST_MAX)
+                                    currEdgeVal = maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                                else
+                                    currEdgeVal = COST_MAX;
                                 if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
-                                sumEdgeVal = sumEdgeVal + currEdgeVal;
+                                if (sumEdgeVal + currEdgeVal < COST_MAX)
+                                    sumEdgeVal = sumEdgeVal + currEdgeVal;
+                                else
+                                    sumEdgeVal = COST_MAX;
                             }
                             
-                            if (sumEdgeVal != maxEdgeVal) {
-                                trueValue = trueValueOfAndVertice(globalTarget, vertexCount, edgeCount,  maxCostArray, maxVertexArray, inverseVertexArray, inverseEdgeArray, inverseWeightArray);
-                            }
+                            //                            if (sumEdgeVal != maxEdgeVal) {
+                            //                                trueValue = trueValueOfAndVertice(globalTarget, vertexCount, edgeCount,  maxCostArray, maxVertexArray, inverseVertexArray, inverseEdgeArray, inverseWeightArray);
+                            //                            }
                             
+                            //printf("Node %i with cost %i tried to update max-node %i of cost %i by weight %i.\n", globalSource, maxCostArray[globalSource], globalTarget, maxCostArray[globalTarget], weightArray[globalEdge]);
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
                             sumCostArray[globalTarget] = sumEdgeVal;
                             sumUpdatingCostArray[globalTarget] = sumEdgeVal;
                             // Mark the target for update
                             maskArray[globalTarget] = 1;
+                            
+                            //printf("New value of %i is %i.\n", globalTarget, maxCostArray[globalTarget]);
                             //                            if (sumEdgeVal!=maxEdgeVal) {
                             //                                printf("In max: globalSource = %i, globalTarget = %i, maxEdgeVal = %i, sumEdgeVal = %i.\n", globalSource, globalTarget, maxEdgeVal, sumEdgeVal);
                             //                            }
