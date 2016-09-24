@@ -530,11 +530,11 @@ void calculateGraphs(GraphData *graph, bool debug) {
         for(int asyncIter = 0; asyncIter < NUM_ASYNCHRONOUS_ITERATIONS; asyncIter++)
         {
             count ++;
-
+            
             if (debug) {
                 printf("Before Kernel1\n");
                 dumpBuffers(graph, &commandQueue, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-             }
+            }
             
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
             checkError(errNum, CL_SUCCESS);
@@ -547,7 +547,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
                 checkError(errNum, CL_SUCCESS);
                 elapsedKernel1 += (time_end_kernel1 - time_start_kernel1);
                 clReleaseEvent(kernel1event);
-
+                
             }
             
             if (debug) {
@@ -567,7 +567,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
                 checkError(errNum, CL_SUCCESS);
                 elapsedKernel2 += (time_end_kernel2 - time_start_kernel2);
                 clReleaseEvent(kernel2event);
-
+                
             }
         }
         
@@ -616,7 +616,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     clReleaseMemObject(sourceArrayDevice);
     clReleaseMemObject(parentCountArrayDevice);
     clReleaseMemObject(maxVerticeArrayDevice);
-  
+    
     clReleaseProgram(program);
     clReleaseKernel(initializeKernel);
     clReleaseKernel(ssspKernel1);
@@ -645,33 +645,37 @@ int main(int argc, char** argv)
     
     
     
-    for (int nVertices =30; nVertices <=30; nVertices=nVertices+1) {
+    for (int nVertices =10; nVertices <=10; nVertices=nVertices+1) {
         srand(0);
         clock_t start_time = clock();
-        printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", nVertices*nGraphs*graphSetCount, nVertices, nGraphs*graphSetCount, graphSetCount);
-        generateRandomGraph(&writeGraph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
+        //generateRandomGraph(&writeGraph, nVertices, nEdgePerVertice, nGraphs, nSources, probOfMax);
         printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         // writing and reading to excercise those functions
         char filePath[512] = "/Users/pontus/Documents/myGraph.cvs";
-        writeGraphToFile(&writeGraph, filePath);
+        //writeGraphToFile(&writeGraph, filePath);
         readGraphFromFile(&graph, filePath);
         completeReadGraph(&graph);
         
+        //printMathematicaString(&graph, 0);
+
         
-//        printGraph(&graph);
-//        printSources(&graph);
-//        printWeights(&graph);
-//        printMax(&graph);
-//        printInverseGraph(&graph);
-//        printInverseWeights(&graph);
+        printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", graph.vertexCount*graph.graphCount*graphSetCount, graph.vertexCount, graph.graphCount*graphSetCount, graphSetCount);
+        
+        
+        //        printGraph(&graph);
+        //        printSources(&graph);
+        //        printWeights(&graph);
+        //        printMax(&graph);
+        //        printInverseGraph(&graph);
+        //        printInverseWeights(&graph);
         
         start_time = clock();
         int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
         int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
-
+        
         for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
-            updateGraphWithNewRandomWeights(&graph);
+            //updateGraphWithNewRandomWeights(&graph);
             calculateGraphs(&graph, false);
             for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
                 maxCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
@@ -681,12 +685,19 @@ int main(int argc, char** argv)
         printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         
         maxSumDifference(&graph);
-        
+ 
         printMathematicaString(&graph, 0);
+
+        //printMathematicaString(&graph, 0);
         
-        compareToCPUComputation(&graph, false, 10);
+        //compareToCPUComputation(&graph, false, 10);
         
     }
+    for (int i = 0; i<graph.vertexCount; i++) {
+        printCostOfVertex(&graph, i);
+    }
+    
+
     //printTraversedEdges(&commandQueue, &graph, &traversedEdgeCountArrayDevice);
     //printCostOfRandomVertices(graph->costArray, 30, totalVertexCount);
     //printGraph(&graph);

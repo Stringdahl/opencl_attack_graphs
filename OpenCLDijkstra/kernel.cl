@@ -9,39 +9,42 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
         return edgeCount;
 }
 
-int getInfluentialParents(int globalChild,  int vertexCount, int edgeCount, __global int *inverseVertexArray,  __global int *inverseEdgeArray, __global int *maxVertexArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
-    int minEdgeVal = COST_MAX;
-    int minParent = -1;
-    int iGraph = globalChild / vertexCount;
-    int localChild = globalChild % vertexCount;
-    int inverseEdgeStart = inverseVertexArray[localChild];
-    int inverseEdgeEnd = getEdgeEnd(localChild, vertexCount, inverseVertexArray, edgeCount);
-    if (inverseEdgeEnd-inverseEdgeStart <= 0) {
-        return -1;
-    }
-    for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
-        int localParent = inverseEdgeArray[localInverseEdge];
-        int globalParent = iGraph*vertexCount + localParent;
-        int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
-        int currEdgeVal = maxCostArray[globalParent] + inverseWeightArray[globalInverseEdge];
-        if (currEdgeVal<minEdgeVal) {
-            minEdgeVal = currEdgeVal;
-            minParent = globalParent;
-        }
-    }
-    return minParent;
-}
+//int getInfluentialParents(int *influentialEdges, int nInfluentialEdges, int globalChild,  int vertexCount, int edgeCount, __global int *inverseVertexArray,  __global int *inverseEdgeArray, __global int *maxVertexArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
+//    influentialEdges[0] = 3;
+//    int minEdgeVal = COST_MAX;
+//    int minParent = -1;
+//    int iGraph = globalChild / vertexCount;
+//    int localChild = globalChild % vertexCount;
+//    int inverseEdgeStart = inverseVertexArray[localChild];
+//    int inverseEdgeEnd = getEdgeEnd(localChild, vertexCount, inverseVertexArray, edgeCount);
+//    if (inverseEdgeEnd-inverseEdgeStart <= 0) {
+//        return -1;
+//    }
+//    if (maxVertexArray[localChild]<0) {
+//        for(int localInverseEdge = inverseEdgeStart; localInverseEdge < inverseEdgeEnd; localInverseEdge++) {
+//            int localParent = inverseEdgeArray[localInverseEdge];
+//            int globalParent = iGraph*vertexCount + localParent;
+//            int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
+//            int currEdgeVal = maxCostArray[globalParent] + inverseWeightArray[globalInverseEdge];
+//            if (currEdgeVal<minEdgeVal) {
+//                minEdgeVal = currEdgeVal;
+//                minParent = globalParent;
+//            }
+//        }
+//    }
+//    return minParent;
+//}
 
-int leastCommonAncestor(int localParent1, int localParent2, int vertexCount, int edgeCount, __global int *maxVertexArray, __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
-    printf("Parent 1 = %i, parent 2 = %i.\n", localParent1, localParent2);
-    int parent1Ancestors[MAXTRACE];
-    int parent2Ancestors[MAXTRACE];
-    int ip1 = getInfluentialParents(localParent1, vertexCount, edgeCount, inverseVertexArray, inverseEdgeArray, maxVertexArray, maxCostArray, inverseWeightArray);
-    int ip2 = getInfluentialParents(localParent1, vertexCount, edgeCount, inverseVertexArray, inverseEdgeArray, maxVertexArray, maxCostArray, inverseWeightArray);
-    printf("Node %i is the influential parent of node %i.\n", ip1, localParent1);
-    return 0;
-}
-
+//int leastCommonAncestor(int localParent1, int localParent2, int vertexCount, int edgeCount, __global int *maxVertexArray, __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
+//    //printf("Parent 1 = %i, parent 2 = %i.\n", localParent1, localParent2);
+//    int influentialEdges[MAXTRACE];
+//    int nInfluentialEdges = 0;
+//    //int ip1 = getInfluentialParents(influentialEdges, nInfluentialEdges, localParent1, vertexCount, edgeCount, inverseVertexArray, inverseEdgeArray, maxVertexArray, maxCostArray, inverseWeightArray);
+//    printf("influentialEdges[0] = %i\n", influentialEdges[0]);
+//    //printf("Node %i is the influential parent of node %i.\n", ip1, localParent1);
+//    return 0;
+//}
+//
 
 int trueValueOfAndVertice(int globalTarget,  int vertexCount, int edgeCount,  __global int *maxCostArray, __global int *maxVertexArray,  __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *inverseWeightArray) {
     int localTarget = globalTarget % vertexCount;
@@ -51,8 +54,8 @@ int trueValueOfAndVertice(int globalTarget,  int vertexCount, int edgeCount,  __
         for(int localInverseEdge2 = localInverseEdge1 + 1; localInverseEdge2 < inverseEdgeEnd; localInverseEdge2++) {
             int localInverseParent1 = inverseEdgeArray[localInverseEdge1];
             int localInverseParent2 = inverseEdgeArray[localInverseEdge2];
-            printf("In node %i, looking for lca.\n", globalTarget);
-            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
+            //printf("In node %i, looking for lca.\n", globalTarget);
+//            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
         }
     }
     return 0;

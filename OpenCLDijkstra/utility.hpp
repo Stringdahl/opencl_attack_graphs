@@ -19,6 +19,7 @@
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 
 void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int totalVerticeCount);
+void printCostOfVertex(GraphData *graph, int vertexToPrint);
 void printWeights(GraphData *graph);
 void printInverseWeights(GraphData *graph);
 void printGraph(GraphData *graph);

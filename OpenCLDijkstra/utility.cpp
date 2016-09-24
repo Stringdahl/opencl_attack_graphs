@@ -35,6 +35,18 @@ void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int tota
     }
 }
 
+void printCostOfVertex(GraphData *graph, int vertexToPrint) {
+    
+    for(int i = 0; i < graph->graphCount; i++)
+    {
+        if (graph->costArray[i*graph->vertexCount + vertexToPrint] == 2147482646)
+            printf("TTC of attack step %i is infinite,", vertexToPrint);
+        else
+            printf("TTC of attack step %i is %i,", vertexToPrint, graph->costArray[i*graph->vertexCount + vertexToPrint]);
+    }
+    printf("\n");
+}
+
 bool contains(int *array, int arrayLength, int value) {
     for (int i = 0; i < arrayLength; i++) {
         if (array[i]==value) {
@@ -291,7 +303,8 @@ void printMathematicaString(GraphData *graph, int iGraph) {
             int localTarget = graph->edgeArray[localEdge];
             int globalTarget = iGraph*graph->vertexCount + localTarget;
             int globalEdge = iGraph*graph->edgeCount + localEdge;
-            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %i, ", globalSource, globalTarget, graph->weightArray[globalEdge]);
+            const char* edgeString = costToString(graph->weightArray[globalEdge]);
+            sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %s, ", globalSource, globalTarget, edgeString);
         }
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
@@ -436,12 +449,12 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
         myfile << graph->vertexArray[iVertex] << ",";
     }
     myfile << graph->vertexArray[graph->vertexCount - 1] << ",\n";
-
+    
     for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
         myfile << graph->maxVertexArray[iVertex] << ",";
     }
     myfile << graph->maxVertexArray[graph->vertexCount - 1] << ",\n";
-
+    
     for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
         myfile << graph->edgeArray[iEdge] << ",";
     }
@@ -489,8 +502,8 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
             myfile.getline (line, 64, ',');
             graph->edgeArray[iEdge] = (int)std::strtol(line, NULL, 10);
         }
-        graph->sourceArray = (int*) malloc(graph->graphCount * sizeof(int));
-        for (int iSource = 0; iSource<graph->graphCount; iSource++) {
+        graph->sourceArray = (int*) malloc(graph->sourceCount * sizeof(int));
+        for (int iSource = 0; iSource<graph->sourceCount; iSource++) {
             myfile.getline (line, 64, ',');
             graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
         }
@@ -499,7 +512,7 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
             myfile.getline (line, 64, ',');
             graph->weightArray[iWeight] = (int)std::strtol(line, NULL, 10);
         }
-      myfile.close();
+        myfile.close();
     }
     else cout << "Unable to open file";
 }
