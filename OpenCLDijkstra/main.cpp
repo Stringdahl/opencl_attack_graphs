@@ -668,15 +668,17 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
 }
 
-void computeGraphsFromFile(char filePathToData[], char filePathToNames[]) {
+void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], char filePathToNames[]) {
     GraphData graph;
     srand(0);
     
-    readGraphFromFile(&graph, filePathToData);
+    readGraphFromFile(&graph, filePathToInData);
     completeReadGraph(&graph);
     clock_t start_time = clock();
     calculateGraphs(&graph, false);
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+    
+    writeGraphToFile(&graph, filePathToOutData);
     
     char **verticeNameArray = (char**) malloc(graph.vertexCount * sizeof(char*));
     for (int i = 0; i < graph.vertexCount; i++)
@@ -684,9 +686,9 @@ void computeGraphsFromFile(char filePathToData[], char filePathToNames[]) {
     readVerticeNames(filePathToNames, verticeNameArray);
     
     //getMedianGraph(&graph);
-    printGraph(&graph, verticeNameArray, 0);
-    printSources(&graph, verticeNameArray);
-    printMathematicaString(&graph, 0, false);
+    //printGraph(&graph, verticeNameArray, 0);
+    //printSources(&graph, verticeNameArray);
+    //printMathematicaString(&graph, 0, false);
     
 
 }
@@ -695,11 +697,12 @@ void computeGraphsFromFile(char filePathToData[], char filePathToNames[]) {
 int main(int argc, char** argv)
 {
     
-    //testRandomGraphs(10, 10, 1, 100, 2, 0.2);
+    testRandomGraphs(10, 10, 1, 100, 2, 0.2);
     
-    char filePathToData[512] = "/Users/pontus/Documents/myGraph4.cvs";
-    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-    computeGraphsFromFile(filePathToData, filePathToNames);
+//    char filePathToInData[512] = "/Users/pontus/Documents/myGraph5.cvs";
+//    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
+//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
     
     return 0;

@@ -106,18 +106,20 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
-                        int currentMaxCost;
                         //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
                         //                            currentMaxCost = COST_MAX;
                         //                        else
-                        if (maxCostArray[globalSource] + weightArray[globalEdge] < COST_MAX)
-                            currentMaxCost = maxCostArray[globalSource] + weightArray[globalEdge];
+                        long currentMaxCost = maxCostArray[globalSource];
+                        long currentWeight = weightArray[globalEdge];
+                        if (currentMaxCost + currentWeight < COST_MAX)
+                            currentMaxCost = currentMaxCost + currentWeight;
                         else
                             currentMaxCost = COST_MAX;
                         
                         // This is shakey:
                         if(currentMaxCost<0) {
                             printf("Error! currentMaxCost below 0 for vertex %i. Resetting currentMaxCost to COST_MAX\n", globalTarget);
+                            printf("currentMaxCost = %i, maxCostArray[%i] = %i, weightArray[%i] = %i, maxCostArray[globalSource] + weightArray[globalEdge] = %i\n", currentMaxCost, globalSource, maxCostArray[globalSource], globalEdge, weightArray[globalEdge], maxCostArray[globalSource] + weightArray[globalEdge]);
                             currentMaxCost = COST_MAX;
                         }
                         
@@ -148,14 +150,18 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 int globalInverseTarget = iGraph*vertexCount + localInverseTarget;
                                 int globalInverseEdge = iGraph*edgeCount + localInverseEdge;
                                 int currEdgeVal;
-                                if (maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge]< COST_MAX)
-                                    currEdgeVal = maxCostArray[globalInverseTarget] + inverseWeightArray[globalInverseEdge];
+                                long currentMaxCost = maxCostArray[globalInverseTarget];
+                                long currentWeight = inverseWeightArray[globalInverseEdge];
+                                if (currentMaxCost + currentWeight < COST_MAX)
+                                    currEdgeVal = currentMaxCost + currentWeight;
                                 else
                                     currEdgeVal = COST_MAX;
                                 if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
-                                if (sumEdgeVal + currEdgeVal < COST_MAX)
+                                long longSumEdgeVal = sumEdgeVal;
+                                longSumEdgeVal = longSumEdgeVal + currEdgeVal;
+                                if (longSumEdgeVal < COST_MAX)
                                     sumEdgeVal = sumEdgeVal + currEdgeVal;
                                 else
                                     sumEdgeVal = COST_MAX;
