@@ -9,8 +9,6 @@
 #include "graph.hpp"
 
 
-#define COST_MAX 2147482646
-
 ///
 //  Namespaces
 //
@@ -223,7 +221,7 @@ void updateGraphWithNewRandomWeights(GraphData *graph) {
 int minDistance(int *dist, bool *sptSet, int vertexCount)
 {
     // Initialize min value
-    int min = COST_MAX;
+    int min = INT_MAX;
     int min_index = 0;
     
     for (int v = 0; v < vertexCount; v++) {
@@ -246,7 +244,7 @@ int minDistance(int *dist, bool *sptSet, int vertexCount)
 
 bool atLeastOneUnprocessedIsFinite(bool *sptSet, int vertexCount, int *dist) {
     for (int i = 0; i < vertexCount; i++) {
-        if (!sptSet[i] && dist[i]<COST_MAX) {
+        if (!sptSet[i] && dist[i]<INT_MAX) {
             return true;
         }
     }
@@ -289,7 +287,7 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
     
     // Initialize all distances as INFINITE and stpSet[] as false
     for (int i = 0; i < vertexCount; i++)
-        dist[i] = COST_MAX, sptSet[i] = false;
+        dist[i] = INT_MAX, sptSet[i] = false;
     
     // Distance of  vertex from itself is always 0
         for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
@@ -334,18 +332,23 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
                 }
                 traversedEdgeCountArray[edge]++;
                 
-                if (dist[source] != COST_MAX) {
+                if (dist[source] != INT_MAX) {
                     // If min node
                     if (maxVertexArray[target]<0) {
                         if (!sptSet[target]) {
                             if (verbose) {
                                 printf(" looking at min node %i (with %i remainaing parents) by edge with weight %i.", target, parentCountArray[target], graph->weightArray[edge]);
                             }
-                            if (dist[source]+weightArray[edge] < dist[target]) {
+                            long longDist = dist[source];
+                            longDist = longDist + weightArray[edge];
+                            if (longDist > INT_MAX)
+                                longDist = INT_MAX;
+                            
+                            if (longDist < dist[target]) {
                                 if (verbose) {
                                     printf(".. updated from %i ", dist[target]);
                                 }
-                                dist[target] = dist[source] + weightArray[edge];
+                                dist[target] = (int)longDist;
                                 if (verbose) {
                                     printf("to %i", dist[target]);
                                 }
@@ -361,8 +364,12 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
                         if (verbose) {
                             printf(" looking at max node %i (with %i remainaing parents, max: %i) by edge with weight %i.", target, parentCountArray[target], maxVertexArray[target], graph->weightArray[edge]);
                         }
-                        if (maxVertexArray[target] < dist[source]+weightArray[edge]) {
-                            maxVertexArray[target] = dist[source]+weightArray[edge];
+                        long longDist = dist[source];
+                        longDist = longDist + weightArray[edge];
+                        if (longDist > INT_MAX)
+                            longDist = INT_MAX;
+                        if (maxVertexArray[target] < longDist) {
+                            maxVertexArray[target] = (int)longDist;
                         }
                         if (parentCountArray[target]==0) {
                             if (verbose) {

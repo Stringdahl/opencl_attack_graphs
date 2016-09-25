@@ -13,7 +13,6 @@
 //  Macros
 //
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
-#define COST_MAX 2147482646
 
 ///
 //  Namespaces
@@ -438,7 +437,7 @@ void compareToCPUComputation(GraphData *graph, bool verbose, int nGraphsToCheck)
                 iErrors++;
                 // exit(1);
             }
-            if (graph->costArray[iGraph*graph->vertexCount + iVertex] == COST_MAX) {
+            if (graph->costArray[iGraph*graph->vertexCount + iVertex] == INT_MAX) {
                 nInfinite++;
             }
         }

@@ -1,4 +1,3 @@
-#define COST_MAX 2147482646
 #define MAXTRACE 20000
 
 
@@ -11,7 +10,7 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
 
 //int getInfluentialParents(int *influentialEdges, int nInfluentialEdges, int globalChild,  int vertexCount, int edgeCount, __global int *inverseVertexArray,  __global int *inverseEdgeArray, __global int *maxVertexArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
 //    influentialEdges[0] = 3;
-//    int minEdgeVal = COST_MAX;
+//    int minEdgeVal = INT_MAX;
 //    int minParent = -1;
 //    int iGraph = globalChild / vertexCount;
 //    int localChild = globalChild % vertexCount;
@@ -106,21 +105,21 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
-                        //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= COST_MAX)
-                        //                            currentMaxCost = COST_MAX;
+                        //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= INT_MAX)
+                        //                            currentMaxCost = INT_MAX;
                         //                        else
                         long currentMaxCost = maxCostArray[globalSource];
                         long currentWeight = weightArray[globalEdge];
-                        if (currentMaxCost + currentWeight < COST_MAX)
+                        if (currentMaxCost + currentWeight < INT_MAX)
                             currentMaxCost = currentMaxCost + currentWeight;
                         else
-                            currentMaxCost = COST_MAX;
+                            currentMaxCost = INT_MAX;
                         
-                        // This is shakey:
+                        // This should never happen, but for a while it did:
                         if(currentMaxCost<0) {
-                            printf("Error! currentMaxCost below 0 for vertex %i. Resetting currentMaxCost to COST_MAX\n", globalTarget);
+                            printf("Error! currentMaxCost below 0 for vertex %i. Resetting currentMaxCost to INT_MAX\n", globalTarget);
                             printf("currentMaxCost = %i, maxCostArray[%i] = %i, weightArray[%i] = %i, maxCostArray[globalSource] + weightArray[globalEdge] = %i\n", currentMaxCost, globalSource, maxCostArray[globalSource], globalEdge, weightArray[globalEdge], maxCostArray[globalSource] + weightArray[globalEdge]);
-                            currentMaxCost = COST_MAX;
+                            currentMaxCost = INT_MAX;
                         }
                         
                         
@@ -152,19 +151,19 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 int currEdgeVal;
                                 long currentMaxCost = maxCostArray[globalInverseTarget];
                                 long currentWeight = inverseWeightArray[globalInverseEdge];
-                                if (currentMaxCost + currentWeight < COST_MAX)
+                                if (currentMaxCost + currentWeight < INT_MAX)
                                     currEdgeVal = currentMaxCost + currentWeight;
                                 else
-                                    currEdgeVal = COST_MAX;
+                                    currEdgeVal = INT_MAX;
                                 if (currEdgeVal>maxEdgeVal) {
                                     maxEdgeVal = currEdgeVal;
                                 }
                                 long longSumEdgeVal = sumEdgeVal;
                                 longSumEdgeVal = longSumEdgeVal + currEdgeVal;
-                                if (longSumEdgeVal < COST_MAX)
+                                if (longSumEdgeVal < INT_MAX)
                                     sumEdgeVal = sumEdgeVal + currEdgeVal;
                                 else
-                                    sumEdgeVal = COST_MAX;
+                                    sumEdgeVal = INT_MAX;
                             }
                             
                             //                            if (sumEdgeVal != maxEdgeVal) {
@@ -253,9 +252,9 @@ __kernel void initializeBuffers( __global int *maskArray,
     }
     else {
         maskArray[tid] = 0;
-        maxCostArray[tid] = COST_MAX;
-        maxUpdatingCostArray[tid] = COST_MAX;
-        sumCostArray[tid] = COST_MAX;
-        sumUpdatingCostArray[tid] = COST_MAX;
+        maxCostArray[tid] = INT_MAX;
+        maxUpdatingCostArray[tid] = INT_MAX;
+        sumCostArray[tid] = INT_MAX;
+        sumUpdatingCostArray[tid] = INT_MAX;
     }
 }
