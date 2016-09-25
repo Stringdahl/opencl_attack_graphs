@@ -121,17 +121,11 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             currentMaxCost = COST_MAX;
                         }
                         
-                        if (globalTarget == 25) {
-                       //     printf("Node %i with cost %i tried to update min-node %i of cost %i by weight %i.\n", globalSource, maxCostArray[globalSource], globalTarget, maxCostArray[globalTarget], weightArray[globalEdge]);
-                        }
                         
                         // ...atomically choose the lesser of the current and candidate updatingCost
                         atomic_min(&maxUpdatingCostArray[globalTarget], currentMaxCost);
                         atomic_min(&sumUpdatingCostArray[globalTarget], currentMaxCost);
                         
-                        if (localTarget == 25) {
-                            printf("New value of %i is %i.\n", globalTarget, maxCostArray[globalTarget]);
-                        }
                         // Reconvert the integer representation to float and store in maxUpdatingCostArray
                         // Iterate over the edges
                         

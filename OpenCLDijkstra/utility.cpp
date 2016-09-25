@@ -58,11 +58,6 @@ bool contains(int *array, int arrayLength, int value) {
 
 
 void printGraph(GraphData *graph) {
-    printf("vertexArray:");
-    for (int iNode=0; iNode<graph->vertexCount; iNode++) {
-        printf("%i: %i.\n", iNode, graph->vertexArray[iNode]);
-    }
-    
     int nChildren;
     for (int iNode=0; iNode<graph->vertexCount; iNode++) {
         if (iNode<graph->vertexCount-1) {
@@ -282,6 +277,8 @@ int compare(const void * a, const void * b)
 int median(int array[], int nArray)
 {
     qsort (array, nArray, sizeof(int), compare);
+    for (int i = 0; i < nArray; i++) {
+    }
     return array[nArray/2];
 }
 
@@ -293,7 +290,6 @@ void getMedianGraph(GraphData *graph) {
             costSampleArray[iGraph] = graph->costArray[iGraph*graph->vertexCount + iVertex];
         }
         graph->costArray[iVertex] = median(costSampleArray, graph->graphCount);
-        //printf("Median value of node %i is %i.\n", iVertex, median(costSampleArray, graph->graphCount));
     }
 }
 
