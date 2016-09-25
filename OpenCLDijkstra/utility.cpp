@@ -40,9 +40,9 @@ void printCostOfVertex(GraphData *graph, int vertexToPrint) {
     for(int i = 0; i < graph->graphCount; i++)
     {
         if (graph->costArray[i*graph->vertexCount + vertexToPrint] == 2147482646)
-            printf("TTC of attack step %i is infinite,", vertexToPrint);
+            printf("TTC of attack step %i is infinite.\n", vertexToPrint);
         else
-            printf("TTC of attack step %i is %i,", vertexToPrint, graph->costArray[i*graph->vertexCount + vertexToPrint]);
+            printf("TTC of attack step %i is %i.\n", vertexToPrint, graph->costArray[i*graph->vertexCount + vertexToPrint]);
     }
     printf("\n");
 }
@@ -57,23 +57,26 @@ bool contains(int *array, int arrayLength, int value) {
 }
 
 
-void printGraph(GraphData *graph) {
+void printGraph(GraphData *graph, char **verticeNameArray, int iGraph) {
     int nChildren;
-    for (int iNode=0; iNode<graph->vertexCount; iNode++) {
-        if (iNode<graph->vertexCount-1) {
-            nChildren = graph->vertexArray[iNode+1]-graph->vertexArray[iNode];
+    for (int localSource=0; localSource<graph->vertexCount; localSource++) {
+        if (localSource<graph->vertexCount-1) {
+            nChildren = graph->vertexArray[localSource+1]-graph->vertexArray[localSource];
         }
         else {
-            nChildren = graph->edgeCount-graph->vertexArray[iNode];
+            nChildren = graph->edgeCount-graph->vertexArray[localSource];
         }
-        printf("Vertex %i has %i children\n", iNode, nChildren);
-        if (contains(graph->sourceArray, graph->sourceCount, iNode)) {
-            printf("Vertex %i is source.\n", iNode);
+        printf("Vertex %s has %i children\n", verticeNameArray[localSource], nChildren);
+        if (contains(graph->sourceArray, graph->sourceCount, localSource)) {
+            printf("Vertex %i is source.\n", localSource);
         }
         for (int iChild=0; iChild<nChildren; iChild++) {
-            int edge = graph->vertexArray[iNode]+iChild;
-            int target = graph->edgeArray[edge];
-            printf("According to edge %i, vertex %i (%i) is parent to vertex %i (%i) with edge weight of %i\n", edge, iNode, graph->costArray[iNode], target, graph->costArray[target], graph->weightArray[edge]);
+            int localEdge = graph->vertexArray[localSource]+iChild;
+            int localTarget = graph->edgeArray[localEdge];
+            int globalSource = iGraph*graph->vertexCount + localSource;
+            int globalTarget = iGraph*graph->vertexCount + localTarget;
+            int globalEdge = iGraph*graph->edgeCount + localEdge;
+            printf("Vertex %s (%i) is parent to vertex %s (%i) with edge weight of %i\n", verticeNameArray[localSource], graph->costArray[globalSource], verticeNameArray[localTarget], graph->costArray[globalTarget], graph->weightArray[globalEdge]);
         }
     }
 }
@@ -118,10 +121,10 @@ void printInverseWeights(GraphData *graph) {
     }
 }
 
-void printSources(GraphData *graph) {
+void printSources(GraphData *graph, char **verticeNameArray) {
     printf("Nodes ");
     for (int i = 0; i < graph->sourceCount; i++) {
-        printf("%i, ", graph->sourceArray[i]);
+        printf("%s, ", verticeNameArray[graph->sourceArray[i]]);
     }
     printf("are sources.\n");
     
@@ -510,8 +513,7 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
 }
 
 void readGraphFromFile(GraphData *graph, char filePath[512]) {
-    char line[64];
-    char line2[256];
+    char line[512];
     ifstream myfile;
     myfile.open (filePath);
     if (myfile.is_open())
@@ -549,7 +551,21 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
             myfile.getline (line, 64, ',');
             graph->weightArray[iWeight] = (int)std::strtol(line, NULL, 10);
         }
-        
+        myfile.close();
+    }
+    else cout << "Unable to open file";
+}
+
+void readVerticeNames(char filePath[512], char **verticeNameArray) {
+    ifstream myfile;
+    myfile.open (filePath);
+    if (myfile.is_open()) {
+        int iVertex = 0;
+        string s;
+        while( getline(myfile, s) ) {
+            strcpy(verticeNameArray[iVertex], s.c_str());
+            iVertex++;
+        }
         myfile.close();
     }
     else cout << "Unable to open file";

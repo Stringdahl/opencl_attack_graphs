@@ -26,11 +26,11 @@ void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int tota
 void printCostOfVertex(GraphData *graph, int vertexToPrint);
 void printWeights(GraphData *graph);
 void printInverseWeights(GraphData *graph);
-void printGraph(GraphData *graph);
+void printGraph(GraphData *graph, char **verticeNameArray, int iGraph);
 void printInverseGraph(GraphData *graph);
 void printParents(GraphData *graph);
 void printMax(GraphData *graph);
-void printSources(GraphData *graph);
+void printSources(GraphData *graph, char **verticeNameArray);
 void printMaskArray(int *maskArrayHost, int totalVertexCount);
 void dumpBuffers(GraphData *graph, cl_command_queue *commandQueue, cl_mem *maskArrayDevice, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice,int iVertex);
 void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *maskArrayHost, cl_mem *costArrayDevice, cl_mem *updatingCostArrayDevice, cl_mem *weightArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice);
@@ -46,5 +46,6 @@ void maxSumDifference(GraphData *graph);
 void writeGraphToFile(GraphData *graph, char filePath[512]);
 void readGraphFromFile(GraphData *graph, char filePath[512]);
 void getMedianGraph(GraphData *graph);
+void readVerticeNames(char filePath[512], char **verticeNameArray);
 
 #endif /* utility_hpp */
