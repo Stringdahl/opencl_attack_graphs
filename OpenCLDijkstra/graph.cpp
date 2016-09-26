@@ -60,6 +60,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
     graph->inverseWeightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
+    graph->shortestParentsArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
     
     
     

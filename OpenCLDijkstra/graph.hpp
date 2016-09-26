@@ -24,6 +24,8 @@
 //  Accelerating large graph algorithms on the GPU using CUDA by
 //  Parwan Harish and P.J. Narayanan
 //
+
+
 typedef struct
 {
     // Graph count
@@ -67,6 +69,8 @@ typedef struct
     int *inverseEdgeArray;
 
     int *inverseWeightArray;
+    
+    int *shortestParentsArray;
     
 } GraphData;
 

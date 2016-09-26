@@ -217,11 +217,61 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
 }
 
 
+__kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
+                               __global int *inverseVertexArray,
+                               __global int *inverseEdgeArray,
+                               __global int *inverseWeightArray,
+                               __global int *maxCostArray,
+                               __global int *maxUpdatingCostArray,
+                               __global int *maxVertexArray,
+                               __global int *shortestParentEdgeArray)
+{
+    // access thread id
+    int globalChild = get_global_id(0);
+    
+    int iGraph = globalChild / vertexCount;
+    int localChild = globalChild % vertexCount;
+
+    int inverseEdgeStart = inverseVertexArray[globalChild];
+    int inverseEdgeEnd = getEdgeEnd(globalChild, vertexCount, inverseVertexArray, edgeCount);
+    int minCost;
+    
+    for(int localParentEdge = inverseEdgeStart; localParentEdge < inverseEdgeEnd; localParentEdge++) {
+        int localParent = inverseEdgeArray[localParentEdge];
+        int globalParent = iGraph*vertexCount + localParent;
+        int globalParentEdge = iGraph*edgeCount + localParentEdge;
+        // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
+        shortestParentEdgeArray[globalParentEdge] = 0;
+        // If this is a min node...
+        if (maxVertexArray[localChild] < 0) {
+            int currCost;
+            long currentMaxCost = maxCostArray[globalParent];
+            long currentWeight = inverseWeightArray[globalParentEdge];
+            if (currentMaxCost + currentWeight < INT_MAX)
+                currCost = currentMaxCost + currentWeight;
+            else
+                currCost = INT_MAX;
+            if (currCost<=minCost) {
+                minCost = currCost;
+                shortestParentEdgeArray[globalParentEdge] = 1;
+                printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
+            }
+        }
+        // If this is a max node...
+        else {
+            // ...return all parents.
+            shortestParentEdgeArray[globalParentEdge] = 1;
+            printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
+        }
+    }
+    
+}
+
 
 ///
 /// Kernel to initialize buffers
 ///
-__kernel void initializeBuffers( __global int *maskArray,
+__kernel void initializeBuffers(__global int *maskArray,
                                 __global int *maxCostArray,
                                 __global int *maxUpdatingCostArray,
                                 __global int *sumCostArray,
