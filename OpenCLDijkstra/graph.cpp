@@ -137,6 +137,7 @@ void completeReadGraph(GraphData *graph)
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->inverseWeightArray = (int*)malloc(graph->graphCount * graph->edgeCount * sizeof(int));
+    graph->shortestParentsArray = (int*)malloc(graph->graphCount * graph->edgeCount * sizeof(int));
     
     
     

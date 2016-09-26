@@ -507,10 +507,17 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
         myfile << graph->weightArray[iWeight] << ",";
     }
     myfile << graph->weightArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
+
     for (int iVertex = 0; iVertex < graph->graphCount * graph->vertexCount - 1; iVertex++) {
         myfile << graph->costArray[iVertex] << ",";
     }
     myfile << graph->costArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
+
+    for (int iShortestParent = 0; iShortestParent < graph->graphCount * graph->edgeCount- 1; iShortestParent++) {
+        myfile << graph->shortestParentsArray[iShortestParent] << ",";
+    }
+    myfile << graph->shortestParentsArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
+
     myfile.close();
 }
 

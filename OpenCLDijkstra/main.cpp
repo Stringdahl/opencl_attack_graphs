@@ -457,8 +457,8 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*ssspKernel2, 9, sizeof(cl_mem), maxVerticeArrayDevice);
 
     // Set the arguments to shortestParentsKernel
-    errNum |= clSetKernelArg(*shortestParentsKernel, 0, sizeof(int), &totalVertexCount);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 1, sizeof(int), &totalEdgeCount);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 0, sizeof(int), &vertexCount);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 1, sizeof(int), &edgeCount);
     errNum |= clSetKernelArg(*shortestParentsKernel, 2, sizeof(cl_mem), inverseVertexArrayDevice);
     errNum |= clSetKernelArg(*shortestParentsKernel, 3, sizeof(cl_mem), inverseEdgeArrayDevice);
     errNum |= clSetKernelArg(*shortestParentsKernel, 4, sizeof(cl_mem), inverseWeightArrayDevice);
@@ -595,11 +595,15 @@ void calculateGraphs(GraphData *graph, bool debug) {
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
 
-    printf("Reading shortestParentsArrayDevice from GPU.\n");
+    printf("Reading shortestParentsArrayDevice from GPU. totalEdgeCount = %i\n", totalEdgeCount);
 
     errNum = clEnqueueReadBuffer(commandQueue, shortestParentsArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, graph->shortestParentsArray, 0, NULL, &readDone);
+    printf("%i\n", errNum);
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
+
+    printf("Read complete.\n");
+
     
     // Shutdown and cleanup
     //
@@ -702,12 +706,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 2, 100, 2, 0.2);
+//    testRandomGraphs(1, 100, 41, 170, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
+    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
+    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
