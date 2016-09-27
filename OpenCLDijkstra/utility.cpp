@@ -343,6 +343,19 @@ void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
             sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> %s, ", globalSource, globalTarget, edgeString);
         }
     }
+    sprintf(str + strlen(str)-2, "}, EdgeStyle -> {");
+    for (int localSource = 0; localSource < graph->vertexCount; localSource++) {
+        int globalSource = iGraph*graph->vertexCount + localSource;
+        int edgeStart = graph->vertexArray[localSource];
+        int edgeEnd = getEdgeEnd(localSource, graph->vertexCount, graph->vertexArray, graph->edgeCount);
+        for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++) {
+            int localTarget = graph->edgeArray[localEdge];
+            int globalTarget = iGraph*graph->vertexCount + localTarget;
+            int globalEdge = iGraph*graph->edgeCount + localEdge;
+            if (graph->shortestParentsArray[globalEdge]==1)
+                sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> Red, ", globalSource, globalTarget);
+        }
+    }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
         if (hasEdge[localVertex]) {

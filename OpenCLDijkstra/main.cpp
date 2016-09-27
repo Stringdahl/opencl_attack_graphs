@@ -666,7 +666,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
-    //printMathematicaString(&graph, 0);
+    printMathematicaString(&graph, 0, false);
     
     
     
@@ -708,12 +708,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-//    testRandomGraphs(1, 100, 41, 170, 2, 0.2);
+    testRandomGraphs(1, 1, 1, 17, 2, 0.2);
     
-    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
-    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
-    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+//    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
+//    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
+//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
