@@ -463,11 +463,12 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     errNum |= clSetKernelArg(*shortestParentsKernel, 3, sizeof(cl_mem), inverseVertexArrayDevice);
     errNum |= clSetKernelArg(*shortestParentsKernel, 4, sizeof(cl_mem), edgeArrayDevice);
     errNum |= clSetKernelArg(*shortestParentsKernel, 5, sizeof(cl_mem), inverseEdgeArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 6, sizeof(cl_mem), inverseWeightArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 7, sizeof(cl_mem), maxCostArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 8, sizeof(cl_mem), maxUpdatingCostArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 9, sizeof(cl_mem), maxVerticeArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 10, sizeof(cl_mem), shortestParentsArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 6, sizeof(cl_mem), weightArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 7, sizeof(cl_mem), inverseWeightArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 8, sizeof(cl_mem), maxCostArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 9, sizeof(cl_mem), maxUpdatingCostArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 10, sizeof(cl_mem), maxVerticeArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 11, sizeof(cl_mem), shortestParentsArrayDevice);
 
     if (errNum != CL_SUCCESS)
     {
@@ -664,6 +665,10 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     }
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
+    for (int i = 0; i < graph.edgeCount; i++){
+        printf("graph.shortestParentsArray[%i]= %i.\n", i, graph.shortestParentsArray[i]);
+    }
+    
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
     printMathematicaString(&graph, 0, false);
@@ -708,7 +713,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 1, 17, 2, 0.2);
+    testRandomGraphs(1, 1, 1, 30, 2, 0.2);
     
 //    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
 //    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";

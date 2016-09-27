@@ -195,7 +195,7 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
 }
 
 
-int getEdgeId(int globalParent, int globalChild, int vertexCount, int edgeCount, __global int *vertexArray, __global int *edgeArray) {
+int getEdgeId(int globalParent, int globalChild, int weight, int vertexCount, int edgeCount, __global int *vertexArray, __global int *edgeArray, __global int *weightArray) {
     int iGraph = globalParent / vertexCount;
     int localParent = globalParent % vertexCount;
     int edgeStart = vertexArray[localParent];
@@ -206,9 +206,9 @@ int getEdgeId(int globalParent, int globalChild, int vertexCount, int edgeCount,
     {
         int currentLocalChild = edgeArray[localEdge];
         int currentGlobalChild = iGraph*vertexCount + currentLocalChild;
+        int globalEdge = iGraph*edgeCount + localEdge;
         
-        if (currentGlobalChild == globalChild) {
-            int globalEdge = iGraph*edgeCount + localEdge;
+        if (currentGlobalChild == globalChild && weightArray[globalEdge] == weight) {
             return globalEdge;
         }
     }
@@ -220,6 +220,7 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                                __global int *inverseVertexArray,
                                __global int *edgeArray,
                                __global int *inverseEdgeArray,
+                               __global int *weightArray,
                                __global int *inverseWeightArray,
                                __global int *maxCostArray,
                                __global int *maxUpdatingCostArray,
@@ -244,41 +245,50 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
     //
     //    printf("maxVertexArray[%i] = %i\n", localChild, maxVertexArray[localChild]);
     //
-    for(int localParentEdge = inverseEdgeStart; localParentEdge < inverseEdgeEnd; localParentEdge++) {
-        int localParent = inverseEdgeArray[localParentEdge];
-        int globalParent = iGraph*vertexCount + localParent;
-        int globalParentEdge = iGraph*edgeCount + localParentEdge;
-        
-        //        printf("globalChild = %i, localParent = %i, globalParent = %i, localParentEdge = %i, globalParentEdge = %i.\n", globalChild, localParent, globalParent, localParentEdge, globalParentEdge);
-        // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
-        shortestParentEdgeArray[globalParentEdge] = 0;
-        // If this is a min node...
-        if (maxVertexArray[localChild] < 0) {
-            int currCost;
-            long currentMaxCost = maxCostArray[globalParent];
-            long currentWeight = inverseWeightArray[globalParentEdge];
-            if (currentMaxCost + currentWeight < INT_MAX)
-                currCost = currentMaxCost + currentWeight;
-            else
-                currCost = INT_MAX;
-            printf("Considering edge from %i to %i with a cost impact of %i.\n", globalParent, globalChild, currCost);
-            if (currCost<=minCost) {
-                minCost = currCost;
-                int edge = getEdgeId(globalParent, globalChild, vertexCount, edgeCount, vertexArray, edgeArray);
-                shortestParentEdgeArray[edge] = 1;
-                printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
+        for(int localParentEdge = inverseEdgeStart; localParentEdge < inverseEdgeEnd; localParentEdge++) {
+            int localParent = inverseEdgeArray[localParentEdge];
+            int globalParent = iGraph*vertexCount + localParent;
+            int globalParentEdge = iGraph*edgeCount + localParentEdge;
+            int edge = getEdgeId(globalParent, globalChild, inverseWeightArray[globalParentEdge], vertexCount, edgeCount, vertexArray, edgeArray, weightArray);
+
+            //        printf("globalChild = %i, localParent = %i, globalParent = %i, localParentEdge = %i, globalParentEdge = %i.\n", globalChild, localParent, globalParent, localParentEdge, globalParentEdge);
+            // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
+            // If this is a min node...
+            if (maxVertexArray[localChild] < 0) {
+                int currCost;
+                long currentMaxCost = maxCostArray[globalParent];
+                long currentWeight = inverseWeightArray[globalParentEdge];
+                if (currentMaxCost + currentWeight < INT_MAX)
+                    currCost = currentMaxCost + currentWeight;
+                else
+                    currCost = INT_MAX;
+                printf("Considering edge from %i to %i with a cost impact of %i, compared to previously calculated cost of %i.\n", globalParent, globalChild, currCost, maxCostArray[globalChild]);
+                if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && maxCostArray[globalParent]!= INT_MAX) {
+                    minCost = currCost;
+                    shortestParentEdgeArray[edge] = 1;
+                    printf("Marked edge %i, from %i to % i (%i), as shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
+                }
+                else {
+                    shortestParentEdgeArray[edge] = 0;
+                    printf("Marked edge %i, from %i to % i (%i), as NOT shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
+                }
+            }
+            // If this is a max node...
+            else {
+                // ...return all parents.
+                //printf("Checking max child %i, where maxCostArray[%i] = %i and maxCostArray[%i] = %i\n", globalChild, globalChild, maxCostArray[globalChild], globalParent, maxCostArray[globalParent]);
+                if (maxCostArray[globalChild] != INT_MAX && maxCostArray[globalParent]!= INT_MAX) {
+                    shortestParentEdgeArray[edge] = 1;
+                    //printf("Marked edge %i, from %i to % i (%i), as shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
+                    //printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
+                }
+                else  {
+                    shortestParentEdgeArray[edge] = 0;
+                    //printf("Marked edge %i, from %i to % i (%i), as NOT shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
+                }
             }
         }
-        // If this is a max node...
-        else {
-            // ...return all parents.
-            if (maxCostArray[globalChild] < INT_MAX) {
-                int edge = getEdgeId(globalParent, globalChild, vertexCount, edgeCount, vertexArray, edgeArray);
-                shortestParentEdgeArray[edge] = 1;
-                //printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
-            }
-        }
-    }
+    
     
     
     

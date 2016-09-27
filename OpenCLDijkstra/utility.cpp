@@ -352,8 +352,11 @@ void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
             int localTarget = graph->edgeArray[localEdge];
             int globalTarget = iGraph*graph->vertexCount + localTarget;
             int globalEdge = iGraph*graph->edgeCount + localEdge;
-            if (graph->shortestParentsArray[globalEdge]==1)
+            //printf("Checking if edge %i from %i to %i is shortest.\n", globalEdge, globalSource, globalTarget);
+            if (graph->shortestParentsArray[globalEdge]==1) {
+                //printf("It is. \n");
                 sprintf(str + strlen(str), "%i \\[DirectedEdge] %i -> Red, ", globalSource, globalTarget);
+            }
         }
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
