@@ -218,11 +218,6 @@ void updateGraphWithNewRandomWeights(GraphData *graph) {
 }
 
 
-void reorderEdgeAttributeArrayFromInverse(int *edgeAttributeArray, GraphData graph) {
-    
-}
-
-
 // A utility function to find the vertex with minimum distance value, from
 // the set of vertices not yet included in shortest path tree
 int minDistance(int *dist, bool *sptSet, int vertexCount)

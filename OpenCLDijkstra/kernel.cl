@@ -34,35 +34,32 @@ int getEdgeEnd(int iVertex, int vertexCount, __global int *vertexArray, int edge
 //    return minParent;
 //}
 
-int leastCommonAncestor(int localParent1, int localParent2, int vertexCount, int edgeCount, __global int *maxVertexArray, __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
-    //printf("Parent 1 = %i, parent 2 = %i.\n", localParent1, localParent2);
-    int influentialEdges[MAXTRACE];
-    int nInfluentialEdges = 0;
-    //int ip1 = getInfluentialParents(influentialEdges, nInfluentialEdges, localParent1, vertexCount, edgeCount, inverseVertexArray, inverseEdgeArray, maxVertexArray, maxCostArray, inverseWeightArray);
-    printf("influentialEdges[0] = %i\n", influentialEdges[0]);
-    //printf("Node %i is the influential parent of node %i.\n", ip1, localParent1);
-    return 0;
-}
+//int leastCommonAncestor(int localParent1, int localParent2, int vertexCount, int edgeCount, __global int *maxVertexArray, __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *maxCostArray,  __global int *inverseWeightArray) {
+//    //printf("Parent 1 = %i, parent 2 = %i.\n", localParent1, localParent2);
+//    int influentialEdges[MAXTRACE];
+//    int nInfluentialEdges = 0;
+//    //int ip1 = getInfluentialParents(influentialEdges, nInfluentialEdges, localParent1, vertexCount, edgeCount, inverseVertexArray, inverseEdgeArray, maxVertexArray, maxCostArray, inverseWeightArray);
+//    printf("influentialEdges[0] = %i\n", influentialEdges[0]);
+//    //printf("Node %i is the influential parent of node %i.\n", ip1, localParent1);
+//    return 0;
+//}
+//
+//
+//int trueValueOfAndVertice(int globalTarget,  int vertexCount, int edgeCount,  __global int *maxCostArray, __global int *maxVertexArray,  __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *inverseWeightArray) {
+//    int localTarget = globalTarget % vertexCount;
+//    int inverseEdgeStart = inverseVertexArray[localTarget];
+//    int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
+//    for(int localInverseEdge1 = inverseEdgeStart; localInverseEdge1 < inverseEdgeEnd; localInverseEdge1++) {
+//        for(int localInverseEdge2 = localInverseEdge1 + 1; localInverseEdge2 < inverseEdgeEnd; localInverseEdge2++) {
+//            int localInverseParent1 = inverseEdgeArray[localInverseEdge1];
+//            int localInverseParent2 = inverseEdgeArray[localInverseEdge2];
+//            //printf("In node %i, looking for lca.\n", globalTarget);
+//            //            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
+//        }
+//    }
+//    return 0;
+//}
 
-
-int trueValueOfAndVertice(int globalTarget,  int vertexCount, int edgeCount,  __global int *maxCostArray, __global int *maxVertexArray,  __global int *inverseVertexArray,  __global int *inverseEdgeArray,  __global int *inverseWeightArray) {
-    int localTarget = globalTarget % vertexCount;
-    int inverseEdgeStart = inverseVertexArray[localTarget];
-    int inverseEdgeEnd = getEdgeEnd(localTarget, vertexCount, inverseVertexArray, edgeCount);
-    for(int localInverseEdge1 = inverseEdgeStart; localInverseEdge1 < inverseEdgeEnd; localInverseEdge1++) {
-        for(int localInverseEdge2 = localInverseEdge1 + 1; localInverseEdge2 < inverseEdgeEnd; localInverseEdge2++) {
-            int localInverseParent1 = inverseEdgeArray[localInverseEdge1];
-            int localInverseParent2 = inverseEdgeArray[localInverseEdge2];
-            //printf("In node %i, looking for lca.\n", globalTarget);
-            //            int lca = leastCommonAncestor(localInverseParent1, localInverseParent2, vertexCount, edgeCount, maxVertexArray, inverseVertexArray, inverseEdgeArray, maxCostArray, inverseWeightArray);
-        }
-    }
-    return 0;
-}
-
-///
-/// This is part 1 of the Kernel from Algorithm 4 in the paper
-///
 __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseVertexArray, __global int *edgeArray, __global int *inverseEdgeArray, __global int *weightArray, __global int *inverseWeightArray, __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray, __global int *sumCostArray, __global int *sumUpdatingCostArray, int vertexCount, int edgeCount, __global int *traversedEdgeCountArray, __global int *parentCountArray, __global int *maxVertexArray, __global int *influentialParentArray)
 {
     // access thread id
@@ -71,13 +68,11 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
     int iGraph = globalSource / vertexCount;
     int localSource = globalSource % vertexCount;
     
-    //printf("Start of Kernel 1: globalSource = %i, iGraph = %i, vertexCount = %i, localSource = %i, maskArray[%i] = %i, maxUpdatingCostArray[%i] = %i, maxCostArray[%i] = %i.\n", globalSource, iGraph, vertexCount, localSource, globalSource, maskArray[globalSource], globalSource, maxUpdatingCostArray[globalSource], globalSource, maxCostArray[globalSource]);
     // Only consider vertices that are marked for update
     if ( maskArray[globalSource] != 0 ) {
         // After attempting to update, don't do it again unless (i) a parent updated this, or (ii) recalculation is required due to kernel 2.
         maskArray[globalSource] = 0;
         // Only update if (i) this is a min node, or (ii) this is a max node and all parents have been visited.
-        //printf("Check max and parents: globalSource = %i, maxVertexArray[%i] = %i, parentCountArray[%i] = %i\n", globalSource, globalSource, maxVertexArray[globalSource], globalSource, parentCountArray[globalSource]);
         if (maxVertexArray[globalSource]<0 || parentCountArray[globalSource]==0) {
             {
                 // Get the edges
@@ -108,14 +103,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             currentMaxCost = currentMaxCost + currentWeight;
                         else
                             currentMaxCost = INT_MAX;
-                        
-                        // This should never happen, but for a while it did:
-                        if(currentMaxCost<0) {
-                            printf("Error! currentMaxCost below 0 for vertex %i. Resetting currentMaxCost to INT_MAX\n", globalTarget);
-                            printf("currentMaxCost = %i, maxCostArray[%i] = %i, weightArray[%i] = %i, maxCostArray[globalSource] + weightArray[globalEdge] = %i\n", currentMaxCost, globalSource, maxCostArray[globalSource], globalEdge, weightArray[globalEdge], maxCostArray[globalSource] + weightArray[globalEdge]);
-                            currentMaxCost = INT_MAX;
-                        }
-                        
                         
                         // ...atomically choose the lesser of the current and candidate updatingCost
                         atomic_min(&maxUpdatingCostArray[globalTarget], currentMaxCost);
@@ -170,9 +157,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
 }
 
 
-///
-/// This is part 2 of the Kernel from Algorithm 5 in the paper.
-///
 __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArray, __global int *weightArray,
                                __global int *maskArray, __global int *maxCostArray, __global int *maxUpdatingCostArray, __global int *sumCostArray, __global int *sumUpdatingCostArray, int vertexCount, __global int *maxVertexArray)
 {
@@ -237,22 +221,12 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
     int inverseEdgeEnd = getEdgeEnd(localChild, vertexCount, inverseVertexArray, edgeCount);
     int minCost = INT_MAX-1;
     
-    //    printf("globalChild = %i, edges from %i to %i.\n", globalChild, inverseEdgeStart, inverseEdgeEnd);
-    //    printf("vertexCount = %i, edgeCount = %i\n", vertexCount, edgeCount);
-    //    printf("inverseVertexArray[%i] = %i\n", globalChild, inverseVertexArray[localChild]);
-    //    printf("maxCostArray[%i] = %i\n", globalChild, maxCostArray[globalChild]);
-    //    printf("maxUpdatingCostArray[%i] = %i\n", globalChild, maxUpdatingCostArray[globalChild]);
-    //
-    //    printf("maxVertexArray[%i] = %i\n", localChild, maxVertexArray[localChild]);
-    //
         for(int localParentEdge = inverseEdgeStart; localParentEdge < inverseEdgeEnd; localParentEdge++) {
             int localParent = inverseEdgeArray[localParentEdge];
             int globalParent = iGraph*vertexCount + localParent;
             int globalParentEdge = iGraph*edgeCount + localParentEdge;
             int edge = getEdgeId(globalParent, globalChild, inverseWeightArray[globalParentEdge], vertexCount, edgeCount, vertexArray, edgeArray, weightArray);
 
-            //        printf("globalChild = %i, localParent = %i, globalParent = %i, localParentEdge = %i, globalParentEdge = %i.\n", globalChild, localParent, globalParent, localParentEdge, globalParentEdge);
-            // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
             // If this is a min node...
             if (maxVertexArray[localChild] < 0) {
                 int currCost;
@@ -262,29 +236,23 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                     currCost = currentMaxCost + currentWeight;
                 else
                     currCost = INT_MAX;
-                printf("Considering edge from %i to %i with a cost impact of %i, compared to previously calculated cost of %i.\n", globalParent, globalChild, currCost, maxCostArray[globalChild]);
+                // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
                 if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && maxCostArray[globalParent]!= INT_MAX) {
                     minCost = currCost;
                     shortestParentEdgeArray[edge] = 1;
-                    printf("Marked edge %i, from %i to % i (%i), as shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
                 }
                 else {
                     shortestParentEdgeArray[edge] = 0;
-                    printf("Marked edge %i, from %i to % i (%i), as NOT shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
                 }
             }
             // If this is a max node...
             else {
                 // ...return all parents.
-                //printf("Checking max child %i, where maxCostArray[%i] = %i and maxCostArray[%i] = %i\n", globalChild, globalChild, maxCostArray[globalChild], globalParent, maxCostArray[globalParent]);
                 if (maxCostArray[globalChild] != INT_MAX && maxCostArray[globalParent]!= INT_MAX) {
                     shortestParentEdgeArray[edge] = 1;
-                    //printf("Marked edge %i, from %i to % i (%i), as shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
-                    //printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
                 }
                 else  {
                     shortestParentEdgeArray[edge] = 0;
-                    //printf("Marked edge %i, from %i to % i (%i), as NOT shortest.\n", edge, globalParent, globalChild, edgeArray[edge]);
                 }
             }
         }

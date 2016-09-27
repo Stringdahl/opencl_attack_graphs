@@ -410,7 +410,6 @@ return errNum;
 int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_kernel *ssspKernel2, cl_kernel *shortestParentsKernel, int graphCount, int vertexCount, int edgeCount, int sourceCount,  cl_mem *maskArrayDevice, cl_mem *vertexArrayDevice, cl_mem *inverseVertexArrayDevice, cl_mem *edgeArrayDevice, cl_mem *inverseEdgeArrayDevice, cl_mem *maxCostArrayDevice, cl_mem *maxUpdatingCostArrayDevice, cl_mem *sumCostArrayDevice, cl_mem *sumUpdatingCostArrayDevice, cl_mem *sourceArrayDevice, cl_mem *weightArrayDevice, cl_mem *inverseWeightArrayDevice, cl_mem *traversedEdgeCountArrayDevice, cl_mem *parentCountArrayDevice, cl_mem *maxVerticeArrayDevice, cl_mem *shortestParentsArrayDevice) {
     
     int totalVertexCount = graphCount*vertexCount;
-    int totalEdgeCount = graphCount*edgeCount;
     
     // Set the arguments to initializeKernel
     //
@@ -582,7 +581,6 @@ void calculateGraphs(GraphData *graph, bool debug) {
     }
     // Wait for the command commands to get serviced before reading back results
     clFinish(commandQueue);
-    //printf("%i iterations over the two kernels.\n", count);
     
     // Read back the results from the device to verify the output
     
@@ -591,21 +589,15 @@ void calculateGraphs(GraphData *graph, bool debug) {
     errNum = clEnqueueReadBuffer( commandQueue, sumCostArrayDevice, CL_TRUE, 0, sizeof(int) * totalVertexCount, graph->sumCostArray, 0, NULL, &readDone );
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
-  
-    printf("Enqueuing shortest parent kernel.\n");
     
     errNum = clEnqueueNDRangeKernel(commandQueue, shortestParentsKernel, 1, 0, &global, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
 
-    printf("Reading shortestParentsArrayDevice from GPU. totalEdgeCount = %i\n", totalEdgeCount);
-
     errNum = clEnqueueReadBuffer(commandQueue, shortestParentsArrayDevice, CL_FALSE, 0, sizeof(int) * totalEdgeCount, graph->shortestParentsArray, 0, NULL, &readDone);
-    printf("%i\n", errNum);
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
 
-    printf("Read complete.\n");
 
     
     // Shutdown and cleanup
@@ -665,13 +657,9 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     }
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
-    for (int i = 0; i < graph.edgeCount; i++){
-        printf("graph.shortestParentsArray[%i]= %i.\n", i, graph.shortestParentsArray[i]);
-    }
-    
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
-    printMathematicaString(&graph, 0, false);
+//    printMathematicaString(&graph, 0, false);
     
     
     
@@ -701,9 +689,6 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     compareToCPUComputation(&graph, false, 10);
 
-    //getMedianGraph(&graph);
-    //printGraph(&graph, verticeNameArray, 0);
-    //printSources(&graph, verticeNameArray);
     //printMathematicaString(&graph, 0, false);
     
     
@@ -713,9 +698,9 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 1, 30, 2, 0.2);
+    testRandomGraphs(10, 1000, 25, 1000, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/myGraph4.cvs";
+//    char filePathToInData[512] = "/Users/pontus/Documents/graph2.out";
 //    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
 //    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
 //    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
