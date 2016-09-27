@@ -459,13 +459,15 @@ int setKernelArguments(cl_kernel *initializeKernel, cl_kernel *ssspKernel1, cl_k
     // Set the arguments to shortestParentsKernel
     errNum |= clSetKernelArg(*shortestParentsKernel, 0, sizeof(int), &vertexCount);
     errNum |= clSetKernelArg(*shortestParentsKernel, 1, sizeof(int), &edgeCount);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 2, sizeof(cl_mem), inverseVertexArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 3, sizeof(cl_mem), inverseEdgeArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 4, sizeof(cl_mem), inverseWeightArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 5, sizeof(cl_mem), maxCostArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 6, sizeof(cl_mem), maxUpdatingCostArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 7, sizeof(cl_mem), maxVerticeArrayDevice);
-    errNum |= clSetKernelArg(*shortestParentsKernel, 8, sizeof(cl_mem), shortestParentsArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 2, sizeof(cl_mem), vertexArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 3, sizeof(cl_mem), inverseVertexArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 4, sizeof(cl_mem), edgeArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 5, sizeof(cl_mem), inverseEdgeArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 6, sizeof(cl_mem), inverseWeightArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 7, sizeof(cl_mem), maxCostArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 8, sizeof(cl_mem), maxUpdatingCostArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 9, sizeof(cl_mem), maxVerticeArrayDevice);
+    errNum |= clSetKernelArg(*shortestParentsKernel, 10, sizeof(cl_mem), shortestParentsArrayDevice);
 
     if (errNum != CL_SUCCESS)
     {

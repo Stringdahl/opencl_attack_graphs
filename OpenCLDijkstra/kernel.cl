@@ -87,16 +87,13 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                 // Iterate over the edges
                 for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
                 {
-                    // nid is the (globally indexed) target node
                     int localTarget = edgeArray[localEdge];
                     int globalTarget = iGraph*vertexCount + edgeArray[localEdge];
-                    // eid is the globally indexed edge
                     int globalEdge = iGraph*edgeCount + localEdge;
                     
                     // If this edge has never been traversed, reduce the remaining parents of the target by one, so that they reach zero when all incoming edges have been visited.
                     if (traversedEdgeCountArray[globalEdge] == 0) {
                         atomic_dec(&parentCountArray[globalTarget]);
-                        // parentCountArray[globalTarget]--;
                     }
                     // Mark that this edge has been traversed.
                     traversedEdgeCountArray[globalEdge] ++;
@@ -105,9 +102,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                     
                     // If this is a min node ...
                     if (maxVertexArray[globalTarget]<0) {
-                        //                        if (maxCostArray[globalSource] + weightArray[globalEdge] >= INT_MAX)
-                        //                            currentMaxCost = INT_MAX;
-                        //                        else
                         long currentMaxCost = maxCostArray[globalSource];
                         long currentWeight = weightArray[globalEdge];
                         if (currentMaxCost + currentWeight < INT_MAX)
@@ -126,12 +120,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                         // ...atomically choose the lesser of the current and candidate updatingCost
                         atomic_min(&maxUpdatingCostArray[globalTarget], currentMaxCost);
                         atomic_min(&sumUpdatingCostArray[globalTarget], currentMaxCost);
-                        
-                        // Reconvert the integer representation to float and store in maxUpdatingCostArray
-                        // Iterate over the edges
-                        
-                        // Mark the target for update
-                        //maskArray[nid] = 1;
                         
                     }
                     
@@ -166,22 +154,12 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                     sumEdgeVal = INT_MAX;
                             }
                             
-                            //                            if (sumEdgeVal != maxEdgeVal) {
-                            //                                trueValue = trueValueOfAndVertice(globalTarget, vertexCount, edgeCount,  maxCostArray, maxVertexArray, inverseVertexArray, inverseEdgeArray, inverseWeightArray);
-                            //                            }
-                            
-                            //printf("Node %i with cost %i tried to update max-node %i of cost %i by weight %i.\n", globalSource, maxCostArray[globalSource], globalTarget, maxCostArray[globalTarget], weightArray[globalEdge]);
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
                             sumCostArray[globalTarget] = sumEdgeVal;
                             sumUpdatingCostArray[globalTarget] = sumEdgeVal;
                             // Mark the target for update
                             maskArray[globalTarget] = 1;
-                            
-                            //printf("New value of %i is %i.\n", globalTarget, maxCostArray[globalTarget]);
-                            //                            if (sumEdgeVal!=maxEdgeVal) {
-                            //                                printf("In max: globalSource = %i, globalTarget = %i, maxEdgeVal = %i, sumEdgeVal = %i.\n", globalSource, globalTarget, maxEdgeVal, sumEdgeVal);
-                            //                            }
                             
                         }
                     }
@@ -217,8 +195,30 @@ __kernel void OCL_SSSP_KERNEL2(__global int *vertexArray, __global int *edgeArra
 }
 
 
+int getEdgeId(int globalParent, int globalChild, int vertexCount, int edgeCount, __global int *vertexArray, __global int *edgeArray) {
+    int iGraph = globalParent / vertexCount;
+    int localParent = globalParent % vertexCount;
+    int edgeStart = vertexArray[localParent];
+    int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
+
+    // Iterate over the edges
+    for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
+    {
+        int currentLocalChild = edgeArray[localEdge];
+        int currentGlobalChild = iGraph*vertexCount + currentLocalChild;
+
+        if (currentGlobalChild == globalChild) {
+            int globalEdge = iGraph*edgeCount + localEdge;
+            return globalEdge;
+        }
+    }
+    return -1;
+}
+
 __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
+                               __global int *vertexArray,
                                __global int *inverseVertexArray,
+                               __global int *edgeArray,
                                __global int *inverseEdgeArray,
                                __global int *inverseWeightArray,
                                __global int *maxCostArray,
@@ -263,17 +263,21 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                 currCost = INT_MAX;
             if (currCost<=minCost) {
                 minCost = currCost;
-                shortestParentEdgeArray[globalParentEdge] = 1;
+                int edge = getEdgeId(globalParent, globalChild, vertexCount, edgeCount, vertexArray, edgeArray);
+                shortestParentEdgeArray[edge] = 1;
                 //printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
             }
         }
         // If this is a max node...
         else {
             // ...return all parents.
-            shortestParentEdgeArray[globalParentEdge] = 1;
+            int edge = getEdgeId(globalParent, globalChild, vertexCount, edgeCount, vertexArray, edgeArray);
+            shortestParentEdgeArray[edge] = 1;
             //printf("Marked parentEdge %i as shortest.\n", globalParentEdge);
         }
     }
+    
+    
     
 }
 
