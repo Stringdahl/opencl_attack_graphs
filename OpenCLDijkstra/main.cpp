@@ -706,9 +706,6 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     printf("\nReading graph from file.\n");
     readGraphFromFile(&graph, filePathToInData);
     completeReadGraph(&graph);
-
-    //printMathematicaString(&graph, 0, false);
-
     printf("Computing...\n");
     clock_t start_time = clock();
     calculateGraphs(&graph, false);
@@ -717,7 +714,6 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     writeGraphToFile(&graph, filePathToOutData);
     
-
 //    char **verticeNameArray = (char**) malloc(graph.vertexCount * sizeof(char*));
 //    for (int i = 0; i < graph.vertexCount; i++)
 //        verticeNameArray[i] = (char*) malloc((512) * sizeof(char));
