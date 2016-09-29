@@ -361,7 +361,6 @@ void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
-        printf("hasEdge[%i] = %i", localVertex, hasEdge[localVertex]);
         if (hasEdge[localVertex]) {
             int globalVertex = iGraph*graph->vertexCount + localVertex;
             if (graph->sourceArray[globalVertex]) {

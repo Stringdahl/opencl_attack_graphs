@@ -706,7 +706,9 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     printf("\nReading graph from file.\n");
     readGraphFromFile(&graph, filePathToInData);
     completeReadGraph(&graph);
-    
+
+    printMathematicaString(&graph, 0, false);
+
     printf("Computing...\n");
     clock_t start_time = clock();
     calculateGraphs(&graph, false);
@@ -732,13 +734,13 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 10, 100, 2, 0.2);
+//    testRandomGraphs(1, 1, 10, 100, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/inGraph2.csv";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph2.csv";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
-//
+    char filePathToInData[512] = "/Users/pontus/Documents/graph-1.out";
+    char filePathToOutData[512] = "/Users/pontus/Documents/graph-1-res.csv";
+    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+
 
     
     return 0;
