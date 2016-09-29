@@ -509,15 +509,15 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     }
     myfile << graph->maxVertexArray[graph->vertexCount - 1] << ",\n";
     
-    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
-        myfile << graph->edgeArray[iEdge] << ",";
-    }
-    myfile << graph->edgeArray[graph->edgeCount - 1] << ",\n";
-    
     for (int iSource = 0; iSource < graph->graphCount * graph->vertexCount - 1; iSource++) {
         myfile << graph->sourceArray[iSource] << ",";
     }
     myfile << graph->sourceArray[graph->graphCount * graph->vertexCount - 1] << ",\n";
+    
+    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
+        myfile << graph->edgeArray[iEdge] << ",";
+    }
+    myfile << graph->edgeArray[graph->edgeCount - 1] << ",\n";
     
     for (int iWeight = 0; iWeight < graph->graphCount * graph->edgeCount- 1; iWeight++) {
         myfile << graph->weightArray[iWeight] << ",";
@@ -527,7 +527,7 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     for (int iVertex = 0; iVertex < graph->graphCount * graph->vertexCount - 1; iVertex++) {
         myfile << graph->costArray[iVertex] << ",";
     }
-    myfile << graph->costArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
+    myfile << graph->costArray[graph->graphCount * graph->vertexCount - 1] << ",\n";
 
     for (int iShortestParent = 0; iShortestParent < graph->graphCount * graph->edgeCount- 1; iShortestParent++) {
         myfile << graph->shortestParentsArray[iShortestParent] << ",";
