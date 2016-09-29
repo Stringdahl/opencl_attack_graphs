@@ -116,7 +116,12 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
                                                        sizeof(int) * totalEdgeCount, traversedEdgeCountArray, &errNum);
     checkError(errNum, CL_SUCCESS);
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
-                                           sizeof(int) * graph->sourceCount, graph->sourceArray, &errNum);
+                                           sizeof(int) * totalVertexCount, graph->sourceArray, &errNum);
+    
+    for (int i = 0; i < totalVertexCount; i++) {
+        printf("graph->sourceArray[%i] = %i\n", i, graph->sourceArray[i]);
+    }
+    
     checkError(errNum, CL_SUCCESS);
     hostParentCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
@@ -154,7 +159,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *traversedEdgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->sourceCount, NULL, &errNum);
+    *sourceArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *shortestParentsArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalEdgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -200,10 +205,10 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     
     errNum = clEnqueueCopyBuffer(commandQueue, hostSourceArrayBuffer, *sourceArrayDevice, 0, 0,
-                                 sizeof(int) * graph->sourceCount, 0, NULL, NULL);
+                                 sizeof(int) * totalVertexCount, 0, NULL, NULL);
     if (errNum != CL_SUCCESS)
     {
-        printf("Error: Failed to enqueue source array buffer!\n");
+        printf("Error: Failed to enqueue buffer!\n");
         exit(1);
     }
     checkError(errNum, CL_SUCCESS);
@@ -649,7 +654,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
-//    printMathematicaString(&graph, 0, false);
+    printMathematicaString(&graph, 0, false);
     
     
     
@@ -688,12 +693,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-//    testRandomGraphs(10, 1000, 25, 1000, 2, 0.2);
+    testRandomGraphs(1, 1, 2, 20, 2, 0.2);
     
-    char filePathToInData[512] = "/Users/pontus/Documents/graph-1.out";
-    char filePathToOutData[512] = "/Users/pontus/Documents/graph-1.rst";
-    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+//    char filePathToInData[512] = "/Users/pontus/Documents/graph-1.out";
+//    char filePathToOutData[512] = "/Users/pontus/Documents/graph-1.rst";
+//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     

@@ -140,9 +140,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 else
                                     sumEdgeVal = INT_MAX;
                             }
-                            if (maxEdgeVal < 0) {
-                                printf("maxEdgeVal < 0");
-                            }
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
                             sumCostArray[globalTarget] = sumEdgeVal;
@@ -282,15 +279,11 @@ __kernel void initializeBuffers(__global int *maskArray,
     int tid = get_global_id(0);
     int iGraph = tid / vertexCount;
     int localTid = tid % vertexCount;
-    bool isSource = false;
     
     influentialParentArray[tid] = -1;
-    for (int iSource = 0; iSource < sourceCount; iSource++) {
-        if (localTid == sourceArray[iSource]) {
-            isSource = true;
-        }
-    }
-    if (isSource) {
+
+    if (sourceArray[tid] == 1) {
+        printf("Setting vertex %i as source.\n", tid);
         maskArray[tid] = 1;
         maxCostArray[tid] = 0;
         maxUpdatingCostArray[tid] = 0;

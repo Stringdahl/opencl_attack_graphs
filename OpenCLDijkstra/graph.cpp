@@ -45,6 +45,8 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
 //
 void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax)
 {
+    float probOfSource = 1.0;
+    
     graph->vertexCount = vertexCount;
     graph->graphCount = graphCount;
     graph->sourceCount = sourceCount;
@@ -53,7 +55,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->costArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->sumCostArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
-    graph->sourceArray = (int*) malloc(graph->sourceCount * sizeof(int));
+    graph->sourceArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
@@ -74,6 +76,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
             graph->maxVertexArray[i]=-1;
         }
         graph->parentCountArray[i] = 0;
+        graph->sourceArray[i] = 0;
     }
     
     for(int i = 0; i < graph->edgeCount; i++)
@@ -88,14 +91,16 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
         graph->weightArray[i] = (rand() % 1000);
     }
     
-    for(int iSource = 0; iSource < graph->sourceCount; iSource++) {
-        int tempSource = (rand() % graph->vertexCount);
-        while (containes(graph->sourceArray, graph->sourceCount, tempSource)) {
-            tempSource = (rand() % graph->vertexCount);
+    // Set at least one random source per graph
+    for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
+        int firstLocalSource = (rand() % graph->vertexCount);
+        for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
+            if (iSource == 0 || (rand() % 100) < 100*probOfSource) {
+                graph->sourceArray[iGraph*graph->vertexCount + firstLocalSource] = 1;
+                graph->maxVertexArray[iGraph*graph->vertexCount + firstLocalSource] = -1;
+            }
+            
         }
-        graph->sourceArray[iSource] = tempSource;
-        // The source should be min
-        graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
     }
     
     int iEdge = 0;
@@ -292,12 +297,12 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
         dist[i] = INT_MAX, sptSet[i] = false;
     
     // Distance of  vertex from itself is always 0
-        for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
-            dist[graph->sourceArray[iSource]] = 0;
-            if (verbose) {
-                printf("Source vertex = %i in CPU.\n", iGraph*graph->vertexCount + graph->sourceArray[iSource]);
-            }
+    for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
+        dist[graph->sourceArray[iSource]] = 0;
+        if (verbose) {
+            printf("Source vertex = %i in CPU.\n", iGraph*graph->vertexCount + graph->sourceArray[iSource]);
         }
+    }
     
     // Find shortest path for all vertices
     while (atLeastOneUnprocessedIsFinite(sptSet, vertexCount, dist))

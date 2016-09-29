@@ -363,7 +363,7 @@ void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
         if (hasEdge[localVertex]) {
             int globalVertex = iGraph*graph->vertexCount + localVertex;
-            if (contains(graph->sourceArray, graph->sourceCount, localVertex)) {
+            if (graph->sourceArray[globalVertex]) {
                 sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
             }
             else {
