@@ -691,8 +691,8 @@ int main(int argc, char** argv)
     
 //    testRandomGraphs(10, 10, 20, 200, 2, 0.2);
     
-    char filePathToInData[512] = "/Users/pontus/Documents/graph-3.out";
-    char filePathToOutData[512] = "/Users/pontus/Documents/graph-3.rst";
+    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
+    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
     char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
     computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
