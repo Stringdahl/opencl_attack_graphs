@@ -680,7 +680,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     compareToCPUComputation(&graph, false, 10);
 
-    //printMathematicaString(&graph, 0, false);
+    printMathematicaString(&graph, 0, false);
     
     
 }
@@ -689,12 +689,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(10, 10, 20, 200, 2, 0.2);
+//    testRandomGraphs(10, 10, 20, 200, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/graph-2.out";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/graph-2.rst";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    char filePathToInData[512] = "/Users/pontus/Documents/graph-3.out";
+    char filePathToOutData[512] = "/Users/pontus/Documents/graph-3.rst";
+    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
