@@ -297,10 +297,12 @@ int* dijkstra(GraphData *graph, int iGraph, bool verbose){
         dist[i] = INT_MAX, sptSet[i] = false;
     
     // Distance of  vertex from itself is always 0
-    for (int iSource = 0; iSource < graph->sourceCount; iSource++) {
-        dist[graph->sourceArray[iSource]] = 0;
-        if (verbose) {
-            printf("Source vertex = %i in CPU.\n", iGraph*graph->vertexCount + graph->sourceArray[iSource]);
+    for (int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
+        if (graph->sourceArray[iGraph*graph->vertexCount + iVertex] == 1) {
+            dist[iVertex] = 0;
+            if (verbose) {
+                printf("Source vertex = %i in CPU.\n", iGraph*graph->vertexCount + graph->sourceArray[iVertex]);
+            }
         }
     }
     

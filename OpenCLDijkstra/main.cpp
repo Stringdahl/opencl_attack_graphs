@@ -649,7 +649,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     maxSumDifference(&graph);
-    //compareToCPUComputation(&graph, false, 10);
+    compareToCPUComputation(&graph, false, 10);
     //printMathematicaString(&graph, 0, false);
     
     
@@ -678,7 +678,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
         verticeNameArray[i] = (char*) malloc((512) * sizeof(char));
     //readVerticeNames(filePathToNames, verticeNameArray);
     
-    //compareToCPUComputation(&graph, false, 10);
+    compareToCPUComputation(&graph, false, 10);
 
     //printMathematicaString(&graph, 0, false);
     
@@ -689,12 +689,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-//    testRandomGraphs(1, 1, 2, 20, 2, 0.2);
+    testRandomGraphs(10, 10, 20, 200, 2, 0.2);
     
-    char filePathToInData[512] = "/Users/pontus/Documents/graph-2.out";
-    char filePathToOutData[512] = "/Users/pontus/Documents/graph-2.rst";
-    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+//    char filePathToInData[512] = "/Users/pontus/Documents/graph-2.out";
+//    char filePathToOutData[512] = "/Users/pontus/Documents/graph-2.rst";
+//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
