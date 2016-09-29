@@ -510,15 +510,15 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     }
     myfile << graph->maxVertexArray[graph->vertexCount - 1] << ",\n";
     
-    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
-        myfile << graph->edgeArray[iEdge] << ",";
-    }
-    myfile << graph->edgeArray[graph->edgeCount - 1] << ",\n";
-    
     for (int iSource = 0; iSource < graph->graphCount * graph->vertexCount - 1; iSource++) {
         myfile << graph->sourceArray[iSource] << ",";
     }
     myfile << graph->sourceArray[graph->graphCount * graph->vertexCount - 1] << ",\n";
+    
+    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
+        myfile << graph->edgeArray[iEdge] << ",";
+    }
+    myfile << graph->edgeArray[graph->edgeCount - 1] << ",\n";
     
     for (int iWeight = 0; iWeight < graph->graphCount * graph->edgeCount- 1; iWeight++) {
         myfile << graph->weightArray[iWeight] << ",";
