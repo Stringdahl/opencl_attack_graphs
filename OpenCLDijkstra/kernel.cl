@@ -140,7 +140,9 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                 else
                                     sumEdgeVal = INT_MAX;
                             }
-                            
+                            if (maxEdgeVal < 0) {
+                                printf("maxEdgeVal < 0");
+                            }
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
                             sumCostArray[globalTarget] = sumEdgeVal;

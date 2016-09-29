@@ -22,7 +22,7 @@
 #endif
 
 
-
+#define kernelPath "/Users/pontus/Documents/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl"
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
 #define NUM_ASYNCHRONOUS_ITERATIONS 20  // Number of async loop iterations before attempting to read results back
 
@@ -344,7 +344,7 @@ int  initializeComputing(cl_device_id *device_id, cl_context *context, cl_comman
     }
     
     // Create the compute program from the source file
-    *program = loadAndBuildProgram(*context, "/Users/pontus/Library/Mobile Documents/com~apple~CloudDocs/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl");
+    *program = loadAndBuildProgram(*context, kernelPath);
     if (!program)
     {
         printf("Error: Failed to create compute program!\n");
@@ -556,18 +556,8 @@ void calculateGraphs(GraphData *graph, bool debug) {
         {
             count ++;
             
-            if (debug) {
-                printf("Before Kernel1\n");
-                dumpBuffers(graph, &commandQueue, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-            }
-            
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &global, NULL, 0, NULL, &kernel1event);
             checkError(errNum, CL_SUCCESS);
-            
-            if (debug) {
-                printf("After Kernel1\n");
-                dumpBuffers(graph, &commandQueue, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &weightArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, -1);
-            }
             
             errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &global, NULL, 0, NULL, &kernel2event);
             checkError(errNum, CL_SUCCESS);
@@ -698,12 +688,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(10, 1000, 25, 1000, 2, 0.2);
+//    testRandomGraphs(10, 1000, 25, 1000, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/graph2.out";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/outGraph.cvs";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    char filePathToInData[512] = "/Users/pontus/Documents/graph-1.out";
+    char filePathToOutData[512] = "/Users/pontus/Documents/graph-1.rst";
+    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
