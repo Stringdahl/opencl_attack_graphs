@@ -118,10 +118,6 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     hostSourceArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                            sizeof(int) * totalVertexCount, graph->sourceArray, &errNum);
     
-    for (int i = 0; i < totalVertexCount; i++) {
-        printf("graph->sourceArray[%i] = %i\n", i, graph->sourceArray[i]);
-    }
-    
     checkError(errNum, CL_SUCCESS);
     hostParentCountArrayBuffer = clCreateBuffer(gpuContext, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                 sizeof(int) * totalVertexCount, parentCountArray, &errNum);
@@ -653,8 +649,8 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     maxSumDifference(&graph);
-    compareToCPUComputation(&graph, false, 10);
-    printMathematicaString(&graph, 0, false);
+    //compareToCPUComputation(&graph, false, 10);
+    //printMathematicaString(&graph, 0, false);
     
     
     
@@ -680,9 +676,9 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     char **verticeNameArray = (char**) malloc(graph.vertexCount * sizeof(char*));
     for (int i = 0; i < graph.vertexCount; i++)
         verticeNameArray[i] = (char*) malloc((512) * sizeof(char));
-    readVerticeNames(filePathToNames, verticeNameArray);
+    //readVerticeNames(filePathToNames, verticeNameArray);
     
-    compareToCPUComputation(&graph, false, 10);
+    //compareToCPUComputation(&graph, false, 10);
 
     //printMathematicaString(&graph, 0, false);
     

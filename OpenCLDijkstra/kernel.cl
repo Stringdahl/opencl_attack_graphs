@@ -236,7 +236,7 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                 else
                     currCost = INT_MAX;
                 // shortestParentEdgeArray[i] is 1 if edge i (according to the inverseEdgeArray numbering scheme) is a shortest parent, otherwise 0.)
-                if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && maxCostArray[globalParent]!= INT_MAX) {
+                if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && currentMaxCost != INT_MAX && currentWeight != INT_MAX && currCost != INT_MAX) {
                     minCost = currCost;
                     shortestParentEdgeArray[edge] = 1;
                 }
@@ -283,7 +283,6 @@ __kernel void initializeBuffers(__global int *maskArray,
     influentialParentArray[tid] = -1;
 
     if (sourceArray[tid] == 1) {
-        printf("Setting vertex %i as source.\n", tid);
         maskArray[tid] = 1;
         maxCostArray[tid] = 0;
         maxUpdatingCostArray[tid] = 0;

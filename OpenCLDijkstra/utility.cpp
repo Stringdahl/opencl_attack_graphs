@@ -262,7 +262,7 @@ void printAfterUpdating(GraphData *graph, cl_command_queue *commandQueue, int *m
 
 const char* costToString(int cost) {
     static char str[8];
-    if (cost > 99999) {
+    if (cost == INT_MAX) {
         sprintf(str, "inf");
     }
     else {
@@ -565,6 +565,7 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
         for (int iSource = 0; iSource < graph->graphCount * graph->vertexCount; iSource++) {
             myfile.getline (line, 64, ',');
             graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
+
         }
         graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
         for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
