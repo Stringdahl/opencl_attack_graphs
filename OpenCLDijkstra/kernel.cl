@@ -198,6 +198,7 @@ int getEdgeId(int globalParent, int globalChild, int weight, int vertexCount, in
     return -1;
 }
 
+
 __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                                __global int *vertexArray,
                                __global int *inverseVertexArray,
@@ -212,20 +213,21 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
 {
     // access thread id
     int globalChild = get_global_id(0);
-    
-    int iGraph = globalChild / vertexCount;
-    int localChild = globalChild % vertexCount;
-    
-    int inverseEdgeStart = inverseVertexArray[localChild];
-    int inverseEdgeEnd = getEdgeEnd(localChild, vertexCount, inverseVertexArray, edgeCount);
-    int minCost = INT_MAX-1;
-    
+    if (maxCostArray[globalChild] != INT_MAX) {
+        
+        int iGraph = globalChild / vertexCount;
+        int localChild = globalChild % vertexCount;
+        
+        int inverseEdgeStart = inverseVertexArray[localChild];
+        int inverseEdgeEnd = getEdgeEnd(localChild, vertexCount, inverseVertexArray, edgeCount);
+        int minCost = INT_MAX-1;
+        
         for(int localParentEdge = inverseEdgeStart; localParentEdge < inverseEdgeEnd; localParentEdge++) {
             int localParent = inverseEdgeArray[localParentEdge];
             int globalParent = iGraph*vertexCount + localParent;
             int globalParentEdge = iGraph*edgeCount + localParentEdge;
             int edge = getEdgeId(globalParent, globalChild, inverseWeightArray[globalParentEdge], vertexCount, edgeCount, vertexArray, edgeArray, weightArray);
-
+            
             // If this is a min node...
             if (maxVertexArray[localChild] < 0) {
                 int currCost;
@@ -255,11 +257,27 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                 }
             }
         }
-    
-    
-    
-    
+        
+    }
 }
+
+__kernel void INIT_INV_VERTEX_DIFF(__global int *inverseVertexDiffArray)
+{
+    int globalVertex = get_global_id(0);
+    inverseVertexDiffArray[globalVertex] = 0;
+}
+
+
+
+__kernel void INV_VERTEX_DIFF(__global int *edgeArray, __global int *inverseVertexDiffArray)
+{
+    int globalEdge = get_global_id(0);
+    int childVertex = edgeArray[globalEdge];
+    atomic_inc(&inverseVertexDiffArray[childVertex]);
+    printf("Incrementing inverseVertexDiffArray[%i] to %i.\n", childVertex, inverseVertexDiffArray[childVertex]);
+}
+
+
 
 
 ///
