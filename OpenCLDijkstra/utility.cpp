@@ -361,9 +361,11 @@ void printMathematicaString(GraphData *graph, int iGraph, bool printSum) {
     }
     sprintf(str + strlen(str)-2, "}, VertexShapeFunction -> {");
     for (int localVertex = 0; localVertex < graph->vertexCount; localVertex++) {
+        printf("hasEdge[%i] = %i", localVertex, hasEdge[localVertex]);
         if (hasEdge[localVertex]) {
             int globalVertex = iGraph*graph->vertexCount + localVertex;
             if (contains(graph->sourceArray, graph->sourceCount, localVertex)) {
+                printf("Writing %i as source in plot.\n", globalVertex);
                 sprintf(str + strlen(str), "%i -> \"Star\", ", globalVertex);
             }
             else {
@@ -565,6 +567,7 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
         for (int iSource = 0; iSource<graph->sourceCount; iSource++) {
             myfile.getline (line, 64, ',');
             graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
+            printf("Node %i is source.\n", graph->sourceArray[iSource]);
         }
         graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
         for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
