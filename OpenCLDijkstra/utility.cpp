@@ -561,8 +561,8 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
             myfile.getline (line, 64, ',');
             graph->maxVertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
         }
-        graph->sourceArray = (int*) malloc(graph->sourceCount * sizeof(int));
-        for (int iSource = 0; iSource<graph->sourceCount; iSource++) {
+        graph->sourceArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
+        for (int iSource = 0; iSource < graph->graphCount * graph->vertexCount; iSource++) {
             myfile.getline (line, 64, ',');
             graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
         }

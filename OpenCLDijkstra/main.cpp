@@ -693,12 +693,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 2, 20, 2, 0.2);
+//    testRandomGraphs(1, 1, 2, 20, 2, 0.2);
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/graph-1.out";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/graph-1.rst";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    char filePathToInData[512] = "/Users/pontus/Documents/graph-2.out";
+    char filePathToOutData[512] = "/Users/pontus/Documents/graph-2.rst";
+    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
 
     
