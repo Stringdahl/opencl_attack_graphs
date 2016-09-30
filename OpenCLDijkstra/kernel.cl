@@ -293,7 +293,6 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
     
     int edgeStart = vertexArray[localParent];
     int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
-    printf("Iterating over vertex %i's children.\n", localParent);
     // Iterate over the edges
     for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
     {
@@ -305,7 +304,6 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
         // write to that location
         inverseEdgeArray[location] = localParent;
         inverseWeightArray[location] = weightArray[localEdge];
-        printf("Parent %i updated the tracker of child %i to %i and placed itself in position %i of inverseEdgeArray.\n", localParent, localChild, offset+1, location);
     }
 }
 

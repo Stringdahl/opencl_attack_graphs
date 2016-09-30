@@ -629,7 +629,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     }
     if (debug)
         printf("]\n");
-
+    
     cl_mem hostInverseVertexArrayBuffer = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
                                                          sizeof(int) * graph->vertexCount, graph->inverseVertexArray, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -637,7 +637,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     errNum = clEnqueueCopyBuffer(commandQueue, hostInverseVertexArrayBuffer, inverseVertexArrayDevice, 0, 0,
                                  sizeof(int) * graph->vertexCount, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
-
+    
     
     
     if (debug)
@@ -752,13 +752,17 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", graph.vertexCount*graph.graphCount*graphSetCount, graph.vertexCount, graph.graphCount*graphSetCount, graphSetCount);
     
-    start_time = clock();
     int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
     int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
+
+    printf("updateGraphWithNewRandomWeights()\n");
     
     for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
         updateGraphWithNewRandomWeights(&graph);
+        printf("Starting calculations...\n");
+        start_time = clock();
         calculateGraphs(&graph, false);
+        printf("...completed calculations in %.2f seconds.\n", (float)(clock()-start_time)/1000000);
         for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
             maxCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
             sumCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.sumCostArray[iGlobalVertex];
@@ -767,8 +771,8 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     maxSumDifference(&graph);
-    compareToCPUComputation(&graph, false, 10);
-    printMathematicaString(&graph, 0, false);
+    //compareToCPUComputation(&graph, false, 10);
+    //printMathematicaString(&graph, 0, false);
     
     
     
@@ -799,7 +803,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     compareToCPUComputation(&graph, false, 10);
     
-    printMathematicaString(&graph, 0, false);
+    //printMathematicaString(&graph, 0, false);
     
     
 }
@@ -808,12 +812,12 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    //    testRandomGraphs(1, 1, 10, 100, 2, 0.2);
+    testRandomGraphs(1, 1, 10, 15000000, 2, 0.2);
     
-    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
-    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
-    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    //    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
+    //    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
+    //    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
+    //    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
     
     
     
