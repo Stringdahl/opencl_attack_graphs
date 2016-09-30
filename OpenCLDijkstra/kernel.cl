@@ -261,12 +261,13 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
     }
 }
 
-__kernel void INIT_INV_VERTEX_DIFF(__global int *inverseVertexDiffArray)
+__kernel void INIT_INV_VERTEX_DIFF(__global int *inverseVertexDiffArray, __global int *inverseEdgeIncrTrackerArray)
 {
+    //Because we only enqueue graph->vertexCount work items, localVertex = global_id
     int localVertex = get_global_id(0);
     inverseVertexDiffArray[localVertex] = 0;
+    inverseEdgeIncrTrackerArray[localVertex] = 0;
 }
-
 
 
 __kernel void INV_VERTEX_DIFF(__global int *edgeArray, __global int *inverseVertexDiffArray)
@@ -275,6 +276,35 @@ __kernel void INV_VERTEX_DIFF(__global int *edgeArray, __global int *inverseVert
     
     int childVertex = edgeArray[localEdge];
     atomic_inc(&inverseVertexDiffArray[childVertex]);
+}
+
+
+__kernel void INV_EDGE_ARRAY(int vertexCount,
+                             int edgeCount,
+                             __global int *vertexArray,
+                             __global int *edgeArray,
+                             __global int *inverseVertexArray,
+                             __global int *inverseEdgeArray,
+                             __global int *inverseEdgeIncrTrackerArray)
+{
+    int localParent = get_global_id(0);
+    
+    int edgeStart = vertexArray[localParent];
+    int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
+    printf("Iterating over vertex %i's children.\n", localParent);
+    // Iterate over the edges
+    for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
+    {
+        int localChild = edgeArray[localEdge];
+        // Increment the tracker variable, which determines the position of the parent id in the inverseEdgeArray
+        int offset = atomic_inc(&inverseEdgeIncrTrackerArray[localChild]);
+        //Determine parent's own ID's proper location of inverseEdgeArray
+        int location = inverseVertexArray[localChild] + offset;
+        // write to that location
+        inverseEdgeArray[location] = localParent;
+        printf("Parent %i updated the tracker of child %i to %i and placed itself in position %i of inverseEdgeArray.\n", localParent, localChild, offset+1, location);
+    }
+    
 }
 
 
