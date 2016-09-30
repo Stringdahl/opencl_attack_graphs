@@ -25,7 +25,6 @@ using namespace std;
 //
 void checkErrorFileLine(int errNum, int expected, const char* file, const int lineNumber);
 
-
 void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int totalVerticeCount) {
     for(int i = 0; i < verticesToPrint; i++)
     {
@@ -538,7 +537,7 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     myfile.close();
 }
 
-void readGraphFromFile(GraphData *graph, char filePath[512]) {
+void readGraphFromFile(GraphData *graph, char filePath[512], bool debug) {
     char line[512];
     ifstream myfile;
     myfile.open (filePath);
@@ -552,31 +551,42 @@ void readGraphFromFile(GraphData *graph, char filePath[512]) {
         graph->edgeCount = (int)std::strtol(line, NULL, 10);
         myfile.getline (line, 64, ',');
         graph->sourceCount = (int)std::strtol(line, NULL, 10);
+        if (debug)
+            printf("graph->graphCount = %i, graph->vertexCount = %i, graph->edgeCount = %i, graph->sourceCount = %i.\n", graph->graphCount, graph->vertexCount, graph->edgeCount, graph->sourceCount);
         graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
         for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
             myfile.getline (line, 64, ',');
             graph->vertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
+            if (debug)
+                printf("graph->vertexArray[%i] = %i.\n", iVertex, graph->vertexArray[iVertex]);
         }
         graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
         for (int iVertex = 0; iVertex<graph->vertexCount; iVertex++) {
             myfile.getline (line, 64, ',');
             graph->maxVertexArray[iVertex] = (int)std::strtol(line, NULL, 10);
+            if (debug)
+                printf("graph->maxVertexArray[%i] = %i.\n", iVertex, graph->maxVertexArray[iVertex]);
         }
         graph->sourceArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
-        for (int iSource = 0; iSource < graph->graphCount * graph->vertexCount; iSource++) {
+        for (int iVertex = 0; iVertex < graph->graphCount * graph->vertexCount; iVertex++) {
             myfile.getline (line, 64, ',');
-            graph->sourceArray[iSource] = (int)std::strtol(line, NULL, 10);
-            printf("Node %i is source.\n", graph->sourceArray[iSource]);
+            graph->sourceArray[iVertex] = (int)std::strtol(line, NULL, 10);
+            if (debug)
+                printf("graph->sourceArray[%i] = %i.\n", iVertex, graph->sourceArray[iVertex]);
         }
         graph->edgeArray = (int*) malloc(graph->edgeCount * sizeof(int));
         for (int iEdge = 0; iEdge<graph->edgeCount; iEdge++) {
             myfile.getline (line, 64, ',');
             graph->edgeArray[iEdge] = (int)std::strtol(line, NULL, 10);
+            if (debug)
+                printf("graph->edgeArray[%i] = %i.\n", iEdge, graph->edgeArray[iEdge]);
         }
         graph->weightArray = (int*) malloc(graph->graphCount * graph->edgeCount * sizeof(int));
-        for (int iWeight = 0; iWeight<(graph->graphCount * graph->edgeCount); iWeight++) {
+        for (int iEdge = 0; iEdge<(graph->graphCount * graph->edgeCount); iEdge++) {
             myfile.getline (line, 64, ',');
-            graph->weightArray[iWeight] = (int)std::strtol(line, NULL, 10);
+            graph->weightArray[iEdge] = (int)std::strtol(line, NULL, 10);
+            if (debug)
+                printf("graph->weightArray[%i] = %i.\n", iEdge, graph->weightArray[iEdge]);
         }
         myfile.close();
     }

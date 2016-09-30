@@ -704,7 +704,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     
     printf("\nReading graph from file.\n");
-    readGraphFromFile(&graph, filePathToInData);
+    readGraphFromFile(&graph, filePathToInData, true);
     completeReadGraph(&graph);
     printf("Computing...\n");
     clock_t start_time = clock();

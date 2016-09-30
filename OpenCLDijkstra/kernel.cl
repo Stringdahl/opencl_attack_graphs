@@ -264,7 +264,8 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
 __kernel void INIT_INV_VERTEX_DIFF(__global int *inverseVertexDiffArray)
 {
     int globalVertex = get_global_id(0);
-    inverseVertexDiffArray[globalVertex] = 0;
+    int localVertex = globalVertex % vertexCount;
+    inverseVertexDiffArray[localVertex] = 0;
 }
 
 
@@ -272,7 +273,9 @@ __kernel void INIT_INV_VERTEX_DIFF(__global int *inverseVertexDiffArray)
 __kernel void INV_VERTEX_DIFF(__global int *edgeArray, __global int *inverseVertexDiffArray)
 {
     int globalEdge = get_global_id(0);
-    int childVertex = edgeArray[globalEdge];
+    int localEdge = globalEdge % edgeCount;
+    
+    int childVertex = edgeArray[localEdge];
     atomic_inc(&inverseVertexDiffArray[childVertex]);
     printf("Incrementing inverseVertexDiffArray[%i] to %i.\n", childVertex, inverseVertexDiffArray[childVertex]);
 }
