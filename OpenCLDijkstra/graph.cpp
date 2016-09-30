@@ -161,32 +161,32 @@ void completeReadGraph(GraphData *graph)
         graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
     }
     
-//    int iEdge = 0;
-//    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
-//        graph->inverseVertexArray[iChild] = iEdge;
-//        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
-//            // Get the edges
-//            int edgeStart = graph->vertexArray[iParent];
-//            int edgeEnd;
-//            if (iParent + 1 < (graph->vertexCount))
-//            {
-//                edgeEnd = graph->vertexArray[iParent + 1];
-//            }
-//            else
-//            {
-//                edgeEnd = graph->edgeCount;
-//            }
-//            for(int edge = edgeStart; edge < edgeEnd; edge++){
-//                if (graph->edgeArray[edge]==iChild) {
-//                    graph->inverseEdgeArray[iEdge]=iParent;
-//                    for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
-//                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
-//                    }
-//                    iEdge ++;
-//                }
-//            }
-//        }
-//    }
+    int iEdge = 0;
+    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
+        //graph->inverseVertexArray[iChild] = iEdge;
+        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
+            // Get the edges
+            int edgeStart = graph->vertexArray[iParent];
+            int edgeEnd;
+            if (iParent + 1 < (graph->vertexCount))
+            {
+                edgeEnd = graph->vertexArray[iParent + 1];
+            }
+            else
+            {
+                edgeEnd = graph->edgeCount;
+            }
+            for(int edge = edgeStart; edge < edgeEnd; edge++){
+                if (graph->edgeArray[edge]==iChild) {
+                    //graph->inverseEdgeArray[iEdge]=iParent;
+                    for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
+                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
+                    }
+                    iEdge ++;
+                }
+            }
+        }
+    }
 }
 
 

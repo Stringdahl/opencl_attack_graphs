@@ -55,7 +55,7 @@ bool contains(int *array, int arrayLength, int value) {
 }
 
 
-void printGraph(GraphData *graph, char **verticeNameArray, int iGraph) {
+void printGraph(GraphData *graph, int iGraph) {
     int nChildren;
     for (int localSource=0; localSource<graph->vertexCount; localSource++) {
         if (localSource<graph->vertexCount-1) {
@@ -64,7 +64,7 @@ void printGraph(GraphData *graph, char **verticeNameArray, int iGraph) {
         else {
             nChildren = graph->edgeCount-graph->vertexArray[localSource];
         }
-        printf("Vertex %s has %i children\n", verticeNameArray[localSource], nChildren);
+        printf("Vertex %i has %i children\n", localSource, nChildren);
         if (contains(graph->sourceArray, graph->sourceCount, localSource)) {
             printf("Vertex %i is source.\n", localSource);
         }
@@ -74,7 +74,7 @@ void printGraph(GraphData *graph, char **verticeNameArray, int iGraph) {
             int globalSource = iGraph*graph->vertexCount + localSource;
             int globalTarget = iGraph*graph->vertexCount + localTarget;
             int globalEdge = iGraph*graph->edgeCount + localEdge;
-            printf("Vertex %s (%i) is parent to vertex %s (%i) with edge weight of %i\n", verticeNameArray[localSource], graph->costArray[globalSource], verticeNameArray[localTarget], graph->costArray[globalTarget], graph->weightArray[globalEdge]);
+            printf("Vertex %i (%i) is parent to vertex %i (%i) with edge weight of %i\n", localSource, graph->costArray[globalSource], localTarget, graph->costArray[globalTarget], graph->weightArray[globalEdge]);
         }
     }
 }
@@ -504,6 +504,11 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     myfile << graph->vertexArray[graph->vertexCount - 1] << ",\n";
     
     for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
+        myfile << graph->inverseVertexArray[iVertex] << ",";
+    }
+    myfile << graph->inverseVertexArray[graph->vertexCount - 1] << ",\n";
+    
+    for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
         myfile << graph->maxVertexArray[iVertex] << ",";
     }
     myfile << graph->maxVertexArray[graph->vertexCount - 1] << ",\n";
@@ -518,11 +523,21 @@ void writeGraphToFile(GraphData *graph, char filePath[512]) {
     }
     myfile << graph->edgeArray[graph->edgeCount - 1] << ",\n";
     
+    for (int iEdge = 0; iEdge < graph->edgeCount - 1; iEdge++) {
+        myfile << graph->inverseEdgeArray[iEdge] << ",";
+    }
+    myfile << graph->inverseEdgeArray[graph->edgeCount - 1] << ",\n";
+    
     for (int iWeight = 0; iWeight < graph->graphCount * graph->edgeCount- 1; iWeight++) {
         myfile << graph->weightArray[iWeight] << ",";
     }
     myfile << graph->weightArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
-
+    
+    for (int iWeight = 0; iWeight < graph->graphCount * graph->edgeCount- 1; iWeight++) {
+        myfile << graph->inverseWeightArray[iWeight] << ",";
+    }
+    myfile << graph->inverseWeightArray[graph->graphCount * graph->edgeCount - 1] << ",\n";
+    
     for (int iVertex = 0; iVertex < graph->graphCount * graph->vertexCount - 1; iVertex++) {
         myfile << graph->costArray[iVertex] << ",";
     }

@@ -26,7 +26,7 @@ void printCostOfRandomVertices(int *costArrayHost, int verticesToPrint, int tota
 void printCostOfVertex(GraphData *graph, int vertexToPrint);
 void printWeights(GraphData *graph);
 void printInverseWeights(GraphData *graph);
-void printGraph(GraphData *graph, char **verticeNameArray, int iGraph);
+void printGraph(GraphData *graph, int iGraph);
 void printInverseGraph(GraphData *graph);
 void printParents(GraphData *graph);
 void printMax(GraphData *graph);

@@ -139,6 +139,10 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                     sumEdgeVal = sumEdgeVal + currEdgeVal;
                                 else
                                     sumEdgeVal = INT_MAX;
+                                
+                                if (globalTarget==2) {
+                                    printf("globalTarget = %i, localInverseTarget = %i, globalInverseTarget = %i, currentWeight = %i, maxEdgeVal = %i\n", globalTarget, localInverseTarget, globalInverseTarget, currentWeight, maxEdgeVal);
+                                }
                             }
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
@@ -147,6 +151,9 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                             // Mark the target for update
                             maskArray[globalTarget] = 1;
                             
+                            if (globalTarget==2) {
+                                printf("maxCostArray[%i] = %i\n", globalTarget, maxCostArray[globalTarget]);
+                            }
                         }
                     }
                 }
@@ -289,21 +296,32 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
                              __global int *inverseWeightArray,
                              __global int *inverseEdgeIncrTrackerArray)
 {
-    int localParent = get_global_id(0);
+    int globalParent = get_global_id(0);
+    int localParent = globalParent % vertexCount;
+    int iGraph = globalParent / vertexCount;
     
     int edgeStart = vertexArray[localParent];
     int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
+    printf("Vertex %i has edges from %i to %i\n", localParent, edgeStart, edgeEnd);
     // Iterate over the edges
     for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
     {
+        int globalEdge = iGraph * edgeCount + localEdge;
         int localChild = edgeArray[localEdge];
+        int globalChild = iGraph * vertexCount + localChild;
+        printf("localParetn %i had localChild %i\n", localParent, localChild);
         // Increment the tracker variable, which determines the position of the parent id in the inverseEdgeArray
         int offset = atomic_inc(&inverseEdgeIncrTrackerArray[localChild]);
         //Determine parent's own ID's proper location of inverseEdgeArray
-        int location = inverseVertexArray[localChild] + offset;
+        int localLocation = inverseVertexArray[localChild] + offset;
+        int globalLocation = iGraph * edgeCount + localLocation;
         // write to that location
-        inverseEdgeArray[location] = localParent;
-        inverseWeightArray[location] = weightArray[localEdge];
+        if (iGraph == 0) {
+            inverseEdgeArray[localLocation] = localParent;
+        }
+        inverseWeightArray[globalLocation] = weightArray[globalEdge];
+        printf("Inversion-recording vertex %i as parent to vertex %i with the weight %i.\n", localParent, localChild, weightArray[globalEdge]);
+
     }
 }
 
