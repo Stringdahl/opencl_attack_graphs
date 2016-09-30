@@ -366,7 +366,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     checkError(errNum, CL_SUCCESS);
     *inverseVertexDiffArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * graph->vertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *inverseEdgeIncrTrackerArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * graph->vertexCount, NULL, &errNum);
+    *inverseEdgeIncrTrackerArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * totalVertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     
     
@@ -766,6 +766,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     }
     
     printGraph(&graph, 0);
+    printGraph(&graph, 1);
 
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
@@ -805,7 +806,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 2, 2, 20, 2, 0.2);
+    testRandomGraphs(1, 2, 2, 30, 2, 0.2);
     
 //    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
 //    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";

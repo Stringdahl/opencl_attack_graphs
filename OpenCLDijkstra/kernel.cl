@@ -234,7 +234,9 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
             int globalParent = iGraph*vertexCount + localParent;
             int globalParentEdge = iGraph*edgeCount + localParentEdge;
             int edge = getEdgeId(globalParent, globalChild, inverseWeightArray[globalParentEdge], vertexCount, edgeCount, vertexArray, edgeArray, weightArray);
-            
+            if (edge == -1) {
+                printf("ERROR! getEdgeId(%i, %i, %i, ...) returned -1\n", globalParent, globalChild, inverseWeightArray[globalParentEdge]);
+            }
             // If this is a min node...
             if (maxVertexArray[localChild] < 0) {
                 int currCost;
@@ -248,6 +250,7 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                 if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && currentMaxCost != INT_MAX && currentWeight != INT_MAX && currCost != INT_MAX) {
                     minCost = currCost;
                     shortestParentEdgeArray[edge] = 1;
+                    printf("vertex %i is child to %i, with a weight of %i, so edge %i with weight %i is shortest parent.\n", globalChild, globalParent, inverseWeightArray[globalParentEdge], edge, weightArray[edge]);
                 }
                 else {
                     shortestParentEdgeArray[edge] = 0;
@@ -302,26 +305,23 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
     
     int edgeStart = vertexArray[localParent];
     int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
-    printf("Vertex %i has edges from %i to %i\n", localParent, edgeStart, edgeEnd);
     // Iterate over the edges
     for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
     {
         int globalEdge = iGraph * edgeCount + localEdge;
         int localChild = edgeArray[localEdge];
         int globalChild = iGraph * vertexCount + localChild;
-        printf("localParetn %i had localChild %i\n", localParent, localChild);
         // Increment the tracker variable, which determines the position of the parent id in the inverseEdgeArray
-        int offset = atomic_inc(&inverseEdgeIncrTrackerArray[localChild]);
+        int offset = atomic_inc(&inverseEdgeIncrTrackerArray[globalChild]);
         //Determine parent's own ID's proper location of inverseEdgeArray
         int localLocation = inverseVertexArray[localChild] + offset;
         int globalLocation = iGraph * edgeCount + localLocation;
         // write to that location
         if (iGraph == 0) {
             inverseEdgeArray[localLocation] = localParent;
+            printf("Setting vertex %i as parent to vertex %i inserting %i in location %i in inverseEdgeArray.\n", localParent, localChild, localParent, localLocation);
         }
         inverseWeightArray[globalLocation] = weightArray[globalEdge];
-        printf("Inversion-recording vertex %i as parent to vertex %i with the weight %i.\n", localParent, localChild, weightArray[globalEdge]);
-
     }
 }
 
