@@ -506,8 +506,9 @@ void calculateGraphs(GraphData *graph, bool debug) {
     
     
     int errNum;                            // error code returned from api calls
-    size_t vertexCountSizeT;                      // global domain size for our calculation
-    size_t edgeCountSizeT;                      // global domain size for our calculation
+    size_t globalVertexCountSizeT;                      // global domain size for our calculation
+    size_t localVertexCountSizeT;                      // Only the graph structure (don't confuse with work groups' local)
+    size_t localEdgeCountSizeT;                      // global domain size for our calculation
     
     cl_device_id device_id;             // compute device id
     cl_context context;                 // compute context
@@ -545,35 +546,49 @@ void calculateGraphs(GraphData *graph, bool debug) {
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     
-    
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
+    if (debug)
+        printf("initializeComputing.\n");
     initializeComputing(&device_id, &context, &commandQueue, &program);
     
     // Create kernels from the program (kernel.cl)
+    if (debug)
+        printf("createKernels.\n");
     createKernels(&initInvVertexDiffKernel, &invVertexDiffKernel, &initializeKernel, &ssspKernel1, &ssspKernel2, &shortestParentsKernel, &program);
     
     // Allocate buffers in Device memory
+    if (debug)
+        printf("allocateOCLBuffers.\n");
     allocateOCLBuffers(context, commandQueue, graph, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &maskArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &traversedEdgeCountArrayDevice, &sourceArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &shortestParentsArrayDevice, &inverseVertexDiffArrayDevice);
     
     // Setting the kernel arguments
+    if (debug)
+        printf("setKernelArguments.\n");
     errNum = setKernelArguments(&initInvVertexDiffKernel, &invVertexDiffKernel, &initializeKernel, &ssspKernel1, &ssspKernel2, &shortestParentsKernel, graph->graphCount, graph->vertexCount, graph->edgeCount, graph->sourceCount, &maskArrayDevice, &vertexArrayDevice, &inverseVertexArrayDevice, &edgeArrayDevice, &inverseEdgeArrayDevice, &maxCostArrayDevice, &maxUpdatingCostArrayDevice, &sumCostArrayDevice, &sumUpdatingCostArrayDevice, &sourceArrayDevice, &weightArrayDevice, &inverseWeightArrayDevice, &traversedEdgeCountArrayDevice, &parentCountArrayDevice, &maxVerticeArrayDevice, &shortestParentsArrayDevice, &inverseVertexDiffArrayDevice);
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
     //
-    vertexCountSizeT = totalVertexCount;
-    edgeCountSizeT = totalEdgeCount;
+    globalVertexCountSizeT = totalVertexCount;
+    localVertexCountSizeT = graph->vertexCount;
+    localEdgeCountSizeT = graph->edgeCount;
 
     
-    errNum = clEnqueueNDRangeKernel(commandQueue, initInvVertexDiffKernel, 1, NULL, &vertexCountSizeT, NULL, 0, NULL, NULL);
+    if (debug)
+        printf("Enqueuing initInvVertexDiffKernel in %zu work items.\n", localVertexCountSizeT);
+    errNum = clEnqueueNDRangeKernel(commandQueue, initInvVertexDiffKernel, 1, NULL, &localVertexCountSizeT, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
-    errNum = clEnqueueNDRangeKernel(commandQueue, invVertexDiffKernel, 1, NULL, &edgeCountSizeT, NULL, 0, NULL, NULL);
+    if (debug)
+        printf("invVertexDiffKernel in %zu work items.\n", localEdgeCountSizeT);
+    errNum = clEnqueueNDRangeKernel(commandQueue, invVertexDiffKernel, 1, NULL, &localEdgeCountSizeT, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
+    clFinish(commandQueue);
     
-    
-    errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &vertexCountSizeT, NULL, 0, NULL, NULL);
+    if (debug)
+        printf("initializeKernel.\n");
+    errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &globalVertexCountSizeT, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     
     
@@ -596,11 +611,11 @@ void calculateGraphs(GraphData *graph, bool debug) {
         {
             count ++;
             
-            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &vertexCountSizeT, NULL, 0, NULL, &kernel1event);
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel1, 1, 0, &globalVertexCountSizeT, NULL, 0, NULL, &kernel1event);
             checkError(errNum, CL_SUCCESS);
             
             
-            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &vertexCountSizeT, NULL, 0, NULL, &kernel2event);
+            errNum = clEnqueueNDRangeKernel(commandQueue, ssspKernel2, 1, 0, &globalVertexCountSizeT, NULL, 0, NULL, &kernel2event);
             checkError(errNum, CL_SUCCESS);
             
         }
@@ -621,7 +636,7 @@ void calculateGraphs(GraphData *graph, bool debug) {
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
     
-    errNum = clEnqueueNDRangeKernel(commandQueue, shortestParentsKernel, 1, 0, &vertexCountSizeT, NULL, 0, NULL, NULL);
+    errNum = clEnqueueNDRangeKernel(commandQueue, shortestParentsKernel, 1, 0, &globalVertexCountSizeT, NULL, 0, NULL, NULL);
     checkError(errNum, CL_SUCCESS);
     clFinish(commandQueue);
 
@@ -704,11 +719,11 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     
     printf("\nReading graph from file.\n");
-    readGraphFromFile(&graph, filePathToInData, true);
+    readGraphFromFile(&graph, filePathToInData, false);
     completeReadGraph(&graph);
     printf("Computing...\n");
     clock_t start_time = clock();
-    calculateGraphs(&graph, false);
+    calculateGraphs(&graph, true);
     
     printf("Time to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
