@@ -334,7 +334,7 @@ void allocateOCLBuffers(cl_context gpuContext, cl_command_queue commandQueue, Gr
     // Now create all of the GPU buffers
     *vertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->vertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
-    *inverseVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->vertexCount, NULL, &errNum);
+    *inverseVertexArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_WRITE, sizeof(int) * graph->vertexCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
     *edgeArrayDevice = clCreateBuffer(gpuContext, CL_MEM_READ_ONLY, sizeof(int) * graph->edgeCount, NULL, &errNum);
     checkError(errNum, CL_SUCCESS);
@@ -457,9 +457,11 @@ int setKernelArguments(cl_kernel *initInvVertexDiffKernel, cl_kernel *invVertexD
     errNum |= clSetKernelArg(*invEdgeArrayKernel, 1, sizeof(int), &edgeCount);
     errNum |= clSetKernelArg(*invEdgeArrayKernel, 2, sizeof(cl_mem), vertexArrayDevice);
     errNum |= clSetKernelArg(*invEdgeArrayKernel, 3, sizeof(cl_mem), edgeArrayDevice);
-    errNum |= clSetKernelArg(*invEdgeArrayKernel, 4, sizeof(cl_mem), inverseVertexArrayDevice);
-    errNum |= clSetKernelArg(*invEdgeArrayKernel, 5, sizeof(cl_mem), inverseEdgeArrayDevice);
-    errNum |= clSetKernelArg(*invEdgeArrayKernel, 6, sizeof(cl_mem), inverseEdgeIncrTrackerArrayDevice);
+    errNum |= clSetKernelArg(*invEdgeArrayKernel, 4, sizeof(cl_mem), weightArrayDevice);
+    errNum |= clSetKernelArg(*invEdgeArrayKernel, 5, sizeof(cl_mem), inverseVertexArrayDevice);
+    errNum |= clSetKernelArg(*invEdgeArrayKernel, 6, sizeof(cl_mem), inverseEdgeArrayDevice);
+    errNum |= clSetKernelArg(*invEdgeArrayKernel, 7, sizeof(cl_mem), inverseWeightArrayDevice);
+    errNum |= clSetKernelArg(*invEdgeArrayKernel, 8, sizeof(cl_mem), inverseEdgeIncrTrackerArrayDevice);
     
     // Set the arguments to initializeKernel
     errNum |= clSetKernelArg(*initializeKernel, 0, sizeof(cl_mem), maskArrayDevice);
@@ -571,7 +573,6 @@ void calculateGraphs(GraphData *graph, bool debug) {
     int totalEdgeCount = graph->graphCount * graph->edgeCount;
     int *maskArrayHost = (int*) malloc(sizeof(int) * totalVertexCount);
     int *inverseVertexDiffArrayHost = (int*) malloc(sizeof(int) * graph->vertexCount);
-    int *inverseVertexArrayHost = (int*) malloc(sizeof(int) * graph->vertexCount);
     
     // Set up OpenCL computing environment, getting GPU device ID, command queue, context, and program
     if (debug)
@@ -618,17 +619,27 @@ void calculateGraphs(GraphData *graph, bool debug) {
     
     clFinish(commandQueue);
     
-    inverseVertexArrayHost[0] = 0;
+    graph->inverseVertexArray[0] = 0;
     if (debug)
-        printf("inverseVertexArrayHost = [%i, ", inverseVertexArrayHost[0]);
+        printf("inverseVertexArrayHost = [%i, ", graph->inverseVertexArray[0]);
     for (int iVertex = 0; iVertex < graph->vertexCount - 1; iVertex++) {
-        inverseVertexArrayHost[iVertex + 1] = inverseVertexArrayHost[iVertex] + inverseVertexDiffArrayHost[iVertex];
+        graph->inverseVertexArray[iVertex + 1] = graph->inverseVertexArray[iVertex] + inverseVertexDiffArrayHost[iVertex];
         if (debug)
-            printf("%i, ", inverseVertexArrayHost[iVertex + 1]);
+            printf("%i, ", graph->inverseVertexArray[iVertex + 1]);
     }
     if (debug)
         printf("]\n");
 
+    cl_mem hostInverseVertexArrayBuffer = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+                                                         sizeof(int) * graph->vertexCount, graph->inverseVertexArray, &errNum);
+    checkError(errNum, CL_SUCCESS);
+    
+    errNum = clEnqueueCopyBuffer(commandQueue, hostInverseVertexArrayBuffer, inverseVertexArrayDevice, 0, 0,
+                                 sizeof(int) * graph->vertexCount, 0, NULL, NULL);
+    checkError(errNum, CL_SUCCESS);
+
+    
+    
     if (debug)
         printf("invEdgeArrayKernel() in %zu work items.\n", localVertexCountSizeT);
     errNum = clEnqueueNDRangeKernel(commandQueue, invEdgeArrayKernel, 1, NULL, &localVertexCountSizeT, NULL, 0, NULL, NULL);

@@ -283,8 +283,10 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
                              int edgeCount,
                              __global int *vertexArray,
                              __global int *edgeArray,
+                             __global int *weightArray,
                              __global int *inverseVertexArray,
                              __global int *inverseEdgeArray,
+                             __global int *inverseWeightArray,
                              __global int *inverseEdgeIncrTrackerArray)
 {
     int localParent = get_global_id(0);
@@ -302,9 +304,9 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
         int location = inverseVertexArray[localChild] + offset;
         // write to that location
         inverseEdgeArray[location] = localParent;
+        inverseWeightArray[location] = weightArray[localEdge];
         printf("Parent %i updated the tracker of child %i to %i and placed itself in position %i of inverseEdgeArray.\n", localParent, localChild, offset+1, location);
     }
-    
 }
 
 
