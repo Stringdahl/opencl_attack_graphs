@@ -139,10 +139,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                     sumEdgeVal = sumEdgeVal + currEdgeVal;
                                 else
                                     sumEdgeVal = INT_MAX;
-                                
-                                if (globalTarget==2) {
-                                    printf("globalTarget = %i, localInverseTarget = %i, globalInverseTarget = %i, currentWeight = %i, maxEdgeVal = %i\n", globalTarget, localInverseTarget, globalInverseTarget, currentWeight, maxEdgeVal);
-                                }
                             }
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
@@ -250,7 +246,6 @@ __kernel void SHORTEST_PARENTS(int vertexCount, int edgeCount,
                 if (currCost==maxCostArray[globalChild] && maxCostArray[globalChild] != INT_MAX && currentMaxCost != INT_MAX && currentWeight != INT_MAX && currCost != INT_MAX) {
                     minCost = currCost;
                     shortestParentEdgeArray[edge] = 1;
-                    printf("vertex %i is child to %i, with a weight of %i, so edge %i with weight %i is shortest parent.\n", globalChild, globalParent, inverseWeightArray[globalParentEdge], edge, weightArray[edge]);
                 }
                 else {
                     shortestParentEdgeArray[edge] = 0;
@@ -319,7 +314,6 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
         // write to that location
         if (iGraph == 0) {
             inverseEdgeArray[localLocation] = localParent;
-            printf("Setting vertex %i as parent to vertex %i inserting %i in location %i in inverseEdgeArray.\n", localParent, localChild, localParent, localLocation);
         }
         inverseWeightArray[globalLocation] = weightArray[globalEdge];
     }

@@ -765,9 +765,6 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
         }
     }
     
-    printGraph(&graph, 0);
-    printGraph(&graph, 1);
-
     printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     maxSumDifference(&graph);
