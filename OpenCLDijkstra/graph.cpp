@@ -102,33 +102,6 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
             
         }
     }
-    
-//    int iEdge = 0;
-//    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
-//        graph->inverseVertexArray[iChild] = iEdge;
-//        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
-//            // Get the edges
-//            int edgeStart = graph->vertexArray[iParent];
-//            int edgeEnd;
-//            if (iParent + 1 < (graph->vertexCount))
-//            {
-//                edgeEnd = graph->vertexArray[iParent + 1];
-//            }
-//            else
-//            {
-//                edgeEnd = graph->edgeCount;
-//            }
-//            for(int edge = edgeStart; edge < edgeEnd; edge++){
-//                if (graph->edgeArray[edge]==iChild) {
-//                    graph->inverseEdgeArray[iEdge]=iParent;
-//                    for (int iGraph = 0; iGraph < graphCount; iGraph++) {
-//                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
-//                    }
-//                    iEdge ++;
-//                }
-//            }
-//        }
-//    }
 }
 
 ///
@@ -157,35 +130,8 @@ void completeReadGraph(GraphData *graph)
     }
     
     for(int iSource = 0; iSource < graph->sourceCount; iSource++) {
-        // The source should be min
+        // The sources should be min
         graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
-    }
-    
-    int iEdge = 0;
-    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
-        //graph->inverseVertexArray[iChild] = iEdge;
-        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
-            // Get the edges
-            int edgeStart = graph->vertexArray[iParent];
-            int edgeEnd;
-            if (iParent + 1 < (graph->vertexCount))
-            {
-                edgeEnd = graph->vertexArray[iParent + 1];
-            }
-            else
-            {
-                edgeEnd = graph->edgeCount;
-            }
-            for(int edge = edgeStart; edge < edgeEnd; edge++){
-                if (graph->edgeArray[edge]==iChild) {
-                    //graph->inverseEdgeArray[iEdge]=iParent;
-                    for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
-                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
-                    }
-                    iEdge ++;
-                }
-            }
-        }
     }
 }
 
@@ -196,30 +142,6 @@ void updateGraphWithNewRandomWeights(GraphData *graph) {
     {
         graph->weightArray[i] = (rand() % 1000);
     }
-//    int iEdge = 0;
-//    for (int iChild = 0; iChild < graph->vertexCount; iChild++) {
-//        for (int iParent = 0; iParent < graph->vertexCount; iParent++) {
-//            // Get the edges
-//            int edgeStart = graph->vertexArray[iParent];
-//            int edgeEnd;
-//            if (iParent + 1 < (graph->vertexCount))
-//            {
-//                edgeEnd = graph->vertexArray[iParent + 1];
-//            }
-//            else
-//            {
-//                edgeEnd = graph->edgeCount;
-//            }
-//            for(int edge = edgeStart; edge < edgeEnd; edge++){
-//                if (graph->edgeArray[edge]==iChild) {
-//                    for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
-//                        graph->inverseWeightArray[iGraph * graph->edgeCount + iEdge]=graph->weightArray[iGraph * graph->edgeCount + edge];
-//                    }
-//                    iEdge ++;
-//                }
-//            }
-//        }
-//    }
 }
 
 
@@ -232,13 +154,6 @@ int minDistance(int *dist, bool *sptSet, int vertexCount)
     int min_index = 0;
     
     for (int v = 0; v < vertexCount; v++) {
-        //        printf("Node %i costs %i ", v, dist[v]);
-        //        if (sptSet[v] == false) {
-        //            printf("and is unprocessed. ");
-        //        }
-        //        else {
-        //            printf("but is already proceessed. ");
-        //        }
         if (sptSet[v] == false && dist[v] <= min) {
             min = dist[v], min_index = v;
         }

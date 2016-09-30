@@ -794,7 +794,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     compareToCPUComputation(&graph, false, 10);
     
-    //printMathematicaString(&graph, 0, false);
+    printMathematicaString(&graph, 0, false);
     
     
 }
