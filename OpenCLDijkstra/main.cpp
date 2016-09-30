@@ -812,7 +812,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1, 10, 15000000, 2, 0.2);
+    testRandomGraphs(4, 1, 10, 15000000, 2, 0.2);
     
     //    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
     //    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
