@@ -808,7 +808,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
 }
 
-void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[]) {
+void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], bool printMathematicaGraph) {
     GraphData graph;
     srand(0);
     
@@ -825,7 +825,8 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[]) {
     
     //compareToCPUComputation(&graph, false, 10);
     
-    //printMathematicaString(&graph, 0, false);
+    if (printMathematicaGraph)
+        printMathematicaString(&graph, 0, false);
     
     
 }
@@ -834,6 +835,7 @@ void printHelp() {
     printf("Usage: OpenCLDijkstra -f <fileName>.\n");
     printf("Example: OpenCLDijkstra -f \"/Users/John/Documents/service.graph\"\n");
     printf("The output file is placed in the same folder as the input, with the appended suffix \".gpu\"\n");
+    printf("To output a textual string to copy into Mathematica for graph visualization, append \"-m\" after the file name.\n");
     printf("Run test with OpenCLDijkstra -t or \n");
     printf("OpenCLDijkstra -t nSamples nAttackPoints nAttackSteps nChildrenPerAttackStep probOfMaxNode\n");
     printf("Example: OpenCLDijkstra -t 1000 100 10000 2 0.2\n");
@@ -843,13 +845,16 @@ void printHelp() {
 int main(int argc, char** argv)
 {
     
-    if (argc == 3) {
+    if (argc == 3 || argc == 4) {
         if (strncmp(argv[1], "-f", 2) == 0) {
             char filePathToInData[512];
             char filePathToOutData[512];
             sprintf(filePathToInData, "%s", argv[2]);
             sprintf(filePathToOutData, "%s.gpu", filePathToInData);
-            computeGraphsFromFile(filePathToInData, filePathToOutData);
+            if (strncmp(argv[3], "-m", 2) == 0)
+                computeGraphsFromFile(filePathToInData, filePathToOutData, true);
+            else
+                computeGraphsFromFile(filePathToInData, filePathToOutData, true);
         }
     }
     else {
