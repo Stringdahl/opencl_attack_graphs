@@ -678,10 +678,7 @@ void computeGraphs(GraphData *graph, bool debug) {
         clFinish(commandQueue);
     }
     
-    
-    printGraph(graph, 0);
-    printInverseGraph(graph);
-    
+        
     if (debug)
         printf("initializeKernel.\n");
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &globalVertexCountSizeT, NULL, 0, NULL, NULL);
@@ -808,7 +805,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
-    printMathematicaString(&graph, 0, false);
+    printMathematicaString(&graph, 1, false);
     
     
     
@@ -842,7 +839,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 2, 3, 30, 2, 0.2);
+//    testRandomGraphs(1, 2, 1, 21, 2, 0.2);
     
 //    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
 //    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";

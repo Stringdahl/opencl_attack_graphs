@@ -139,9 +139,6 @@ __kernel void OCL_SSSP_KERNEL1(__global int *vertexArray, __global int *inverseV
                                     sumEdgeVal = sumEdgeVal + currEdgeVal;
                                 else
                                     sumEdgeVal = INT_MAX;
-                                if(weightArray[localEdge] != inverseWeightArray[globalInverseEdge]) {
-                                    printf("Error: Updating max vertex %i from parent %i. Parent %i has cost %i, inverse edge %i has weight %i. My updated cost is %i. Local edge from parent to child is %i, with a weight of %i.\n", globalTarget, globalSource, globalInverseTarget, currentMaxCost, globalInverseEdge, currentWeight, maxEdgeVal, localEdge, weightArray[localEdge]);
-                                }
                             }
                             maxCostArray[globalTarget] = maxEdgeVal;
                             maxUpdatingCostArray[globalTarget] = maxEdgeVal;
@@ -192,7 +189,7 @@ int getEdgeId(int globalParent, int globalChild, int weight, int vertexCount, in
         int currentLocalChild = edgeArray[localEdge];
         int currentGlobalChild = iGraph*vertexCount + currentLocalChild;
         int globalEdge = iGraph*edgeCount + localEdge;
-        printf("Checking getEdgeId() for globalParent = %i, localParent = %i, globalChild = %i, curreltLocalChild = %i, currentGlobalChild = %i, weight = %i, globalEdge = %i, weightArray[globalEdge] = %i\n", globalParent, localParent, globalChild, currentLocalChild, currentGlobalChild, weight, globalEdge, weightArray[globalEdge]);
+        //printf("Checking getEdgeId() for globalParent = %i, localParent = %i, globalChild = %i, curreltLocalChild = %i, currentGlobalChild = %i, weight = %i, globalEdge = %i, weightArray[globalEdge] = %i\n", globalParent, localParent, globalChild, currentLocalChild, currentGlobalChild, weight, globalEdge, weightArray[globalEdge]);
         
         if (currentGlobalChild == globalChild && weightArray[globalEdge] == weight) {
             return globalEdge;
@@ -295,32 +292,17 @@ __kernel void INV_EDGE_ARRAY(int vertexCount,
                              __global int *inverseEdgeIncrTrackerArray)
 {
     int localParent = get_global_id(0);
-    //int localParent = globalParent % vertexCount;
-    //int iGraph = globalParent / vertexCount;
     
     int edgeStart = vertexArray[localParent];
     int edgeEnd = getEdgeEnd(localParent, vertexCount, vertexArray, edgeCount);
-    // Iterate over the edges
     for(int localEdge = edgeStart; localEdge < edgeEnd; localEdge++)
     {
-        //int globalEdge = iGraph * edgeCount + localEdge;
         int localChild = edgeArray[localEdge];
-        //int globalChild = iGraph * vertexCount + localChild;
         // Increment the tracker variable, which determines the position of the parent id in the inverseEdgeArray
         int offset = atomic_inc(&inverseEdgeIncrTrackerArray[localChild]);
         //Determine parent's own ID's proper location of inverseEdgeArray
         int localLocation = inverseVertexArray[localChild] + offset;
-        //int globalLocation = iGraph * edgeCount + localLocation;
-        // write to that location
-        
-        
-        // The problem here could be that the higher samples don't know what order the first sample's parents end up in. Thus, localLocation, and thus globalLocation, could be different between samples, so that the first parent in one sample becomes the second in another.
-        
-        //if (iGraph == 0) {
         inverseEdgeArray[localLocation] = localParent;
-        //}
-        //inverseWeightArray[globalLocation] = weightArray[globalEdge];
-        printf("Setting inverseEdgeArray[%i] = %i from child %i to parent %i.\n", localLocation, inverseEdgeArray[localLocation], localChild, localParent);
     }
 }
 
