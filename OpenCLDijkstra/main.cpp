@@ -805,7 +805,7 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     
     maxSumDifference(&graph);
     compareToCPUComputation(&graph, false, 10);
-    printMathematicaString(&graph, 1, false);
+   // printMathematicaString(&graph, 1, false);
     
     
     
@@ -822,13 +822,13 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     completeReadGraph(&graph);
     printf("Computing...\n");
     clock_t start_time = clock();
-    computeGraphs(&graph, true);
+    computeGraphs(&graph, false);
     
     printf("Time to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     writeGraphToFile(&graph, filePathToOutData);
     
-    compareToCPUComputation(&graph, true, 10);
+    compareToCPUComputation(&graph, false, 10);
     
     printMathematicaString(&graph, 0, false);
     
@@ -839,7 +839,7 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
 int main(int argc, char** argv)
 {
     
-//    testRandomGraphs(1, 2, 1, 21, 2, 0.2);
+    testRandomGraphs(1, 1000, 20, 1000, 2, 0.2);
     
 //    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
 //    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
