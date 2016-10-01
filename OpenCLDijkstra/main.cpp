@@ -619,7 +619,7 @@ void computeGraphs(GraphData *graph, bool debug) {
     globalVertexCountSizeT = totalVertexCount;
     localVertexCountSizeT = graph->vertexCount;
     localEdgeCountSizeT = graph->edgeCount;
-        
+    
     if (debug)
         printf("Enqueuing initInvVertexDiffKernel() in %zu work items.\n", localVertexCountSizeT);
     errNum = clEnqueueNDRangeKernel(commandQueue, initInvVertexDiffKernel, 1, NULL, &localVertexCountSizeT, NULL, 0, NULL, NULL);
@@ -668,7 +668,6 @@ void computeGraphs(GraphData *graph, bool debug) {
     
     if (debug) {
         errNum = clEnqueueReadBuffer(commandQueue, inverseVertexArrayDevice, CL_TRUE, 0, sizeof(int) * graph->vertexCount, graph->inverseVertexArray, 0, NULL, &readDone);
-        printf("%i\n", errNum);
         checkError(errNum, CL_SUCCESS);
         errNum = clEnqueueReadBuffer(commandQueue, inverseEdgeArrayDevice, CL_TRUE, 0, sizeof(int) * graph->edgeCount, graph->inverseEdgeArray, 0, NULL, &readDone);
         checkError(errNum, CL_SUCCESS);
@@ -678,7 +677,7 @@ void computeGraphs(GraphData *graph, bool debug) {
         clFinish(commandQueue);
     }
     
-        
+    
     if (debug)
         printf("initializeKernel.\n");
     errNum = clEnqueueNDRangeKernel(commandQueue, initializeKernel, 1, NULL, &globalVertexCountSizeT, NULL, 0, NULL, NULL);
@@ -780,40 +779,36 @@ void testRandomGraphs(int graphSetCount, int graphCount, int sourceCount, int ve
     clock_t start_time = clock();
     generateRandomGraph(&graph, verticeCount, edgePerVerticeCount, graphCount, sourceCount, probOfMax, false);
     completeReadGraph(&graph);
-    printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
-    printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", graph.vertexCount*graph.graphCount*graphSetCount, graph.vertexCount, graph.graphCount*graphSetCount, graphSetCount);
     
     int *maxCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
     int *sumCostArray = (int*) malloc(graphSetCount* graph.graphCount * graph.vertexCount * sizeof(int));
     
-    printf("updateGraphWithNewRandomWeights()\n");
-    
     for (int iGraphSet = 0; iGraphSet < graphSetCount; iGraphSet++) {
+        printf("Time to generate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+        printf("%i vertices. %i attack steps per sample. %i samples divided into %i sets.\n", graph.vertexCount*graph.graphCount*graphSetCount, graph.vertexCount, graph.graphCount*graphSetCount, graphSetCount);
         updateGraphWithNewRandomWeights(&graph);
         
         printf("Starting calculations...\n");
         start_time = clock();
-        computeGraphs(&graph, true);
-        printf("...completed calculations in %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+        computeGraphs(&graph, false);
         for (int iGlobalVertex=0; iGlobalVertex < graph.graphCount * graph.vertexCount; iGlobalVertex++) {
             maxCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.costArray[iGlobalVertex];
             sumCostArray[iGraphSet * graph.graphCount * graph.vertexCount + iGlobalVertex] = graph.sumCostArray[iGlobalVertex];
         }
     }
     
-    printf("\nTime to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
+    printf("Time to calculate graph, including overhead: %.2f seconds.\n", (float)(clock()-start_time)/1000000);
     
     maxSumDifference(&graph);
+    //printMathematicaString(&graph, 0, false);
     compareToCPUComputation(&graph, false, 10);
-   // printMathematicaString(&graph, 1, false);
-    
     
     
     
     
 }
 
-void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], char filePathToNames[]) {
+void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[]) {
     GraphData graph;
     srand(0);
     
@@ -828,23 +823,66 @@ void computeGraphsFromFile(char filePathToInData[], char filePathToOutData[], ch
     
     writeGraphToFile(&graph, filePathToOutData);
     
-    compareToCPUComputation(&graph, false, 10);
+    //compareToCPUComputation(&graph, false, 10);
     
-    printMathematicaString(&graph, 0, false);
+    //printMathematicaString(&graph, 0, false);
     
     
+}
+
+void printHelp() {
+    printf("Usage: OpenCLDijkstra -f <fileName>.\n");
+    printf("Example: OpenCLDijkstra -f \"/Users/John/Documents/service.graph\"\n");
+    printf("The output file is placed in the same folder as the input, with the appended suffix \".gpu\"\n");
+    printf("Run test with OpenCLDijkstra -t or \n");
+    printf("OpenCLDijkstra -t nSamples nAttackPoints nAttackSteps nChildrenPerAttackStep probOfMaxNode\n");
+    printf("Example: OpenCLDijkstra -t 1000 100 10000 2 0.2\n");
 }
 
 
 int main(int argc, char** argv)
 {
     
-    testRandomGraphs(1, 1000, 20, 1000, 2, 0.2);
+    if (argc == 3) {
+        if (strncmp(argv[1], "-f", 2) == 0) {
+            char filePathToInData[512];
+            char filePathToOutData[512];
+            sprintf(filePathToInData, "%s", argv[2]);
+            sprintf(filePathToOutData, "%s.gpu", filePathToInData);
+            computeGraphsFromFile(filePathToInData, filePathToOutData);
+        }
+    }
+    else {
+        if (argc == 7) {
+            if (strncmp(argv[1], "-t", 2) == 0) {
+                int nSamples = (int)strtol(argv[2], NULL, 10);
+                int nAttackPoints = (int)strtol(argv[3], NULL, 10);
+                int nAttackSteps = (int)strtol(argv[4], NULL, 10);
+                int nChildrenPerAttackStep = (int)strtol(argv[5], NULL, 10);
+                float probOfMaxNode = (float)strtof(argv[6], NULL);
+                testRandomGraphs(1, nSamples, nAttackPoints, nAttackSteps, nChildrenPerAttackStep, probOfMaxNode);
+            }
+        }
+        else {
+            if (argc == 2) {
+                if (strncmp(argv[1], "-t", 2) == 0) {
+                    testRandomGraphs(1, 1000, 100, 10000, 2, 0.2);
+                }
+                if (strncmp(argv[1], "-h", 2) == 0) {
+                    printHelp();
+                }
+            }
+            else {
+            printHelp();
+            }
+        }
+    }
     
-//    char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
-//    char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
-//    char filePathToNames[512] = "/Users/pontus/Documents/nodeNames.cvs";
-//    computeGraphsFromFile(filePathToInData, filePathToOutData, filePathToNames);
+    
+    //char filePathToInData[512] = "/Users/pontus/Documents/service.graph";
+    //char filePathToOutData[512] = "/Users/pontus/Documents/service.gpu";
+    
+    
     
     
     

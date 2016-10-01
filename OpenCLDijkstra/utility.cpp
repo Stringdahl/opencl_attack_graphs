@@ -491,7 +491,7 @@ void maxSumDifference(GraphData *graph) {
         }
     }
     printf("The average difference between max and sum is %f%% per node. %.2f%% of nodes were approximated.\n", 100*(float)diff/(float)sum, 100*(float)nDiff/totalVerticeCount);
-    printf("The biggeste single difference was %.2f%% in node %i (%i).\n", maxDiff, iMaxDiff % graph->graphCount, iMaxDiff);
+    printf("The biggest single difference was %.2f%% in node %i (%i).\n", maxDiff, iMaxDiff % graph->graphCount, iMaxDiff);
 }
 
 void writeGraphToFile(GraphData *graph, char filePath[512]) {

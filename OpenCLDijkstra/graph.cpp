@@ -82,7 +82,7 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
         graph->edgeArray[i] = targetVertex;
         if (verbose)
             printf("edgeArray[%i] is %i.\n", i, graph->edgeArray[i]);
-
+        
     }
     for(int i = 0; i < graphCount * graph->edgeCount; i++)
     {
@@ -99,7 +99,6 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
                 graph->sourceArray[iGraph*graph->vertexCount + firstLocalSource] = 1;
                 if (verbose)
                     printf("Vertex %i is source.\n", iSource);
-
             }
         }
     }
@@ -130,9 +129,10 @@ void completeReadGraph(GraphData *graph)
         graph->parentCountArray[graph->edgeArray[i]]++;
     }
     
-    for(int iSource = 0; iSource < graph->sourceCount; iSource++) {
+    for(int iVertex = 0; iVertex < graph->vertexCount; iVertex++) {
         // The sources should be min
-        graph->maxVertexArray[graph->sourceArray[iSource]]=-1;
+        if (graph->sourceArray[iVertex]==1)
+            graph->maxVertexArray[iVertex]=-1;
     }
 }
 
