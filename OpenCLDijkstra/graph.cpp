@@ -43,7 +43,7 @@ void checkErrorFileLine(int errNum, int expected, const char* file, const int li
 ///
 //  Generate a random graph
 //
-void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax)
+void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVertex, int graphCount, int sourceCount, float probOfMax, bool verbose)
 {
     float probOfSource = 1.0;
     
@@ -51,31 +51,28 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     graph->graphCount = graphCount;
     graph->sourceCount = sourceCount;
     graph->vertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->inverseVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
     graph->maxVertexArray = (int*) malloc(graph->vertexCount * sizeof(int));
-    graph->costArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
-    graph->sumCostArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->sourceArray = (int*) malloc(graph->graphCount * graph->vertexCount * sizeof(int));
     graph->edgeCount = vertexCount * neighborsPerVertex;
     graph->edgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->inverseEdgeArray = (int*)malloc(graph->edgeCount * sizeof(int));
-    graph->parentCountArray = (int*)malloc(graph->edgeCount * sizeof(int));
     graph->weightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
-    graph->inverseWeightArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
-    graph->shortestParentsArray = (int*)malloc(graphCount * graph->edgeCount * sizeof(int));
-    
     
     
     for(int i = 0; i < graph->vertexCount; i++)
     {
         graph->vertexArray[i] = i * neighborsPerVertex;
+        if (verbose)
+            printf("vertexArray[%i] is %i.\n", i, graph->vertexArray[i]);
         if ((rand() % 100) < 100*probOfMax) {
             graph->maxVertexArray[i]=0;
+            if (verbose)
+                printf("Vertex %i is max.\n", i);
         }
         else {
             graph->maxVertexArray[i]=-1;
+            if (verbose)
+                printf("Vertex %i is min.\n", i);
         }
-        graph->parentCountArray[i] = 0;
         graph->sourceArray[i] = 0;
     }
     
@@ -83,12 +80,15 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
     {
         int targetVertex = (rand() % graph->vertexCount);
         graph->edgeArray[i] = targetVertex;
-        graph->parentCountArray[targetVertex]++;
-        
+        if (verbose)
+            printf("edgeArray[%i] is %i.\n", i, graph->edgeArray[i]);
+
     }
     for(int i = 0; i < graphCount * graph->edgeCount; i++)
     {
         graph->weightArray[i] = (rand() % 1000);
+        if (verbose)
+            printf("weightArray[%i] is %i.\n", i, graph->weightArray[i]);
     }
     
     // Set at least one random source per graph
@@ -97,9 +97,10 @@ void generateRandomGraph(GraphData *graph, int vertexCount, int neighborsPerVert
         for (int iGraph = 0; iGraph < graph->graphCount; iGraph++) {
             if (iSource == 0 || (rand() % 100) < 100*probOfSource) {
                 graph->sourceArray[iGraph*graph->vertexCount + firstLocalSource] = 1;
-                graph->maxVertexArray[iGraph*graph->vertexCount + firstLocalSource] = -1;
+                if (verbose)
+                    printf("Vertex %i is source.\n", iSource);
+
             }
-            
         }
     }
 }
