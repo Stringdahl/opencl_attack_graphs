@@ -22,7 +22,8 @@
 #endif
 
 
-#define kernelPath "/Users/pontus/Documents/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl"
+//pontu#define kernelPath "/Users/pontus/Documents/Pontus Program Files/XCode/OpenCLDijkstra/OpenCLDijkstra/kernel.cl"
+#define kernelPath "kernel.cl"
 #define checkError(a, b) checkErrorFileLine(a, b, __FILE__ , __LINE__)
 #define NUM_ASYNCHRONOUS_ITERATIONS 20  // Number of async loop iterations before attempting to read results back
 
